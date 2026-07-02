@@ -1,0 +1,13 @@
+{
+    "chat.agent.enabled": false,
+    "chat.checkpoints.enabled": false,
+    "window.newWindowProfile": "Main",
+    "workbench.commandPalette.showAskInChat": false,
+    "workbench.browser.enableChatTools": false,
+    "workbench.settings.applyToAllProfiles": [
+        "workbench.browser.enableChatTools",
+        "workbench.commandPalette.showAskInChat",
+        "chat.agent.enabled"
+    ],
+    "window.menuBarVisibility": "compact"
+}

@@ -1,0 +1,9 @@
+command = /home/paulday/.local/bin/tmux-niri-session.sh
+mouse-scroll-multiplier = 0.5
+background-opacity = 0.5
+window-padding-x = 8
+window-padding-y = 8
+foreground = ffffff
+background = 000000
+window-decoration = none
+font-size = 10

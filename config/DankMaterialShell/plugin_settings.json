@@ -1,0 +1,9 @@
+{
+  "todoLauncher": {
+    "enabled": false,
+    "tasksData": "[{\"id\":\"1782798780708\",\"text\":\"Import wiki wiki\",\"done\":false,\"completionDate\":null}]"
+  },
+  "taskwarrior": {
+    "enabled": true
+  }
+}
