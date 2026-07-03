@@ -205,7 +205,9 @@ copy "$DOTFILES/home/.profile" "$USER_HOME/.profile"
 copy "$DOTFILES/home/.taskrc" "$USER_HOME/.taskrc"
 
 # niri
-copy "$DOTFILES/config/niri/config.kdl"    "$USER_HOME/.config/niri/config.kdl"
+copy "$DOTFILES/config/niri/config.kdl"                   "$USER_HOME/.config/niri/config.kdl"
+copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/niri/create_named_workspace.sh"
+chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
 copy "$DOTFILES/config/niri/dms/binds.kdl" "$USER_HOME/.config/niri/dms/binds.kdl"
 
 # ghostty

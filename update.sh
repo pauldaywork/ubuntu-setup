@@ -28,8 +28,9 @@ pull "$HOME/.profile" "$DOTFILES/home/.profile"
 pull "$HOME/.taskrc" "$DOTFILES/home/.taskrc"
 
 # ─── niri ─────────────────────────────────────────────────────────────────────
-pull "$HOME/.config/niri/config.kdl"    "$DOTFILES/config/niri/config.kdl"
-pull "$HOME/.config/niri/dms/binds.kdl" "$DOTFILES/config/niri/dms/binds.kdl"
+pull "$HOME/.config/niri/config.kdl"                "$DOTFILES/config/niri/config.kdl"
+pull "$HOME/.config/niri/create_named_workspace.sh" "$DOTFILES/config/niri/create_named_workspace.sh"
+pull "$HOME/.config/niri/dms/binds.kdl"             "$DOTFILES/config/niri/dms/binds.kdl"
 
 # ─── ghostty ──────────────────────────────────────────────────────────────────
 pull "$HOME/.config/ghostty/config.ghostty" "$DOTFILES/config/ghostty/config.ghostty"

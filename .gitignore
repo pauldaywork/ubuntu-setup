@@ -9,3 +9,4 @@ config/niri/dms/layout.kdl
 config/niri/dms/outputs.kdl
 config/niri/dms/windowrules.kdl
 config/niri/dms/wpblur.kdl
+config/niri/dms/profiles/
