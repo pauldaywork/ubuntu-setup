@@ -28,7 +28,16 @@ pull "$HOME/.profile" "$DOTFILES/home/.profile"
 pull "$HOME/.taskrc" "$DOTFILES/home/.taskrc"
 
 # ─── niri ─────────────────────────────────────────────────────────────────────
-pull "$HOME/.config/niri/config.kdl"                "$DOTFILES/config/niri/config.kdl"
+# config.kdl gets `include "dms/laptop.kdl"` appended by `install.sh --laptop` on
+# laptop machines. That line is machine-specific, not part of the shared base
+# config, so strip it back out before it lands in the repo.
+if [ -f "$HOME/.config/niri/config.kdl" ]; then
+    mkdir -p "$DOTFILES/config/niri"
+    grep -v '^include "dms/laptop.kdl"$' "$HOME/.config/niri/config.kdl" > "$DOTFILES/config/niri/config.kdl" || true
+    info "Pulled $HOME/.config/niri/config.kdl"
+else
+    warn "Not found, skipping: $HOME/.config/niri/config.kdl"
+fi
 pull "$HOME/.config/niri/create_named_workspace.sh" "$DOTFILES/config/niri/create_named_workspace.sh"
 pull "$HOME/.config/niri/dms/binds.kdl"             "$DOTFILES/config/niri/dms/binds.kdl"
 
@@ -37,6 +46,9 @@ pull "$HOME/.config/ghostty/config.ghostty" "$DOTFILES/config/ghostty/config.gho
 
 # ─── alacritty theme ──────────────────────────────────────────────────────────
 pull "$HOME/.config/alacritty/dank-theme.toml" "$DOTFILES/config/alacritty/dank-theme.toml"
+
+# ─── mako ─────────────────────────────────────────────────────────────────────
+pull "$HOME/.config/mako/config" "$DOTFILES/config/mako/config"
 
 # ─── DankMaterialShell ────────────────────────────────────────────────────────
 pull "$HOME/.config/DankMaterialShell/settings.json"        "$DOTFILES/config/DankMaterialShell/settings.json"

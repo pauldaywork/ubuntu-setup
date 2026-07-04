@@ -26,6 +26,13 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# rustup/cargo (installed via rustup.rs, not the rustup snap)
+. "$HOME/.cargo/env"
+
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:/home/paulday/.lmstudio/bin"
 # End of LM Studio CLI section

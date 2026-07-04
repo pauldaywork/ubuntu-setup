@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# Diagnose drift between what this machine actually has installed and what
+# ~/.bashrc, ~/.profile, and install.sh assume (e.g. a tool that got moved
+# or reinstalled by hand without its shell config being updated to match).
+#
+# Read-only by default — it only reports. Pass --fix to interactively repair
+# dangling PATH/env references in dotfiles (each fix is confirmed and the
+# file is backed up first). It never installs, uninstalls, or moves software
+# on its own — those calls need a human, so those checks only print a
+# suggested command.
+#
+# Usage:
+#   bash doctor.sh          # report only
+#   bash doctor.sh --fix    # report, and offer to repair dotfile references
+
+set -uo pipefail
+
+FIX=false
+[ "${1:-}" = "--fix" ] && FIX=true
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+ISSUES=0
+ok()      { echo -e "${GREEN}[✓]${NC} $*"; }
+issue()   { ISSUES=$((ISSUES + 1)); echo -e "${RED}[✗]${NC} $*"; }
+note()    { echo -e "${YELLOW}[!]${NC} $*"; }
+section() { echo -e "\n${GREEN}══${NC} $* ${GREEN}══${NC}"; }
+
+RC_FILES=("$HOME/.bashrc" "$HOME/.profile")
+
+# Prompts before editing a dotfile; only runs when --fix was passed.
+confirm_fix() {
+    $FIX || return 1
+    read -rp "    Apply this fix? [y/N] " reply
+    [[ "$reply" =~ ^[Yy]$ ]]
+}
+
+backup() {
+    cp "$1" "$1.doctor-bak-$(date +%Y%m%d%H%M%S)"
+}
+
+# ─── 1. Dangling PATH / env references in dotfiles ───────────────────────────
+# Finds lines like `export FOO_DIR="$HOME/x"` or `. "$HOME/x/env"` and checks
+# the path they point at still exists. Catches the general case of "a tool
+# got moved/reinstalled and the shell config was never updated" without
+# needing to know about every tool in advance.
+section "Checking for dangling PATH/env references"
+
+for rc in "${RC_FILES[@]}"; do
+    [ -f "$rc" ] || continue
+    while IFS= read -r line; do
+        raw_path=$(echo "$line" | grep -oE '(\$HOME|~|/home/[A-Za-z0-9._-]+)(/[A-Za-z0-9._-]+)+' | head -1)
+        [ -z "$raw_path" ] && continue
+        expanded="${raw_path/#\~/$HOME}"
+        expanded="${expanded/#\$HOME/$HOME}"
+        [ -e "$expanded" ] && continue
+        issue "$rc references '$expanded' but it doesn't exist:"
+        echo "      $line"
+    done < <(grep -E '^\s*(export [A-Z_]+=|\. |source )' "$rc")
+done
+[ "$ISSUES" -eq 0 ] && ok "No dangling references found"
+
+# ─── 2. nvm location vs what's actually configured ───────────────────────────
+section "Checking nvm"
+
+configured_nvm_dir=""
+for rc in "${RC_FILES[@]}"; do
+    [ -f "$rc" ] || continue
+    match=$(grep -oP '(?<=export NVM_DIR=")[^"]+' "$rc" 2>/dev/null | head -1)
+    [ -n "$match" ] && configured_nvm_dir="${match/#\$HOME/$HOME}" && break
+done
+
+if [ -z "$configured_nvm_dir" ]; then
+    note "No NVM_DIR export found — skipping"
+elif [ -f "$configured_nvm_dir/nvm.sh" ]; then
+    ok "NVM_DIR ($configured_nvm_dir) is valid"
+else
+    issue "NVM_DIR is set to $configured_nvm_dir, but nvm isn't installed there"
+    real_dir=""
+    for candidate in "$HOME/.nvm" "$HOME/.config/nvm"; do
+        [ -f "$candidate/nvm.sh" ] && real_dir="$candidate" && break
+    done
+    if [ -n "$real_dir" ]; then
+        note "  Found a real nvm install at $real_dir instead"
+        if confirm_fix; then
+            for rc in "${RC_FILES[@]}"; do
+                grep -q 'NVM_DIR=' "$rc" 2>/dev/null || continue
+                backup "$rc"
+                sed -i "s#export NVM_DIR=\"[^\"]*\"#export NVM_DIR=\"$real_dir\"#" "$rc"
+                ok "  Updated NVM_DIR in $rc (backup saved)"
+            done
+        fi
+    else
+        note "  Couldn't find nvm anywhere under ~/.nvm or ~/.config/nvm — may need reinstalling"
+    fi
+fi
+
+# ─── 3. Duplicate installs (same tool via two different channels) ────────────
+# These are reported only — removing an installed toolchain or app
+# automatically is too risky to do without a human confirming which copy
+# is actually in use.
+section "Checking for duplicate installs"
+
+check_duplicate() {
+    local name="$1" snap_name="$2" other_check="$3"
+    local has_snap=false has_other=false
+    snap list "$snap_name" &>/dev/null && has_snap=true
+    eval "$other_check" &>/dev/null && has_other=true
+    if $has_snap && $has_other; then
+        issue "$name is installed both via snap and another way — likely redundant"
+        note "  To drop the snap copy (keeping the other): sudo snap remove $snap_name"
+    else
+        ok "$name has no duplicate install"
+    fi
+}
+
+check_duplicate "rustup/cargo" "rustup" '[ -x "$HOME/.cargo/bin/rustup" ]'
+check_duplicate "ghostty"      "ghostty" 'dpkg -s ghostty'
+
+# ─── 4. Summary ───────────────────────────────────────────────────────────────
+section "Summary"
+if [ "$ISSUES" -eq 0 ]; then
+    ok "No issues found"
+else
+    note "$ISSUES issue(s) found."
+    $FIX || note "Re-run with --fix to interactively repair dangling PATH/env references."
+fi

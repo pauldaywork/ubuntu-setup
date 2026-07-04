@@ -4,6 +4,14 @@ set -euo pipefail
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER_HOME="$HOME"
 
+# ─── flags ─────────────────────────────────────────────────────────────────────
+LAPTOP=false
+for arg in "$@"; do
+    case "$arg" in
+        --laptop) LAPTOP=true ;;
+    esac
+done
+
 # ─── colours ──────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()    { echo -e "${GREEN}[+]${NC} $*"; }
@@ -26,14 +34,16 @@ add_ppa() {
 add_ppa "danklinux (niri)" "avengemedia/danklinux"
 add_ppa "dms (DankMaterialShell bar)" "avengemedia/dms"
 
+sudo mkdir -p /etc/apt/keyrings
+
 # Sublime Text
 if ! apt-cache show sublime-text &>/dev/null; then
     info "Adding Sublime Text repo"
     wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg \
         | gpg --dearmor \
-        | sudo tee /etc/apt/trusted.gpg.d/sublimehq-archive.gpg > /dev/null
-    echo "deb https://download.sublimetext.com/ apt/stable/" \
-        | sudo tee /etc/apt/sources.list.d/sublime-text.list
+        | sudo tee /etc/apt/keyrings/sublimehq-archive-keyring.gpg > /dev/null
+    echo "deb [signed-by=/etc/apt/keyrings/sublimehq-archive-keyring.gpg] https://download.sublimetext.com/ apt/stable/" \
+        | sudo tee /etc/apt/sources.list.d/sublime-text.list > /dev/null
 fi
 
 # Google Chrome
@@ -41,9 +51,9 @@ if ! apt-cache show google-chrome-stable &>/dev/null; then
     info "Adding Google Chrome repo"
     wget -q -O - https://dl.google.com/linux/linux_signing_key.pub \
         | gpg --dearmor \
-        | sudo tee /etc/apt/trusted.gpg.d/google-chrome.gpg > /dev/null
-    echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" \
-        | sudo tee /etc/apt/sources.list.d/google-chrome.list
+        | sudo tee /etc/apt/keyrings/google-chrome-keyring.gpg > /dev/null
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" \
+        | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
 fi
 
 sudo apt update
@@ -55,6 +65,7 @@ APT_PACKAGES=(
     # window manager + shell
     niri
     dms
+    mako-notifier
 
     # dev tools
     git
@@ -79,10 +90,6 @@ APT_PACKAGES=(
 )
 
 sudo apt install -y "${APT_PACKAGES[@]}"
-
-# ─── NVIDIA — only if this machine has an NVIDIA GPU ──────────────────────────
-# Uncomment these lines if you need NVIDIA drivers:
-# sudo apt install -y nvidia-driver-595-open linux-modules-nvidia-595-open-generic-hwe-26.04
 
 # ─── .deb installs (no apt repo — downloaded directly) ───────────────────────
 section "Installing .deb packages"
@@ -109,14 +116,6 @@ OBSIDIAN_VERSION="1.12.7"
 install_deb "obsidian" \
     "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/obsidian_${OBSIDIAN_VERSION}_amd64.deb"
 
-# LM Studio — use their official installer which always fetches the latest version
-if command -v lms &>/dev/null; then
-    info "LM Studio already installed ($(lms version 2>/dev/null || echo 'unknown version'))"
-else
-    info "Installing LM Studio (latest)"
-    curl -fsSL https://lmstudio.ai/install.sh | bash
-fi
-
 # ─── 3. snap packages ─────────────────────────────────────────────────────────
 section "Installing snap packages"
 
@@ -134,24 +133,41 @@ snap_install firefox
 snap_install code        --classic
 snap_install ghostty     --classic
 snap_install cmake       --classic
-snap_install rustup      --classic
-snap_install opencode    --classic
-snap_install steam
-snap_install termius-app
-snap_install workshop    --classic
 
 # ─── 4. Rust toolchain ────────────────────────────────────────────────────────
+# Installed via the official rustup.rs script rather than the rustup snap —
+# the snap's confinement causes friction with `cargo install` and linking
+# against system libraries.
 section "Setting up Rust toolchain"
 
-if ! /snap/bin/rustup toolchain list 2>/dev/null | grep -q "stable"; then
-    info "Installing stable Rust toolchain"
-    /snap/bin/rustup install stable
-    /snap/bin/rustup default stable
-else
-    info "Rust stable already installed ($(/snap/bin/rustc --version))"
+if ! command -v rustup &>/dev/null; then
+    info "Installing rustup"
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --default-toolchain stable
 fi
 
-# ─── 5. NVM + Node.js ─────────────────────────────────────────────────────────
+# shellcheck source=/dev/null
+[ -f "$USER_HOME/.cargo/env" ] && source "$USER_HOME/.cargo/env"
+
+if ! rustup toolchain list 2>/dev/null | grep -q "stable"; then
+    info "Installing stable Rust toolchain"
+    rustup install stable
+    rustup default stable
+else
+    info "Rust stable already installed ($(rustc --version))"
+fi
+
+# ─── 5. Bun ────────────────────────────────────────────────────────────────────
+section "Installing Bun"
+
+if ! command -v bun &>/dev/null; then
+    info "Installing Bun"
+    curl -fsSL https://bun.sh/install | bash
+else
+    info "Bun already installed ($(bun --version))"
+fi
+
+# ─── 6. NVM + Node.js ─────────────────────────────────────────────────────────
 section "Installing NVM + Node.js"
 
 NVM_DIR="$USER_HOME/.config/nvm"
@@ -173,7 +189,7 @@ if ! nvm ls "$NODE_VERSION" &>/dev/null; then
 fi
 nvm use "$NODE_VERSION"
 
-# ─── 6. Claude Code ───────────────────────────────────────────────────────────
+# ─── 7. Claude Code ───────────────────────────────────────────────────────────
 section "Installing Claude Code"
 
 if ! command -v claude &>/dev/null; then
@@ -183,7 +199,7 @@ else
     info "Claude Code already installed ($(claude --version 2>/dev/null || echo 'unknown version'))"
 fi
 
-# ─── 7. Copy dotfiles ─────────────────────────────────────────────────────────
+# ─── 8. Copy dotfiles ─────────────────────────────────────────────────────────
 section "Copying dotfiles"
 
 copy() {
@@ -210,11 +226,20 @@ copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
 copy "$DOTFILES/config/niri/dms/binds.kdl" "$USER_HOME/.config/niri/dms/binds.kdl"
 
+if [ "$LAPTOP" = true ]; then
+    info "Applying laptop-specific niri config"
+    copy "$DOTFILES/config/niri/dms/laptop.kdl" "$USER_HOME/.config/niri/dms/laptop.kdl"
+    printf '\ninclude "dms/laptop.kdl"\n' >> "$USER_HOME/.config/niri/config.kdl"
+fi
+
 # ghostty
 copy "$DOTFILES/config/ghostty/config.ghostty" "$USER_HOME/.config/ghostty/config.ghostty"
 
 # alacritty theme (referenced by DMS)
 copy "$DOTFILES/config/alacritty/dank-theme.toml" "$USER_HOME/.config/alacritty/dank-theme.toml"
+
+# mako (notifications)
+copy "$DOTFILES/config/mako/config" "$USER_HOME/.config/mako/config"
 
 # DankMaterialShell
 copy "$DOTFILES/config/DankMaterialShell/settings.json"        "$USER_HOME/.config/DankMaterialShell/settings.json"
@@ -232,7 +257,7 @@ if [ -s "$DOTFILES/config/Code/extensions.txt" ]; then
     done < "$DOTFILES/config/Code/extensions.txt"
 fi
 
-# ─── 8. Wallpaper ─────────────────────────────────────────────────────────────
+# ─── 9. Wallpaper ─────────────────────────────────────────────────────────────
 section "Setting up wallpaper"
 
 WALLPAPER_DST="$USER_HOME/Documents/Wallpapers/205.png"
@@ -267,7 +292,7 @@ with open("$DMS_SESSION", "w") as f:
 PYEOF
 fi
 
-# ─── 9. Git config ────────────────────────────────────────────────────────────
+# ─── 10. Git config ───────────────────────────────────────────────────────────
 section "Git configuration"
 
 if [ -z "$(git config --global user.name 2>/dev/null)" ]; then
@@ -280,7 +305,7 @@ if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
 fi
 git config --global init.defaultBranch main
 
-# ─── 10. SSH key ──────────────────────────────────────────────────────────────
+# ─── 11. SSH key ──────────────────────────────────────────────────────────────
 section "SSH key"
 
 SSH_KEY="$USER_HOME/.ssh/id_ed25519"
@@ -307,9 +332,8 @@ echo ""
 info "Manual steps remaining:"
 echo "  1. Reboot (or log out and back in) to start niri + DMS"
 echo "  2. Run 'claude' to log into Claude Code"
-echo "  3. Log into Firefox, Chrome, Obsidian, Steam, Termius as needed"
-echo "  4. Open LM Studio and re-download any models you need"
-echo "  5. If this machine has NVIDIA — uncomment the NVIDIA lines in this script and re-run"
+echo "  3. Log into Firefox, Chrome, Obsidian, Termius as needed"
+echo "  4. Run 'bash extra.sh' if you want Steam, OpenCode, LM Studio, or NVIDIA drivers"
 echo ""
 warn "DMS auto-generates its niri config files (colors.kdl, layout.kdl, outputs.kdl) on first launch"
 warn "Monitor layout (outputs.kdl) will be detected automatically for the new hardware"
