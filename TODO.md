@@ -8,3 +8,4 @@
 - share important files via network or load important files for projects onto local hdd
 - make first default workspace called general
 - fix any issues with tmux
+- remove brightnessctl  mako-notifier  playerctl since it was added when I re ran install on main pc. so that must mean it was never installed or needed in the first place?

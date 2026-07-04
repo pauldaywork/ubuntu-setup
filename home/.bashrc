@@ -128,6 +128,6 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 . "$HOME/.cargo/env"
 
 # Added by LM Studio CLI (lms)
-export PATH="$PATH:/home/paulday/.lmstudio/bin"
+export PATH="$PATH:$HOME/.lmstudio/bin"
 # End of LM Studio CLI section
 

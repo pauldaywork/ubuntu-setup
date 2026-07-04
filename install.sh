@@ -226,6 +226,8 @@ copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
 copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/niri/toggle-window-rules.sh"
 chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
+copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/niri/tmux-niri-session.sh"
+chmod +x "$USER_HOME/.config/niri/tmux-niri-session.sh"
 copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
 copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
 copy "$DOTFILES/config/niri/dms/binds.kdl" "$USER_HOME/.config/niri/dms/binds.kdl"
@@ -245,6 +247,8 @@ fi
 
 # ghostty
 copy "$DOTFILES/config/ghostty/config.ghostty" "$USER_HOME/.config/ghostty/config.ghostty"
+sed -i "s|^command = .*|command = $USER_HOME/.config/niri/tmux-niri-session.sh|" \
+    "$USER_HOME/.config/ghostty/config.ghostty"
 
 # alacritty theme (referenced by DMS)
 copy "$DOTFILES/config/alacritty/dank-theme.toml" "$USER_HOME/.config/alacritty/dank-theme.toml"
@@ -254,6 +258,8 @@ copy "$DOTFILES/config/mako/config" "$USER_HOME/.config/mako/config"
 
 # DankMaterialShell
 copy "$DOTFILES/config/DankMaterialShell/settings.json"        "$USER_HOME/.config/DankMaterialShell/settings.json"
+sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json\"|" \
+    "$USER_HOME/.config/DankMaterialShell/settings.json"
 copy "$DOTFILES/config/DankMaterialShell/plugin_settings.json" "$USER_HOME/.config/DankMaterialShell/plugin_settings.json"
 copy "$DOTFILES/config/DankMaterialShell/firefox.css"          "$USER_HOME/.config/DankMaterialShell/firefox.css"
 copy "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
