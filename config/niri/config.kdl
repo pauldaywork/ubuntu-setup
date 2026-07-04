@@ -114,99 +114,6 @@ output "eDP-1" {
     position x=1280 y=0
 }
 
-// Settings that influence how windows are positioned and sized.
-// Find more information on the wiki:
-// https://niri-wm.github.io/niri/Configuration:-Layout
-layout {
-    // Set gaps around windows in logical pixels.
-    background-color "transparent"
-
-    // You can customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
-    preset-column-widths {
-        // Proportion sets the width as a fraction of the output width, taking gaps into account.
-        // For example, you can perfectly fit four windows sized "proportion 0.25" on an output.
-        // The default preset widths are 1/3, 1/2 and 2/3 of the output.
-        proportion 0.33333
-        proportion 0.6
-        proportion 0.8
-        // Fixed sets the width in logical pixels exactly.
-        // fixed 1920
-    }
-    // You can also customize the heights that "switch-preset-window-height" (Mod+Shift+R) toggles between.
-    // preset-window-heights { }
-    // You can change the default width of the new windows.
-    default-column-width { proportion 0.6; }
-    // If you leave the brackets empty, the windows themselves will decide their initial width.
-    // default-column-width {}
-    // By default focus ring and border are rendered as a solid background rectangle
-    // behind windows. That is, they will show up through semitransparent windows.
-    // This is because windows using client-side decorations can have an arbitrary shape.
-    //
-    // If you don't like that, you should uncomment `prefer-no-csd` below.
-    // Niri will draw focus ring and border *around* windows that agree to omit their
-    // client-side decorations.
-    //
-    // Alternatively, you can override it with a window rule called
-    // `draw-border-with-background`.
-    border {
-        off
-        width 4
-        active-color   "#707070"      // Neutral gray
-        inactive-color "#d0d0d0"      // Light gray
-        urgent-color   "#cc4444"      // Softer red
-    }
-    shadow {
-        softness 30
-        spread 5
-        offset x=0 y=5
-        color "#0007"
-    }
-
-    // When to center a column when changing focus, options are:
-    // - "never", default behavior, focusing an off-screen column will keep at the left
-    //   or right edge of the screen.
-    // - "always", the focused column will always be centered.
-    // - "on-overflow", focusing a column will center it if it doesn't fit
-    //   together with the previously focused column.
-    // center-focused-column "never"
-    // Always keep the currently focused window right in the center
-    center-focused-column "always"
-    
-    // Always center the single window layout too
-    always-center-single-column
-
-    // Set the gap distance between individual windows in logical pixels
-    gaps 130
-
-    // Push the windows inward so the next windows peek in on the sides.
-    // Adjust 150 to your preference; larger numbers push windows more.
-    struts {
-        // left -250
-        // right 15
-        // top -190
-        bottom 150
-    }
-
-    // tab-indicator {
-    //     place-within-column
-    //     // corner-radius 6
-    //     // position "right"
-    //     // length total-proportion=0.25
-    //     gap 410
-    //     gaps-between-tabs 400
-    // }
-
-
-    // focus-dim {
-    //     // How much darker or more transparent the unfocused window gets (0.0 to 1.0)
-    //     amount 0.3
-        
-    //     // Whether to desaturate the unfocused windows (makes them grayscale)
-    //     desaturate 0.1
-    // }
-
-
-}
 
 // Add lines like this to spawn processes at startup.
 // Note that running niri as a session supports xdg-desktop-autostart,
@@ -297,126 +204,9 @@ window-rule {
     default-column-width { proportion 0.5; }
 }
 
-window-rule {
-    // match title="Firefox"
-    // match title="Ghostty"
-    // match is-active=true
-    // match is-focused=false
-    // match is-active-in-column=true
-    // match is-floating=true
-    // match is-window-cast-target=true
-    // match is-urgent=true
-    // match at-startup=true
-
-    // Properties that apply once upon window opening.
-    // default-column-width { proportion 0.75; }
-    // default-window-height { fixed 800; }
-    // open-on-output "Some Company CoolMonitor 1234"
-    // open-on-workspace "chat"
-    // open-maximized true
-    // open-maximized-to-edges true
-    // open-fullscreen true
-    // open-floating true
-    // open-focused false
-
-    // Properties that apply continuously.
-    draw-border-with-background true
-    block-out-from "screencast"
-    // block-out-from "screen-capture"
-    variable-refresh-rate true
-    // default-column-display "tabbed"
-    // default-floating-position x=100 y=200 relative-to="bottom-left"
-    // scroll-factor 0.75
-
-    focus-ring {
-        // off
-        on
-        width 4
-        // active-gradient from="#f00f" to="#0f05" angle=45 in="oklch longer hue"
-        active-color "#00000020"
-        inactive-color "#00000020"
-        urgent-color "#00000020"
-        // active-gradient from="#80c8ff" to="#bbddff" angle=45
-        // inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
-        // urgent-gradient from="#800" to="#a33" angle=45
-    }
-
-    border {
-        // Same as focus-ring.
-    }
-
-    shadow {
-        // on
-        off
-        softness 40
-        spread 5
-        offset x=0 y=5
-        draw-behind-window true
-        color "#00000064"
-        // inactive-color "#00000064"
-    }
-
-    tab-indicator {         
-        active-color "#00000000"
-        //inactive-color "gray"
-        //urgent-color "blue"
-        // active-gradient from="#80c8ff" to="#bbddff" angle=45
-        // inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
-        // urgent-gradient from="#800" to="#a33" angle=45
-    }
-
-    geometry-corner-radius 8
-    clip-to-geometry true
-    // tiled-state true
-    // baba-is-float false
-
-    // popups {
-    //     opacity 0.5
-    //     geometry-corner-radius 5
-
-    //     background-effect {
-    //         xray true
-    //         blur true
-    //         noise 0.05
-    //         saturation 2.8
-    //     }
-    // }
-
-    // min-width 900
-    // max-width 1200
-    min-height 800
-    // max-height 600
-}
-
-window-rule {
-    opacity 0.0
-    background-effect {
-        // blur true
-        xray true
-    }
-
-    // max-height 200
-
-    // struts {
-    //     // left -250
-    //     // right 15
-    //     // top -190
-    //     bottom 150
-    // }
-
-}
-
-window-rule {
-    match is-focused=true
-    opacity 0.75
-
-    background-effect {
-        xray true
-        blur true
-        noise 0.05
-        saturation 1.4
-    }
-}
+// Swappable window-rules profile ("normal" or "focus") — toggled at runtime
+// with Mod+Alt+R via toggle-window-rules.sh, which symlinks this target.
+include "window-rules-active.kdl"
 
 layer-rule {
     match namespace="^launcher$"
@@ -712,6 +502,9 @@ binds {
 
     // Press Mod + Shift + W to create and name a new workspace
     Mod+Shift+W { spawn "~/.config/niri/create_named_workspace.sh"; }
+
+    // Toggle between window-rules profiles (normal / focus-dimming)
+    Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/toggle-window-rules.sh"; }
 
 }
 

@@ -224,7 +224,18 @@ copy "$DOTFILES/home/.taskrc" "$USER_HOME/.taskrc"
 copy "$DOTFILES/config/niri/config.kdl"                   "$USER_HOME/.config/niri/config.kdl"
 copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/niri/create_named_workspace.sh"
 chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
+copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/niri/toggle-window-rules.sh"
+chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
+copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
+copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
 copy "$DOTFILES/config/niri/dms/binds.kdl" "$USER_HOME/.config/niri/dms/binds.kdl"
+
+# Seed the active window-rules profile only if one isn't already chosen,
+# so re-running install doesn't reset an existing choice.
+if [ ! -e "$USER_HOME/.config/niri/window-rules-active.kdl" ]; then
+    ln -s "$USER_HOME/.config/niri/window-rules/focus.kdl" "$USER_HOME/.config/niri/window-rules-active.kdl"
+    echo "focus" > "$USER_HOME/.config/niri/.window-rules-profile"
+fi
 
 if [ "$LAPTOP" = true ]; then
     info "Applying laptop-specific niri config"

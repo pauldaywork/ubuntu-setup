@@ -1,0 +1,73 @@
+// "focus" profile: fades unfocused windows to near-invisible, focused
+// window drawn back in at partial opacity. Toggle with Mod+Alt+R.
+layout {
+    background-color "transparent"
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.6
+        proportion 0.8
+    }
+    default-column-width { proportion 0.6; }
+    border {
+        off
+        width 4
+        active-color   "#707070"      // Neutral gray
+        inactive-color "#d0d0d0"      // Light gray
+        urgent-color   "#cc4444"      // Softer red
+    }
+    shadow {
+        softness 30
+        spread 5
+        offset x=0 y=5
+        color "#0007"
+    }
+    center-focused-column "always"
+    always-center-single-column
+    gaps 13
+    struts {
+        top 60
+        bottom 50
+    }
+}
+
+window-rule {
+    draw-border-with-background true
+    block-out-from "screencast"
+    variable-refresh-rate true
+
+    focus-ring {
+        on
+        width 4
+        active-color "#00000020"
+        inactive-color "#00000020"
+        urgent-color "#00000020"
+    }
+
+    tab-indicator {
+        active-color "#00000000"
+    }
+
+    geometry-corner-radius 8
+    clip-to-geometry true
+}
+
+window-rule {
+    max-height 1000
+    min-height 800
+    opacity 0.75
+
+    background-effect {
+        xray true
+        blur true
+        noise 0.05
+        saturation 1.4
+    }
+}
+
+window-rule {
+    match is-focused=false
+    background-effect {
+        blur false
+    }
+    opacity 0.0
+}
