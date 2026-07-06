@@ -47,9 +47,6 @@ pull "$HOME/.config/niri/dms/binds.kdl"             "$DOTFILES/config/niri/dms/b
 # ─── ghostty ──────────────────────────────────────────────────────────────────
 pull "$HOME/.config/ghostty/config.ghostty" "$DOTFILES/config/ghostty/config.ghostty"
 
-# ─── alacritty theme ──────────────────────────────────────────────────────────
-pull "$HOME/.config/alacritty/dank-theme.toml" "$DOTFILES/config/alacritty/dank-theme.toml"
-
 # ─── mako ─────────────────────────────────────────────────────────────────────
 pull "$HOME/.config/mako/config" "$DOTFILES/config/mako/config"
 

@@ -199,114 +199,18 @@ else
     info "Claude Code already installed ($(claude --version 2>/dev/null || echo 'unknown version'))"
 fi
 
-# ─── 8. Copy dotfiles ─────────────────────────────────────────────────────────
-section "Copying dotfiles"
+# ─── 8. Copy config files + wallpaper ─────────────────────────────────────────
+CONFIG_ARGS=()
+[ "$LAPTOP" = true ] && CONFIG_ARGS+=(--laptop)
+"$DOTFILES/install-config.sh" "${CONFIG_ARGS[@]}"
 
-copy() {
-    local src="$1" dst="$2"
-    mkdir -p "$(dirname "$dst")"
-    if [ -e "$dst" ]; then
-        warn "Backing up existing: $dst → $dst.bak"
-        cp "$dst" "$dst.bak"
-    fi
-    cp "$src" "$dst"
-    info "Copied $dst"
-}
+# ─── 9. VS Code extensions ────────────────────────────────────────────────────
+section "Installing VS Code extensions"
 
-# shell
-copy "$DOTFILES/home/.bashrc"  "$USER_HOME/.bashrc"
-copy "$DOTFILES/home/.profile" "$USER_HOME/.profile"
-
-# taskwarrior
-copy "$DOTFILES/home/.taskrc" "$USER_HOME/.taskrc"
-
-# niri
-copy "$DOTFILES/config/niri/config.kdl"                   "$USER_HOME/.config/niri/config.kdl"
-copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/niri/create_named_workspace.sh"
-chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
-copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/niri/toggle-window-rules.sh"
-chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
-copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/niri/tmux-niri-session.sh"
-chmod +x "$USER_HOME/.config/niri/tmux-niri-session.sh"
-copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
-copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
-copy "$DOTFILES/config/niri/dms/binds.kdl" "$USER_HOME/.config/niri/dms/binds.kdl"
-
-# Seed the active window-rules profile only if one isn't already chosen,
-# so re-running install doesn't reset an existing choice.
-if [ ! -e "$USER_HOME/.config/niri/window-rules-active.kdl" ]; then
-    ln -s "$USER_HOME/.config/niri/window-rules/focus.kdl" "$USER_HOME/.config/niri/window-rules-active.kdl"
-    echo "focus" > "$USER_HOME/.config/niri/.window-rules-profile"
-fi
-
-if [ "$LAPTOP" = true ]; then
-    info "Applying laptop-specific niri config"
-    copy "$DOTFILES/config/niri/dms/laptop.kdl" "$USER_HOME/.config/niri/dms/laptop.kdl"
-    printf '\ninclude "dms/laptop.kdl"\n' >> "$USER_HOME/.config/niri/config.kdl"
-fi
-
-# ghostty
-copy "$DOTFILES/config/ghostty/config.ghostty" "$USER_HOME/.config/ghostty/config.ghostty"
-sed -i "s|^command = .*|command = $USER_HOME/.config/niri/tmux-niri-session.sh|" \
-    "$USER_HOME/.config/ghostty/config.ghostty"
-
-# alacritty theme (referenced by DMS)
-copy "$DOTFILES/config/alacritty/dank-theme.toml" "$USER_HOME/.config/alacritty/dank-theme.toml"
-
-# mako (notifications)
-copy "$DOTFILES/config/mako/config" "$USER_HOME/.config/mako/config"
-
-# DankMaterialShell
-copy "$DOTFILES/config/DankMaterialShell/settings.json"        "$USER_HOME/.config/DankMaterialShell/settings.json"
-sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json\"|" \
-    "$USER_HOME/.config/DankMaterialShell/settings.json"
-copy "$DOTFILES/config/DankMaterialShell/plugin_settings.json" "$USER_HOME/.config/DankMaterialShell/plugin_settings.json"
-copy "$DOTFILES/config/DankMaterialShell/firefox.css"          "$USER_HOME/.config/DankMaterialShell/firefox.css"
-copy "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
-     "$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json"
-
-# VS Code
-copy "$DOTFILES/config/Code/settings.json" "$USER_HOME/.config/Code/User/settings.json"
 if [ -s "$DOTFILES/config/Code/extensions.txt" ]; then
-    info "Installing VS Code extensions"
     while IFS= read -r ext; do
         code --install-extension "$ext" --force
     done < "$DOTFILES/config/Code/extensions.txt"
-fi
-
-# ─── 9. Wallpaper ─────────────────────────────────────────────────────────────
-section "Setting up wallpaper"
-
-WALLPAPER_DST="$USER_HOME/Documents/Wallpapers/205.png"
-mkdir -p "$USER_HOME/Documents/Wallpapers"
-
-if [ ! -f "$WALLPAPER_DST" ]; then
-    cp "$DOTFILES/wallpapers/205.png" "$WALLPAPER_DST"
-    info "Wallpaper copied to $WALLPAPER_DST"
-fi
-
-# Write the DMS session wallpaper path so it loads on first launch
-DMS_SESSION="$USER_HOME/.local/state/DankMaterialShell/session.json"
-mkdir -p "$(dirname "$DMS_SESSION")"
-
-if [ ! -f "$DMS_SESSION" ]; then
-    info "Creating DMS session with wallpaper path"
-    python3 - <<PYEOF
-import json, os
-session = {"wallpaperPath": "$WALLPAPER_DST"}
-with open("$DMS_SESSION", "w") as f:
-    json.dump(session, f, indent=2)
-PYEOF
-else
-    info "Updating wallpaper path in existing DMS session"
-    python3 - <<PYEOF
-import json
-with open("$DMS_SESSION") as f:
-    session = json.load(f)
-session["wallpaperPath"] = "$WALLPAPER_DST"
-with open("$DMS_SESSION", "w") as f:
-    json.dump(session, f, indent=2)
-PYEOF
 fi
 
 # ─── 10. Git config ───────────────────────────────────────────────────────────

@@ -165,6 +165,7 @@ It only ever edits dotfile references, and only after you confirm each one. If i
 ```
 backup-os/
 ├── install.sh                              # Run on a new machine
+├── install-config.sh                       # Config files + wallpaper only (no app installs)
 ├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
 ├── update.sh                               # Run on current machine to snapshot changes
 ├── doctor.sh                               # Diagnose drift on an existing, already-set-up machine
@@ -185,8 +186,6 @@ backup-os/
 │   │       └── laptop.kdl                  # Only installed with `install.sh --laptop`
 │   ├── ghostty/
 │   │   └── config.ghostty
-│   ├── alacritty/
-│   │   └── dank-theme.toml
 │   ├── mako/
 │   │   └── config
 │   ├── DankMaterialShell/
