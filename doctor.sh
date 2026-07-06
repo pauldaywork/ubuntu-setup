@@ -38,7 +38,93 @@ backup() {
     cp "$1" "$1.doctor-bak-$(date +%Y%m%d%H%M%S)"
 }
 
-# ─── 1. Dangling PATH / env references in dotfiles ───────────────────────────
+# ─── 1. Installation completeness ─────────────────────────────────────────────
+# Report-only, same as everything else here — installing software isn't a
+# dotfile fix, so even --fix just prints the command install.sh would run.
+# Keep this list in sync with install.sh if that ever changes.
+section "Checking installation completeness"
+
+APT_PACKAGES=(
+    niri dms mako-notifier
+    git curl build-essential jq tmux libudev-dev util-linux-extra zenity
+    taskwarrior sublime-text google-chrome-stable
+    pipewire wireplumber brightnessctl playerctl
+)
+
+MISSING_APT=()
+for pkg in "${APT_PACKAGES[@]}"; do
+    dpkg -s "$pkg" &>/dev/null || MISSING_APT+=("$pkg")
+done
+if [ "${#MISSING_APT[@]}" -eq 0 ]; then
+    ok "All apt packages installed"
+else
+    issue "Missing apt package(s): ${MISSING_APT[*]}"
+    note "  Install with: sudo apt install -y ${MISSING_APT[*]}"
+fi
+
+if dpkg -s obsidian &>/dev/null; then
+    ok "obsidian installed"
+else
+    issue "obsidian not installed"
+    note "  See the OBSIDIAN_VERSION .deb URL in install.sh"
+fi
+
+SNAP_PACKAGES=(firefox code:classic ghostty:classic cmake:classic)
+for entry in "${SNAP_PACKAGES[@]}"; do
+    pkg="${entry%%:*}"
+    flag=""; [[ "$entry" == *:classic ]] && flag=" --classic"
+    if snap list "$pkg" &>/dev/null; then
+        ok "snap: $pkg installed"
+    else
+        issue "snap: $pkg not installed"
+        note "  Install with: sudo snap install $pkg$flag"
+    fi
+done
+
+if command -v rustup &>/dev/null; then
+    ok "rustup installed ($(rustc --version 2>/dev/null))"
+else
+    issue "rustup not installed"
+    note "  Install with: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable"
+fi
+
+if command -v bun &>/dev/null || [ -x "$HOME/.bun/bin/bun" ]; then
+    ok "bun installed"
+else
+    issue "bun not installed"
+    note "  Install with: curl -fsSL https://bun.sh/install | bash"
+fi
+
+NVM_INSTALL_DIR="$HOME/.config/nvm"
+NODE_VERSION="v24.18.0"
+if [ -s "$NVM_INSTALL_DIR/nvm.sh" ]; then
+    ok "nvm installed"
+    if [ -d "$NVM_INSTALL_DIR/versions/node/$NODE_VERSION" ]; then
+        ok "Node.js $NODE_VERSION installed"
+    else
+        issue "Node.js $NODE_VERSION not installed via nvm"
+        note "  Install with: NVM_DIR=$NVM_INSTALL_DIR bash -c 'source $NVM_INSTALL_DIR/nvm.sh && nvm install $NODE_VERSION'"
+    fi
+else
+    issue "nvm not installed at $NVM_INSTALL_DIR"
+    note "  Re-run install.sh (see its NVM + Node.js section)"
+fi
+
+if command -v claude &>/dev/null; then
+    ok "Claude Code installed"
+else
+    issue "Claude Code not installed"
+    note "  Install with: npm install -g @anthropic-ai/claude-code"
+fi
+
+if [ -d "$HOME/.tmux/plugins/tpm" ]; then
+    ok "TPM (tmux plugin manager) installed"
+else
+    issue "TPM not installed at ~/.tmux/plugins/tpm"
+    note "  Install with: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/bin/install_plugins"
+fi
+
+# ─── 2. Dangling PATH / env references in dotfiles ───────────────────────────
 # Finds lines like `export FOO_DIR="$HOME/x"` or `. "$HOME/x/env"` and checks
 # the path they point at still exists. Catches the general case of "a tool
 # got moved/reinstalled and the shell config was never updated" without
@@ -59,7 +145,7 @@ for rc in "${RC_FILES[@]}"; do
 done
 [ "$ISSUES" -eq 0 ] && ok "No dangling references found"
 
-# ─── 2. nvm location vs what's actually configured ───────────────────────────
+# ─── 3. nvm location vs what's actually configured ───────────────────────────
 section "Checking nvm"
 
 configured_nvm_dir=""
@@ -94,7 +180,7 @@ else
     fi
 fi
 
-# ─── 3. Duplicate installs (same tool via two different channels) ────────────
+# ─── 4. Duplicate installs (same tool via two different channels) ────────────
 # These are reported only — removing an installed toolchain or app
 # automatically is too risky to do without a human confirming which copy
 # is actually in use.
@@ -116,7 +202,7 @@ check_duplicate() {
 check_duplicate "rustup/cargo" "rustup" '[ -x "$HOME/.cargo/bin/rustup" ]'
 check_duplicate "ghostty"      "ghostty" 'dpkg -s ghostty'
 
-# ─── 4. Summary ───────────────────────────────────────────────────────────────
+# ─── 5. Summary ───────────────────────────────────────────────────────────────
 section "Summary"
 if [ "$ISSUES" -eq 0 ]; then
     ok "No issues found"

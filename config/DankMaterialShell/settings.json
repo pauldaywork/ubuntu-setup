@@ -1,7 +1,7 @@
 {
   "currentThemeName": "custom",
   "currentThemeCategory": "registry",
-  "customThemeFile": "/home/paulday/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json",
+  "customThemeFile": "/home/paul/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json",
   "registryThemeVariants": {
     "oxocarbon": "pink",
     "peaceAndQuiet": "cyan"

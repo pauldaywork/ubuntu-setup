@@ -7,7 +7,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Category | Files |
 |---|---|
 | Shell | `.bashrc`, `.profile` |
-| Terminal multiplexer | tmux (`.tmux.conf`) |
+| Terminal multiplexer | tmux (`.tmux.conf` + TPM-managed plugins) |
 | Window manager | Niri config + custom DMS keybindings + swappable window-rules/layout profiles (`Mod+Alt+R`) |
 | Notifications | Mako |
 | Terminal | Ghostty |
@@ -58,8 +58,9 @@ The script will:
 8. Install Claude Code via npm
 9. Copy all config files to their correct locations
 10. Copy the wallpaper to `~/Documents/Wallpapers/`
-11. Prompt for your git name and email
-12. Generate a new SSH key and print the public key so you can add it to GitHub
+11. Install TPM (tmux plugin manager) and fetch tmux plugins
+12. Prompt for your git name and email
+13. Generate a new SSH key and print the public key so you can add it to GitHub
 
 ### 4. After the script finishes
 

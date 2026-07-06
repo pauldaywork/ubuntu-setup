@@ -204,7 +204,30 @@ CONFIG_ARGS=()
 [ "$LAPTOP" = true ] && CONFIG_ARGS+=(--laptop)
 "$DOTFILES/install-config.sh" "${CONFIG_ARGS[@]}"
 
-# ─── 9. VS Code extensions ────────────────────────────────────────────────────
+# ─── 9. TPM (tmux plugin manager) ─────────────────────────────────────────────
+# .tmux.conf declares plugins via `set -g @plugin ...`, which TPM is what
+# actually fetches and loads. Runs after config copy so .tmux.conf is in
+# place for install_plugins to read.
+section "Installing TPM (tmux plugin manager)"
+
+TPM_DIR="$USER_HOME/.tmux/plugins/tpm"
+if [ ! -d "$TPM_DIR" ]; then
+    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+fi
+
+# install_plugins relies on `tmux start-server` to pick up .tmux.conf, but
+# that's a no-op if a tmux server is already running from before this config
+# was in place (e.g. re-running install.sh). Reload it explicitly so
+# TMUX_PLUGIN_MANAGER_PATH is always set before install_plugins looks for it.
+tmux source-file "$USER_HOME/.tmux.conf" 2>/dev/null || true
+"$TPM_DIR/bin/install_plugins"
+# install_plugins only clones plugins — it doesn't source their *.tmux files
+# into a running session (that's what TPM's own prefix+I binding does via a
+# second reload). Without this, a freshly cloned plugin's key bindings never
+# actually take effect until something else reloads the config.
+tmux source-file "$USER_HOME/.tmux.conf" 2>/dev/null || true
+
+# ─── 10. VS Code extensions ───────────────────────────────────────────────────
 section "Installing VS Code extensions"
 
 if [ -s "$DOTFILES/config/Code/extensions.txt" ]; then
@@ -213,7 +236,7 @@ if [ -s "$DOTFILES/config/Code/extensions.txt" ]; then
     done < "$DOTFILES/config/Code/extensions.txt"
 fi
 
-# ─── 10. Git config ───────────────────────────────────────────────────────────
+# ─── 11. Git config ───────────────────────────────────────────────────────────
 section "Git configuration"
 
 if [ -z "$(git config --global user.name 2>/dev/null)" ]; then
@@ -226,7 +249,7 @@ if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
 fi
 git config --global init.defaultBranch main
 
-# ─── 11. SSH key ──────────────────────────────────────────────────────────────
+# ─── 12. SSH key ──────────────────────────────────────────────────────────────
 section "SSH key"
 
 SSH_KEY="$USER_HOME/.ssh/id_ed25519"

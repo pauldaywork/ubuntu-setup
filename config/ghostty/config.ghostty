@@ -1,4 +1,4 @@
-command = /home/paulday/.config/niri/tmux-niri-session.sh
+command = /home/paul/.config/niri/tmux-niri-session.sh
 mouse-scroll-multiplier = 0.5
 background-opacity = 0.5
 window-padding-x = 8
