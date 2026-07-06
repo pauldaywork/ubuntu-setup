@@ -83,9 +83,6 @@ copy "$DOTFILES/config/ghostty/config.ghostty" "$USER_HOME/.config/ghostty/confi
 sed -i "s|^command = .*|command = $USER_HOME/.config/niri/tmux-niri-session.sh|" \
     "$USER_HOME/.config/ghostty/config.ghostty"
 
-# mako (notifications)
-copy "$DOTFILES/config/mako/config" "$USER_HOME/.config/mako/config"
-
 # DankMaterialShell
 copy "$DOTFILES/config/DankMaterialShell/settings.json"        "$USER_HOME/.config/DankMaterialShell/settings.json"
 sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json\"|" \
