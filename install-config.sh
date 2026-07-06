@@ -63,7 +63,6 @@ copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/tmux-niri-session.sh"
 copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
 copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
-copy "$DOTFILES/config/niri/dms/binds.kdl" "$USER_HOME/.config/niri/dms/binds.kdl"
 
 # Seed the active window-rules profile only if one isn't already chosen,
 # so re-running install doesn't reset an existing choice.

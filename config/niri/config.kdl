@@ -180,6 +180,14 @@ window-rule {
     open-floating true
 }
 
+// niri already auto-floats windows that have a parent (dialogs) or a fixed
+// size (alerts), so most popups never hit this rule. It's a fallback by
+// window title for apps that don't set those hints correctly.
+window-rule {
+    match title=r#"(?i)^(open|save|save as|save file|open file|confirm|alert|warning|error|authentication required)( .*)?$"#
+    open-floating true
+}
+
 // Example: block out two password managers from screen capture.
 // (This example rule is commented out with a "/-" in front.)
 /-window-rule {
@@ -501,12 +509,19 @@ binds {
     Mod+Shift+P { power-off-monitors; }
 
     // Press Mod + Shift + W to create and name a new workspace
-    Mod+Shift+W { spawn "~/.config/niri/create_named_workspace.sh"; }
+    Mod+Alt+W { spawn "~/.config/niri/create_named_workspace.sh"; }
 
     // Toggle between window-rules profiles (normal / focus-dimming)
     Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/toggle-window-rules.sh"; }
 
+    
+    Mod+Space hotkey-overlay-title="Application Launcher" { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
+    Super+Shift+M hotkey-overlay-title="Bar: Toggle (Primary)" { spawn "dms" "ipc" "call" "bar" "toggle" "index" "0"; }
+    Mod+T hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
+    Super+B { spawn "firefox"; }
+    Super+Return hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
 }
+
 
 
 include "dms/colors.kdl"

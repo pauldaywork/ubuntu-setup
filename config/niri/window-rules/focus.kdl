@@ -51,9 +51,16 @@ window-rule {
     clip-to-geometry true
 }
 
+// Tiled windows only — floating windows (popups, dialogs, picture-in-picture)
+// are excluded so they keep their natural size instead of being stretched,
+// which was cutting off buttons in short dialogs.
 window-rule {
-    max-height 1000
-    min-height 800
+    match is-floating=false
+    // max-height 1000
+    // min-height 800
+}
+
+window-rule {
     opacity 0.75
 
     background-effect {
