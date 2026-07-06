@@ -7,6 +7,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Category | Files |
 |---|---|
 | Shell | `.bashrc`, `.profile` |
+| Terminal multiplexer | tmux (`.tmux.conf`) |
 | Window manager | Niri config + custom DMS keybindings + swappable window-rules/layout profiles (`Mod+Alt+R`) |
 | Notifications | Mako |
 | Terminal | Ghostty |
@@ -124,6 +125,7 @@ git push
 | Config | Source |
 |---|---|
 | `.bashrc`, `.profile` | `~/` |
+| tmux | `~/.tmux.conf` |
 | Niri config | `~/.config/niri/` |
 | Niri window-rules profiles | `~/.config/niri/window-rules/*.kdl`, `toggle-window-rules.sh` |
 | DMS keybindings | `~/.config/niri/dms/binds.kdl` |
@@ -172,7 +174,8 @@ backup-os/
 ├── home/
 │   ├── .bashrc
 │   ├── .profile
-│   └── .taskrc
+│   ├── .taskrc
+│   └── .tmux.conf
 ├── config/
 │   ├── niri/
 │   │   ├── config.kdl

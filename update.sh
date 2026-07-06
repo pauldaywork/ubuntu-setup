@@ -27,6 +27,9 @@ pull "$HOME/.profile" "$DOTFILES/home/.profile"
 # ─── taskwarrior ──────────────────────────────────────────────────────────────
 pull "$HOME/.taskrc" "$DOTFILES/home/.taskrc"
 
+# ─── tmux ─────────────────────────────────────────────────────────────────────
+pull "$HOME/.tmux.conf" "$DOTFILES/home/.tmux.conf"
+
 # ─── niri ─────────────────────────────────────────────────────────────────────
 # config.kdl gets `include "dms/laptop.kdl"` appended by `install.sh --laptop` on
 # laptop machines. That line is machine-specific, not part of the shared base

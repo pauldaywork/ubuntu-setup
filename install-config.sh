@@ -50,6 +50,9 @@ copy "$DOTFILES/home/.profile" "$USER_HOME/.profile"
 # taskwarrior
 copy "$DOTFILES/home/.taskrc" "$USER_HOME/.taskrc"
 
+# tmux
+copy "$DOTFILES/home/.tmux.conf" "$USER_HOME/.tmux.conf"
+
 # niri
 copy "$DOTFILES/config/niri/config.kdl"                   "$USER_HOME/.config/niri/config.kdl"
 copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/niri/create_named_workspace.sh"
