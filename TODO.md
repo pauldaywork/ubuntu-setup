@@ -1,7 +1,6 @@
 # TODO
 - make first default workspace called general on startup
-- add a similar shortcut and script that was used for creating a new workspace to add a feature to rename current workspace. 
-- remove all anoying alerts like app updates
+- block or slience all alerts like app updates via the default DMS notification service
 
 # check completed
 - pull in VS Code extenshion for .kdl files

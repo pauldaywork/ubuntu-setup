@@ -59,6 +59,8 @@ copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
 copy "$DOTFILES/config/niri/rename_workspace.sh"          "$USER_HOME/.config/niri/rename_workspace.sh"
 chmod +x "$USER_HOME/.config/niri/rename_workspace.sh"
+copy "$DOTFILES/config/niri/default_workspace_name.sh"    "$USER_HOME/.config/niri/default_workspace_name.sh"
+chmod +x "$USER_HOME/.config/niri/default_workspace_name.sh"
 copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/niri/toggle-window-rules.sh"
 chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
 copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/niri/tmux-niri-session.sh"

@@ -123,6 +123,9 @@ output "eDP-1" {
 // This line starts waybar, a commonly used bar for Wayland compositors.
 spawn-at-startup "waybar"
 
+// Name workspace 1 "general" on startup if it doesn't already have a name.
+spawn-at-startup "~/.config/niri/default_workspace_name.sh"
+
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
 
