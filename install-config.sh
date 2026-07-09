@@ -57,6 +57,8 @@ copy "$DOTFILES/home/.tmux.conf" "$USER_HOME/.tmux.conf"
 copy "$DOTFILES/config/niri/config.kdl"                   "$USER_HOME/.config/niri/config.kdl"
 copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/niri/create_named_workspace.sh"
 chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
+copy "$DOTFILES/config/niri/rename_workspace.sh"          "$USER_HOME/.config/niri/rename_workspace.sh"
+chmod +x "$USER_HOME/.config/niri/rename_workspace.sh"
 copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/niri/toggle-window-rules.sh"
 chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
 copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/niri/tmux-niri-session.sh"
@@ -93,6 +95,17 @@ copy "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
 
 # VS Code settings (extensions are not installed here — see install.sh)
 copy "$DOTFILES/config/Code/settings.json" "$USER_HOME/.config/Code/User/settings.json"
+
+# ─── Projects folder ──────────────────────────────────────────────────────────
+section "Setting up Projects folder"
+
+PROJECTS_DIR="$USER_HOME/Projects"
+if [ ! -d "$PROJECTS_DIR" ]; then
+    mkdir -p "$PROJECTS_DIR"
+    info "Created $PROJECTS_DIR"
+else
+    info "Projects folder already exists: $PROJECTS_DIR"
+fi
 
 # ─── Wallpaper ────────────────────────────────────────────────────────────────
 section "Setting up wallpaper"

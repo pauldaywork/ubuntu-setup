@@ -45,7 +45,7 @@ backup() {
 section "Checking installation completeness"
 
 APT_PACKAGES=(
-    niri dms mako-notifier
+    niri dms
     git curl build-essential jq tmux libudev-dev util-linux-extra zenity
     taskwarrior sublime-text google-chrome-stable
     pipewire wireplumber brightnessctl playerctl
@@ -67,6 +67,13 @@ if dpkg -s obsidian &>/dev/null; then
 else
     issue "obsidian not installed"
     note "  See the OBSIDIAN_VERSION .deb URL in install.sh"
+fi
+
+if dpkg -s mako-notifier &>/dev/null; then
+    issue "mako-notifier is installed but no longer used (superseded by DMS notifications)"
+    note "  Remove with: sudo apt remove -y mako-notifier"
+else
+    ok "mako-notifier not installed (as expected)"
 fi
 
 SNAP_PACKAGES=(firefox code:classic ghostty:classic cmake:classic)

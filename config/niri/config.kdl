@@ -511,6 +511,9 @@ binds {
     // Press Mod + Shift + W to create and name a new workspace
     Mod+Alt+W { spawn "~/.config/niri/create_named_workspace.sh"; }
 
+    // Press Mod + Shift + Alt + W to rename the current workspace
+    Mod+Shift+Alt+W { spawn "~/.config/niri/rename_workspace.sh"; }
+
     // Toggle between window-rules profiles (normal / focus-dimming)
     Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/toggle-window-rules.sh"; }
 

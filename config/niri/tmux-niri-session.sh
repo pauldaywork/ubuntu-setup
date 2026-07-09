@@ -16,4 +16,9 @@ done
 
 session="${ws_clean}${n}"
 
-exec tmux new-session -A -s "$session"
+# Start new sessions in ~/Projects (created by install-config.sh); fall back
+# to $HOME if it's missing so this still works standalone.
+start_dir="$HOME/Projects"
+[ -d "$start_dir" ] || start_dir="$HOME"
+
+exec tmux new-session -A -s "$session" -c "$start_dir"

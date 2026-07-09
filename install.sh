@@ -18,6 +18,18 @@ info()    { echo -e "${GREEN}[+]${NC} $*"; }
 warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
 section() { echo -e "\n${GREEN}══${NC} $* ${GREEN}══${NC}"; }
 
+# ─── 0. Remove mako ───────────────────────────────────────────────────────────
+# DMS now owns notifications, so a leftover mako install fights it for the
+# notification socket. Strip it before anything else runs.
+section "Checking for mako"
+
+if dpkg -s mako-notifier &>/dev/null 2>&1; then
+    info "Removing mako-notifier (superseded by DMS notifications)"
+    sudo apt remove -y mako-notifier
+else
+    info "mako-notifier not installed"
+fi
+
 # ─── 1. PPAs and external repos ───────────────────────────────────────────────
 section "Adding package repositories"
 
@@ -65,7 +77,6 @@ APT_PACKAGES=(
     # window manager + shell
     niri
     dms
-    mako-notifier
 
     # dev tools
     git

@@ -50,9 +50,6 @@ pull "$HOME/.config/niri/dms/binds.kdl"             "$DOTFILES/config/niri/dms/b
 # ─── ghostty ──────────────────────────────────────────────────────────────────
 pull "$HOME/.config/ghostty/config.ghostty" "$DOTFILES/config/ghostty/config.ghostty"
 
-# ─── mako ─────────────────────────────────────────────────────────────────────
-pull "$HOME/.config/mako/config" "$DOTFILES/config/mako/config"
-
 # ─── DankMaterialShell ────────────────────────────────────────────────────────
 pull "$HOME/.config/DankMaterialShell/settings.json"        "$DOTFILES/config/DankMaterialShell/settings.json"
 pull "$HOME/.config/DankMaterialShell/plugin_settings.json" "$DOTFILES/config/DankMaterialShell/plugin_settings.json"
