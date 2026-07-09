@@ -362,7 +362,36 @@
   "notificationHistorySaveLow": true,
   "notificationHistorySaveNormal": true,
   "notificationHistorySaveCritical": true,
-  "notificationRules": [],
+  "notificationRules": [
+    {
+      "enabled": true,
+      "field": "appName",
+      "pattern": "App Updates",
+      "matchType": "exact",
+      "action": "mute"
+    },
+    {
+      "enabled": true,
+      "field": "appName",
+      "pattern": "update",
+      "matchType": "contains",
+      "action": "mute"
+    },
+    {
+      "enabled": true,
+      "field": "summary",
+      "pattern": "update.*(available|ready|restart)|new version.*available|restart.*update",
+      "matchType": "regex",
+      "action": "mute"
+    },
+    {
+      "enabled": true,
+      "field": "body",
+      "pattern": "update.*(available|ready|restart)|new version.*available|restart.*update",
+      "matchType": "regex",
+      "action": "mute"
+    }
+  ],
   "osdAlwaysShowValue": false,
   "osdPosition": 5,
   "osdVolumeEnabled": true,
