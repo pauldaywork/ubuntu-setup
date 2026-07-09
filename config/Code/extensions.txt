@@ -1,0 +1,5 @@
+anthropic.claude-code
+github.remotehub
+kdl-org.kdl
+ms-vscode.azure-repos
+ms-vscode.remote-repositories

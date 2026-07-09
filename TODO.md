@@ -1,11 +1,12 @@
 # TODO
-- make first default workspace called general
+- make first default workspace called general on startup
 - turn animations on
 - create Code folder in home and set that to the default starting location for tmux
 - any config around needs to be changed now that mako isn't used.
 - make sure mako isn't installed and remove it before running install script. add this check to doctor.sh too
 - make the tmux bar less bright
 - add a similar shortcut and script that was used for creating a new workspace to add a feature to rename current workspace. 
+- pull in VS Code extenshion for .kdl files
 
 # Research
 - how to I slience or manage notifications in dms?

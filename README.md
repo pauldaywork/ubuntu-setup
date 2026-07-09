@@ -186,7 +186,6 @@ backup-os/
 │   │   │   ├── normal.kdl                  # Fully opaque windows
 │   │   │   └── focus.kdl                   # Unfocused windows fade out
 │   │   └── dms/
-│   │       ├── binds.kdl
 │   │       └── laptop.kdl                  # Only installed with `install.sh --laptop`
 │   ├── ghostty/
 │   │   └── config.ghostty
