@@ -2,4 +2,10 @@
 binds {
     Super+Alt+Comma  hotkey-overlay-title="Turn off main display" { spawn "sh" "-c" "niri msg output eDP-1 off"; }
     Super+Alt+Period hotkey-overlay-title="Turn on main display"  { spawn "sh" "-c" "niri msg output eDP-1 on"; }
+
+    Mod+Up   { focus-workspace-up; }
+    Mod+Down { focus-workspace-down; }
+
+    Mod+Ctrl+Up   { move-column-to-workspace-up; }
+    Mod+Ctrl+Down { move-column-to-workspace-down; }
 }

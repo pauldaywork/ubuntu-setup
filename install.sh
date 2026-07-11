@@ -238,7 +238,25 @@ tmux source-file "$USER_HOME/.tmux.conf" 2>/dev/null || true
 # actually take effect until something else reloads the config.
 tmux source-file "$USER_HOME/.tmux.conf" 2>/dev/null || true
 
-# ─── 10. VS Code extensions ───────────────────────────────────────────────────
+# ─── 10. DMS plugins ───────────────────────────────────────────────────────────
+section "Installing DMS plugins"
+
+DMS_PLUGIN_DIR="$USER_HOME/.config/DankMaterialShell/plugins"
+mkdir -p "$DMS_PLUGIN_DIR"
+
+install_dms_plugin() {
+    local name="$1" repo="$2"
+    if [ -d "$DMS_PLUGIN_DIR/$name" ]; then
+        info "DMS plugin already installed: $name"
+    else
+        info "Installing DMS plugin: $name"
+        git clone "$repo" "$DMS_PLUGIN_DIR/$name"
+    fi
+}
+
+install_dms_plugin "taskwarrior" "https://github.com/cyrylas/dms-taskwarrior"
+
+# ─── 11. VS Code extensions ───────────────────────────────────────────────────
 section "Installing VS Code extensions"
 
 if [ -s "$DOTFILES/config/Code/extensions.txt" ]; then
@@ -247,7 +265,7 @@ if [ -s "$DOTFILES/config/Code/extensions.txt" ]; then
     done < "$DOTFILES/config/Code/extensions.txt"
 fi
 
-# ─── 11. Git config ───────────────────────────────────────────────────────────
+# ─── 12. Git config ───────────────────────────────────────────────────────────
 section "Git configuration"
 
 if [ -z "$(git config --global user.name 2>/dev/null)" ]; then
@@ -260,7 +278,7 @@ if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
 fi
 git config --global init.defaultBranch main
 
-# ─── 12. SSH key ──────────────────────────────────────────────────────────────
+# ─── 13. SSH key ──────────────────────────────────────────────────────────────
 section "SSH key"
 
 SSH_KEY="$USER_HOME/.ssh/id_ed25519"
