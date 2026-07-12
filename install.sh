@@ -184,7 +184,9 @@ section "Installing NVM + Node.js"
 NVM_DIR="$USER_HOME/.config/nvm"
 NODE_VERSION="v24.18.0"
 
-if [ ! -d "$NVM_DIR" ]; then
+mkdir -p "$NVM_DIR"
+
+if [ ! -s "$NVM_DIR/nvm.sh" ]; then
     info "Installing NVM (to ~/.config/nvm)"
     PROFILE=/dev/null NVM_DIR="$NVM_DIR" \
         bash <(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/HEAD/install.sh)
