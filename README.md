@@ -13,7 +13,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Terminal | Ghostty |
 | Bar / shell | DankMaterialShell (theme, settings, plugins) |
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
-| Task manager | Taskwarrior |
+| Task manager | Taskwarrior (+ DMS taskwarrior widget plugin) |
 | Wallpaper | Active wallpaper at time of last `update.sh` run |
 
 ## Setting up a new machine
@@ -40,7 +40,7 @@ cd ~/Documents/Code/backup-os
 bash install.sh
 ```
 
-On a laptop, pass `--laptop` to also install laptop-specific niri config (currently: `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on, for when an external monitor is connected):
+On a laptop, pass `--laptop` to also install laptop-specific niri config (currently: `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on for when an external monitor is connected, plus `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it):
 
 ```bash
 bash install.sh --laptop
@@ -48,26 +48,28 @@ bash install.sh --laptop
 
 The script will:
 
-1. Add PPAs for Niri, DankMaterialShell, Sublime Text, and Google Chrome
-2. Install all apt packages
-3. Install apps without an apt repo (Obsidian) via their official installers
-4. Install snap packages (Firefox, VS Code, Ghostty, CMake)
-5. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
-6. Install Bun via the official installer
-7. Install NVM + Node.js v24.18.0
-8. Install Claude Code via npm
-9. Copy all config files to their correct locations
-10. Copy the wallpaper to `~/Documents/Wallpapers/`
+1. Remove a leftover `mako-notifier` install if present (DMS owns notifications now, and the two fight over the notification socket)
+2. Add PPAs for Niri, DankMaterialShell, Sublime Text, and Google Chrome
+3. Install all apt packages
+4. Install apps without an apt repo (Obsidian) via their official installers
+5. Install snap packages (Firefox, VS Code, Ghostty, CMake)
+6. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
+7. Install Bun via the official installer
+8. Install NVM + Node.js v24.18.0
+9. Install Claude Code via npm
+10. Copy all config files to their correct locations, create `~/Projects/`, and copy the wallpaper to `~/Documents/Wallpapers/`
 11. Install TPM (tmux plugin manager) and fetch tmux plugins
-12. Prompt for your git name and email
-13. Generate a new SSH key and print the public key so you can add it to GitHub
+12. Install DMS plugins (taskwarrior widget)
+13. Install VS Code extensions from `config/Code/extensions.txt`
+14. Prompt for your git name and email
+15. Generate a new SSH key and print the public key so you can add it to GitHub
 
 ### 4. After the script finishes
 
 - **Reboot** to start Niri and DankMaterialShell
 - **Log into Claude Code**: run `claude` in a terminal
 - **Add your SSH key to GitHub**: the script prints the public key — paste it at https://github.com/settings/ssh/new
-- **Log into** Firefox, Chrome, Termius, and Obsidian as normal
+- **Log into** Firefox, Chrome, and Obsidian as normal
 - **Run `bash extra.sh`** if you want Steam, OpenCode, LM Studio, or NVIDIA drivers (see below)
 
 ### 5. Optional extras
@@ -179,7 +181,10 @@ backup-os/
 ├── config/
 │   ├── niri/
 │   │   ├── config.kdl
-│   │   ├── create_named_workspace.sh
+│   │   ├── create_named_workspace.sh       # GUI prompt to name a new workspace (zenity)
+│   │   ├── rename_workspace.sh             # GUI prompt to rename the focused workspace (zenity)
+│   │   ├── default_workspace_name.sh       # Names workspace 1 "general" on startup if unnamed
+│   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace
 │   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
 │   │   ├── window-rules/
 │   │   │   ├── normal.kdl                  # Fully opaque windows

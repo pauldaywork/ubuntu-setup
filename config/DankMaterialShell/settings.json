@@ -600,9 +600,9 @@
       "scrollEnabled": true,
       "scrollXBehavior": "column",
       "scrollYBehavior": "workspace",
-      "shadowIntensity": 100,
-      "shadowOpacity": 100,
-      "shadowColorMode": "secondary",
+      "shadowIntensity": 0,
+      "shadowOpacity": 60,
+      "shadowColorMode": "text",
       "shadowCustomColor": "#000000"
     }
   ],
