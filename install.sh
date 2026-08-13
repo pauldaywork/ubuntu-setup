@@ -18,12 +18,19 @@ info()    { echo -e "${GREEN}[+]${NC} $*"; }
 warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
 section() { echo -e "\n${GREEN}══${NC} $* ${GREEN}══${NC}"; }
 
+# `dpkg -s` exits 0 for packages in the 'rc' state (removed, config files left
+# behind), which would treat an already-removed package as still installed.
+# Match on the status field instead.
+pkg_installed() {
+    [ "$(dpkg-query -W -f='${db:Status-Status}' "$1" 2>/dev/null)" = "installed" ]
+}
+
 # ─── 0. Remove mako ───────────────────────────────────────────────────────────
 # DMS now owns notifications, so a leftover mako install fights it for the
 # notification socket. Strip it before anything else runs.
 section "Checking for mako"
 
-if dpkg -s mako-notifier &>/dev/null 2>&1; then
+if pkg_installed mako-notifier; then
     info "Removing mako-notifier (superseded by DMS notifications)"
     sudo apt remove -y mako-notifier
 else
@@ -131,7 +138,7 @@ section "Installing .deb packages"
 
 install_deb() {
     local name="$1" url="$2"
-    if dpkg -s "$name" &>/dev/null 2>&1; then
+    if pkg_installed "$name"; then
         info "Already installed: $name"
         return
     fi
