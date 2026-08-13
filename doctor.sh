@@ -131,6 +131,13 @@ else
     note "  Install with: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/bin/install_plugins"
 fi
 
+if [ -d "$HOME/.config/DankMaterialShell/plugins/taskwarrior" ]; then
+    ok "DMS taskwarrior plugin installed"
+else
+    issue "DMS taskwarrior plugin not installed at ~/.config/DankMaterialShell/plugins/taskwarrior"
+    note "  Install with: git clone https://github.com/cyrylas/dms-taskwarrior ~/.config/DankMaterialShell/plugins/taskwarrior"
+fi
+
 # ─── 2. Dangling PATH / env references in dotfiles ───────────────────────────
 # Finds lines like `export FOO_DIR="$HOME/x"` or `. "$HOME/x/env"` and checks
 # the path they point at still exists. Catches the general case of "a tool
