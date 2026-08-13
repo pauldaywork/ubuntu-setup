@@ -14,7 +14,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Bar / shell | DankMaterialShell (theme, settings, plugins) |
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
 | Task manager | Taskwarrior (+ DMS taskwarrior widget plugin) |
-| Containers | Docker CE (+ compose/buildx plugins, user in `docker` group) |
+| Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
 | Wallpaper | Active wallpaper at time of last `update.sh` run |
 
 ## Setting up a new machine
@@ -50,7 +50,7 @@ bash install.sh --laptop
 The script will:
 
 1. Remove a leftover `mako-notifier` install if present (DMS owns notifications now, and the two fight over the notification socket)
-2. Add PPAs for Niri, DankMaterialShell, Sublime Text, Google Chrome, and Docker
+2. Add PPAs for Niri, DankMaterialShell, Sublime Text, and Google Chrome
 3. Install all apt packages
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
 5. Install apps without an apt repo (Obsidian) via their official installers

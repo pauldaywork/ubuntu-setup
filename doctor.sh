@@ -48,7 +48,7 @@ APT_PACKAGES=(
     niri dms
     git curl build-essential jq tmux libudev-dev util-linux-extra zenity
     taskwarrior sublime-text google-chrome-stable
-    docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    docker.io docker-compose-v2 docker-buildx
     pipewire wireplumber brightnessctl playerctl
 )
 
@@ -70,9 +70,9 @@ else
     note "  See the OBSIDIAN_VERSION .deb URL in install.sh"
 fi
 
-if dpkg -s docker.io &>/dev/null; then
-    issue "docker.io is installed and conflicts with docker-ce (install.sh uses docker-ce)"
-    note "  Remove with: sudo apt remove -y docker.io"
+if dpkg -s docker-ce &>/dev/null; then
+    issue "docker-ce is installed and conflicts with docker.io (install.sh uses Ubuntu's docker.io)"
+    note "  Remove with: sudo apt remove -y docker-ce docker-ce-cli docker-ce-rootless-extras containerd.io docker-buildx-plugin docker-compose-plugin"
 fi
 
 if id -nG "$(id -un)" | grep -qw docker; then

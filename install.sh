@@ -68,20 +68,6 @@ if ! apt-cache show google-chrome-stable &>/dev/null; then
         | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
 fi
 
-# Docker — the official docker-ce repo, not Ubuntu's docker.io package. The
-# two conflict, so don't install docker.io alongside this.
-if ! apt-cache show docker-ce &>/dev/null; then
-    info "Adding Docker repo"
-    wget -q -O - https://download.docker.com/linux/ubuntu/gpg \
-        | gpg --dearmor \
-        | sudo tee /etc/apt/keyrings/docker-keyring.gpg > /dev/null
-    # Ubuntu derivatives set UBUNTU_CODENAME; plain Ubuntu only VERSION_CODENAME.
-    # shellcheck source=/dev/null
-    . /etc/os-release
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker-keyring.gpg] https://download.docker.com/linux/ubuntu ${UBUNTU_CODENAME:-$VERSION_CODENAME} stable" \
-        | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-fi
-
 sudo apt update
 
 # ─── 2. apt packages ──────────────────────────────────────────────────────────
@@ -107,12 +93,12 @@ APT_PACKAGES=(
     sublime-text
     google-chrome-stable
 
-    # docker (from the official docker-ce repo)
-    docker-ce
-    docker-ce-cli
-    containerd.io
-    docker-buildx-plugin
-    docker-compose-plugin
+    # docker — Ubuntu's own packages, not the docker-ce repo. Keeps everything
+    # on one repo at the cost of tracking the release's version rather than
+    # upstream's. docker-ce conflicts with these; don't mix them.
+    docker.io
+    docker-compose-v2
+    docker-buildx
 
     # audio / system
     pipewire
