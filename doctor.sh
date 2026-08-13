@@ -44,6 +44,13 @@ backup() {
 # Keep this list in sync with install.sh if that ever changes.
 section "Checking installation completeness"
 
+# `dpkg -s` exits 0 for packages in the 'rc' state (removed, config files left
+# behind), which would report a package that isn't actually there as present.
+# Match on the status field instead.
+pkg_installed() {
+    [ "$(dpkg-query -W -f='${db:Status-Status}' "$1" 2>/dev/null)" = "installed" ]
+}
+
 APT_PACKAGES=(
     niri dms
     git curl build-essential jq tmux libudev-dev util-linux-extra zenity
@@ -54,7 +61,7 @@ APT_PACKAGES=(
 
 MISSING_APT=()
 for pkg in "${APT_PACKAGES[@]}"; do
-    dpkg -s "$pkg" &>/dev/null || MISSING_APT+=("$pkg")
+    pkg_installed "$pkg" || MISSING_APT+=("$pkg")
 done
 if [ "${#MISSING_APT[@]}" -eq 0 ]; then
     ok "All apt packages installed"
@@ -63,14 +70,14 @@ else
     note "  Install with: sudo apt install -y ${MISSING_APT[*]}"
 fi
 
-if dpkg -s obsidian &>/dev/null; then
+if pkg_installed obsidian; then
     ok "obsidian installed"
 else
     issue "obsidian not installed"
     note "  See the OBSIDIAN_VERSION .deb URL in install.sh"
 fi
 
-if dpkg -s docker-ce &>/dev/null; then
+if pkg_installed docker-ce; then
     issue "docker-ce is installed and conflicts with docker.io (install.sh uses Ubuntu's docker.io)"
     note "  Remove with: sudo apt remove -y docker-ce docker-ce-cli docker-ce-rootless-extras containerd.io docker-buildx-plugin docker-compose-plugin"
 fi
@@ -89,7 +96,7 @@ else
     note "  Start with: sudo systemctl enable --now docker"
 fi
 
-if dpkg -s mako-notifier &>/dev/null; then
+if pkg_installed mako-notifier; then
     issue "mako-notifier is installed but no longer used (superseded by DMS notifications)"
     note "  Remove with: sudo apt remove -y mako-notifier"
 else
@@ -234,7 +241,7 @@ check_duplicate() {
 }
 
 check_duplicate "rustup/cargo" "rustup" '[ -x "$HOME/.cargo/bin/rustup" ]'
-check_duplicate "ghostty"      "ghostty" 'dpkg -s ghostty'
+check_duplicate "ghostty"      "ghostty" 'pkg_installed ghostty'
 
 # ─── 5. Summary ───────────────────────────────────────────────────────────────
 section "Summary"
