@@ -170,21 +170,49 @@ fi
 # the path they point at still exists. Catches the general case of "a tool
 # got moved/reinstalled and the shell config was never updated" without
 # needing to know about every tool in advance.
+#
+# A missing path is only a problem when the line reads it unconditionally.
+# The stock Ubuntu .bashrc guards its optional includes:
+#
+#   if [ -f ~/.bash_aliases ]; then
+#       . ~/.bash_aliases
+#   fi
+#
+# so the file is allowed to be absent. Lines guarded by a file test — on the
+# same line (`[ -f x ] && . x`) or on one of the few lines above — are skipped.
 section "Checking for dangling PATH/env references"
 
+DANGLING=0
 for rc in "${RC_FILES[@]}"; do
     [ -f "$rc" ] || continue
-    while IFS= read -r line; do
+    mapfile -t rc_lines < "$rc"
+    for i in "${!rc_lines[@]}"; do
+        line="${rc_lines[$i]}"
+        [[ "$line" =~ ^[[:space:]]*(export[[:space:]]+[A-Z_]+=|\.[[:space:]]|source[[:space:]]) ]] || continue
         raw_path=$(echo "$line" | grep -oE '(\$HOME|~|/home/[A-Za-z0-9._-]+)(/[A-Za-z0-9._-]+)+' | head -1)
         [ -z "$raw_path" ] && continue
         expanded="${raw_path/#\~/$HOME}"
         expanded="${expanded/#\$HOME/$HOME}"
         [ -e "$expanded" ] && continue
+
+        # Look at this line and the 3 above it for a `[ -f/-e/-r/-s <path> ]`
+        # test naming the same path — that makes the reference conditional.
+        guarded=false
+        start=$((i > 3 ? i - 3 : 0))
+        for ((j = start; j <= i; j++)); do
+            if [[ "${rc_lines[$j]}" == *"["*"-"[fersx]" "*"$raw_path"* ]]; then
+                guarded=true
+                break
+            fi
+        done
+        $guarded && continue
+
         issue "$rc references '$expanded' but it doesn't exist:"
         echo "      $line"
-    done < <(grep -E '^\s*(export [A-Z_]+=|\. |source )' "$rc")
+        DANGLING=$((DANGLING + 1))
+    done
 done
-[ "$ISSUES" -eq 0 ] && ok "No dangling references found"
+[ "$DANGLING" -eq 0 ] && ok "No dangling references found"
 
 # ─── 3. nvm location vs what's actually configured ───────────────────────────
 section "Checking nvm"
