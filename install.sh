@@ -68,6 +68,20 @@ if ! apt-cache show google-chrome-stable &>/dev/null; then
         | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
 fi
 
+# Docker — the official docker-ce repo, not Ubuntu's docker.io package. The
+# two conflict, so don't install docker.io alongside this.
+if ! apt-cache show docker-ce &>/dev/null; then
+    info "Adding Docker repo"
+    wget -q -O - https://download.docker.com/linux/ubuntu/gpg \
+        | gpg --dearmor \
+        | sudo tee /etc/apt/keyrings/docker-keyring.gpg > /dev/null
+    # Ubuntu derivatives set UBUNTU_CODENAME; plain Ubuntu only VERSION_CODENAME.
+    # shellcheck source=/dev/null
+    . /etc/os-release
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker-keyring.gpg] https://download.docker.com/linux/ubuntu ${UBUNTU_CODENAME:-$VERSION_CODENAME} stable" \
+        | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+fi
+
 sudo apt update
 
 # ─── 2. apt packages ──────────────────────────────────────────────────────────
@@ -93,6 +107,13 @@ APT_PACKAGES=(
     sublime-text
     google-chrome-stable
 
+    # docker (from the official docker-ce repo)
+    docker-ce
+    docker-ce-cli
+    containerd.io
+    docker-buildx-plugin
+    docker-compose-plugin
+
     # audio / system
     pipewire
     wireplumber
@@ -101,6 +122,23 @@ APT_PACKAGES=(
 )
 
 sudo apt install -y "${APT_PACKAGES[@]}"
+
+# ─── Docker permissions ───────────────────────────────────────────────────────
+# /var/run/docker.sock is root:docker, so without group membership every docker
+# command needs sudo. Group changes only apply to new login sessions — this has
+# no effect on the shell running install.sh.
+section "Configuring Docker permissions"
+
+sudo systemctl enable --now docker
+
+CURRENT_USER="$(id -un)"
+if id -nG "$CURRENT_USER" | grep -qw docker; then
+    info "$CURRENT_USER already in the docker group"
+else
+    info "Adding $CURRENT_USER to the docker group"
+    sudo usermod -aG docker "$CURRENT_USER"
+    warn "Log out and back in before docker works without sudo"
+fi
 
 # ─── .deb installs (no apt repo — downloaded directly) ───────────────────────
 section "Installing .deb packages"

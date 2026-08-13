@@ -48,6 +48,7 @@ APT_PACKAGES=(
     niri dms
     git curl build-essential jq tmux libudev-dev util-linux-extra zenity
     taskwarrior sublime-text google-chrome-stable
+    docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     pipewire wireplumber brightnessctl playerctl
 )
 
@@ -67,6 +68,25 @@ if dpkg -s obsidian &>/dev/null; then
 else
     issue "obsidian not installed"
     note "  See the OBSIDIAN_VERSION .deb URL in install.sh"
+fi
+
+if dpkg -s docker.io &>/dev/null; then
+    issue "docker.io is installed and conflicts with docker-ce (install.sh uses docker-ce)"
+    note "  Remove with: sudo apt remove -y docker.io"
+fi
+
+if id -nG "$(id -un)" | grep -qw docker; then
+    ok "In the docker group"
+else
+    issue "Not in the docker group — docker commands will need sudo"
+    note "  Fix with: sudo usermod -aG docker $(id -un)   (then log out and back in)"
+fi
+
+if systemctl is-active --quiet docker; then
+    ok "docker service running"
+else
+    issue "docker service not running"
+    note "  Start with: sudo systemctl enable --now docker"
 fi
 
 if dpkg -s mako-notifier &>/dev/null; then
