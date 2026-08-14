@@ -219,11 +219,22 @@ window-rule {
 // with Mod+Alt+R via toggle-window-rules.sh, which symlinks this target.
 include "window-rules-active.kdl"
 
+// fuzzel names its layer surface "launcher", so this is what gives the project
+// picker and the task pickers their backdrop. The effect is copied from the
+// window-rule in window-rules/*.kdl that ghostty gets, so the pickers read as
+// the same surface as the terminal rather than as a plain dark box: blurred,
+// slightly desaturated-up, with a little noise to stop the blur banding.
+//
+// xray true blurs the wallpaper rather than the windows underneath — same as
+// ghostty. Without it the picker shows a smeared copy of whatever it's covering,
+// which is much busier behind a list of names.
 layer-rule {
     match namespace="^launcher$"
     background-effect {
         blur true
-        xray false
+        xray true
+        noise 0.05
+        saturation 1.4
     }
 }
 
