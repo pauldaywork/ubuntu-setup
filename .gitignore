@@ -1,6 +1,9 @@
 # Never commit these
 *.bak
 
+# Private scratch notes — local only, deliberately untracked.
+THOUGHTS.md
+
 # DMS auto-generates these per-machine — do not track.
 # binds.kdl is DMS-owned too (its KeybindsService writes the file and adds the
 # matching include to config.kdl). Ours is an empty stub: those binds were
