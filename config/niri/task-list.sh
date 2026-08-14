@@ -86,7 +86,15 @@ done
 # Hand straight over to the add box rather than reimplementing it here, so
 # there's one definition of what "adding a task" means (and one place where
 # taskwarrior's attribute syntax keeps working).
+#
+# That box is the DMS modal, same as Mod+Alt+T — asking for it over IPC rather
+# than spawning task-add.sh means picking this row gets the multi-line box, not
+# a second, narrower one. Falls back to the fuzzel script when DMS isn't
+# answering, so the row still does something on a bare niri session.
 if [ "$UUID" = "$ADD_SENTINEL" ]; then
+    if command -v dms >/dev/null && dms ipc call taskAdd open >/dev/null 2>&1; then
+        exit 0
+    fi
     exec "$(dirname "$(readlink -f "$0")")/task-add.sh"
 fi
 

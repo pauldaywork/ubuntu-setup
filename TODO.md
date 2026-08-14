@@ -1,6 +1,6 @@
 # TODO
 
-Nothing outstanding. Add new items here.
+- [ ] store longer detail against a task with taskwarrior annotations (`task <uuid> annotate`): add an "Annotate" action to the menu in task-list.sh alongside Edit/Delete/Complete/Set active, mark annotated rows in the list (export carries them as `.annotations[]`), and consider an "Open in editor" action shelling out to `task <uuid> edit` for anything longer.
 
 ## Done
 

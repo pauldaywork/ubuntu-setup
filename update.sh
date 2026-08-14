@@ -147,6 +147,8 @@ pull "$HOME/.config/niri/tmux-niri-session.sh"      "$DOTFILES/config/niri/tmux-
 pull "$HOME/.config/niri/wallpaper-sync.sh"         "$DOTFILES/config/niri/wallpaper-sync.sh"
 pull "$HOME/.config/niri/toggle-window-rules.sh"    "$DOTFILES/config/niri/toggle-window-rules.sh"
 pull "$HOME/.config/niri/task-lib.sh"               "$DOTFILES/config/niri/task-lib.sh"
+pull "$HOME/.config/niri/task-tag.sh"               "$DOTFILES/config/niri/task-tag.sh"
+pull "$HOME/.config/niri/task-add-text.sh"          "$DOTFILES/config/niri/task-add-text.sh"
 pull "$HOME/.config/niri/task-add.sh"               "$DOTFILES/config/niri/task-add.sh"
 pull "$HOME/.config/niri/task-list.sh"              "$DOTFILES/config/niri/task-list.sh"
 pull "$HOME/.config/niri/task-active.sh"            "$DOTFILES/config/niri/task-active.sh"
@@ -177,6 +179,10 @@ pull "$HOME/.config/DankMaterialShell/plugins/activetask/plugin.json" \
      "$DOTFILES/config/DankMaterialShell/plugins/activetask/plugin.json"
 pull "$HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
      "$DOTFILES/config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml"
+pull "$HOME/.config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml" \
+     "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml"
+pull "$HOME/.config/DankMaterialShell/plugins/activetask/TaskAddModal.qml" \
+     "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskAddModal.qml"
 
 # ─── VS Code ──────────────────────────────────────────────────────────────────
 pull "$HOME/.config/Code/User/settings.json" "$DOTFILES/config/Code/settings.json"

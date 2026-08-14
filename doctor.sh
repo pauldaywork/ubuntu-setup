@@ -161,7 +161,7 @@ fi
 
 # The workspace task shortcuts and the Active Task widget share task-lib.sh, so
 # a missing file here breaks Mod+Alt+T, Mod+Alt+L and the bar pill together.
-for f in task-lib.sh task-add.sh task-list.sh task-active.sh; do
+for f in task-lib.sh task-tag.sh task-add-text.sh task-add.sh task-list.sh task-active.sh; do
     if [ -f "$HOME/.config/niri/$f" ]; then
         ok "Workspace task script present: $f"
     else
@@ -170,11 +170,28 @@ for f in task-lib.sh task-add.sh task-list.sh task-active.sh; do
     fi
 done
 
-if [ -f "$HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" ]; then
-    ok "DMS activetask widget installed"
-else
-    issue "DMS activetask widget not installed at ~/.config/DankMaterialShell/plugins/activetask"
-    note "  Install with: bash install-config.sh"
+# Both surfaces of the activetask plugin: the bar pill and the daemon holding
+# the Mod+Alt+T modal. The daemon files missing is the quieter failure — the bar
+# still works, the shortcut just does nothing.
+ACTIVETASK_DIR="$HOME/.config/DankMaterialShell/plugins/activetask"
+for f in plugin.json ActiveTaskWidget.qml TaskAddDaemon.qml TaskAddModal.qml; do
+    if [ -f "$ACTIVETASK_DIR/$f" ]; then
+        ok "DMS activetask plugin file present: $f"
+    else
+        issue "Missing $ACTIVETASK_DIR/$f"
+        note "  Install with: bash install-config.sh"
+    fi
+done
+
+# The manifest is only parsed at DMS startup (PluginService.resyncAll skips
+# manifests it already knows), so files on disk aren't proof the daemon is live.
+if command -v dms >/dev/null; then
+    if dms ipc call taskAdd close >/dev/null 2>&1; then
+        ok "Add-task modal reachable (dms ipc call taskAdd)"
+    else
+        issue "DMS isn't answering on the taskAdd IPC target — Mod+Alt+T will do nothing"
+        note "  Restart the shell with: systemctl --user restart dms.service"
+    fi
 fi
 
 # Wallpapers. Three things have to agree or the desktop goes black: swww has to

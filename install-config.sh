@@ -242,6 +242,10 @@ copy "$DOTFILES/config/niri/task-list.sh"                 "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/task-list.sh"
 copy "$DOTFILES/config/niri/task-active.sh"               "$USER_HOME/.config/niri/task-active.sh"
 chmod +x "$USER_HOME/.config/niri/task-active.sh"
+copy "$DOTFILES/config/niri/task-tag.sh"                  "$USER_HOME/.config/niri/task-tag.sh"
+chmod +x "$USER_HOME/.config/niri/task-tag.sh"
+copy "$DOTFILES/config/niri/task-add-text.sh"             "$USER_HOME/.config/niri/task-add-text.sh"
+chmod +x "$USER_HOME/.config/niri/task-add-text.sh"
 copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
 copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
 
@@ -318,13 +322,18 @@ copy "$DOTFILES/config/DankMaterialShell/firefox.css"          "$USER_HOME/.conf
 copy "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
      "$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json"
 
-# Our own DMS bar plugin. Third-party plugins are git-cloned by install.sh and
-# left alone on re-runs; this one is versioned here, so it's copied every time
-# like any other dotfile.
+# Our own DMS plugin: a bar widget showing the active task, plus a daemon
+# holding the add-task modal that Mod+Alt+T opens over IPC. Third-party plugins
+# are git-cloned by install.sh and left alone on re-runs; this one is versioned
+# here, so it's copied every time like any other dotfile.
 copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/plugin.json" \
      "$USER_HOME/.config/DankMaterialShell/plugins/activetask/plugin.json"
 copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
      "$USER_HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml"
+copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml" \
+     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml"
+copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskAddModal.qml" \
+     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddModal.qml"
 
 # VS Code settings (extensions are not installed here — see install.sh)
 copy "$DOTFILES/config/Code/settings.json" "$USER_HOME/.config/Code/User/settings.json"

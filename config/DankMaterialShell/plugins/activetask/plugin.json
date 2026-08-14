@@ -1,12 +1,17 @@
 {
     "id": "activetask",
     "name": "Active Task",
-    "description": "Show the started Taskwarrior task tagged with the current niri workspace",
-    "version": "1.0.0",
+    "description": "Show the started Taskwarrior task tagged with the current niri workspace, and add new tasks from a multi-line box",
+    "version": "2.0.0",
     "author": "paul",
     "icon": "play_circle",
-    "type": "widget",
-    "capabilities": ["dankbar-widget"],
-    "component": "./ActiveTaskWidget.qml",
+    "type": "composite",
+    "capabilities": ["dankbar-widget", "daemon"],
+    "components": {
+        "widget": "./ActiveTaskWidget.qml",
+        "daemon": "./TaskAddDaemon.qml"
+    },
+    "requires_dms": ">=1.5.0",
+    "dependencies": ["task", "jq", "niri"],
     "permissions": ["process"]
 }
