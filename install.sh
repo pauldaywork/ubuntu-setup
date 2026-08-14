@@ -16,18 +16,15 @@ for arg in "$@"; do
     esac
 done
 
-# ─── colours ──────────────────────────────────────────────────────────────────
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-info()    { echo -e "${GREEN}[+]${NC} $*"; }
-warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
-section() { echo -e "\n${GREEN}══${NC} $* ${GREEN}══${NC}"; }
-
-# `dpkg -s` exits 0 for packages in the 'rc' state (removed, config files left
-# behind), which would treat an already-removed package as still installed.
-# Match on the status field instead.
-pkg_installed() {
-    [ "$(dpkg-query -W -f='${db:Status-Status}' "$1" 2>/dev/null)" = "installed" ]
-}
+# ─── shared helpers + the package/version manifest ────────────────────────────
+for lib in lib/common.sh lib/manifest.sh; do
+    if [ ! -f "$DOTFILES/$lib" ]; then
+        echo "Missing $DOTFILES/$lib — run this from a full clone of the repo" >&2
+        exit 1
+    fi
+    # shellcheck source=/dev/null
+    source "$DOTFILES/$lib"
+done
 
 # ─── 0. Remove mako ───────────────────────────────────────────────────────────
 # DMS now owns notifications, so a leftover mako install fights it for the
@@ -84,57 +81,9 @@ sudo apt update
 # ─── 2. apt packages ──────────────────────────────────────────────────────────
 section "Installing apt packages"
 
-APT_PACKAGES=(
-    # window manager + shell — all from the danklinux PPA added above.
-    # ghostty comes from there too, which is why it isn't a snap: the repo is
-    # already configured, and the deb avoids classic-snap confinement.
-    niri
-    dms
-    ghostty
-
-    # dmenu-style picker used by open_project_workspace.sh (Mod+Alt+P).
-    # Usually pulled in as a niri dependency, but named here so it can't
-    # silently disappear from under the shortcut.
-    fuzzel
-
-    # dev tools
-    git
-    curl
-    build-essential
-    jq
-    tmux
-    libudev-dev
-    util-linux-extra
-    zenity
-
-    # wallpaper — swww is built from source below, and needs lz4 (it compresses
-    # animation frames) plus the wayland-protocols pkg-config files. inotify-tools
-    # is what wallpaper-sync.sh watches the DMS session file with.
-    liblz4-dev
-    libwayland-dev
-    wayland-protocols
-    inotify-tools
-
-    # apps (from external repos)
-    taskwarrior
-    sublime-text
-    google-chrome-stable
-
-    # docker — Ubuntu's own packages, not the docker-ce repo. Keeps everything
-    # on one repo at the cost of tracking the release's version rather than
-    # upstream's. docker-ce conflicts with these; don't mix them.
-    docker.io
-    docker-compose-v2
-    docker-buildx
-
-    # audio / system
-    pipewire
-    wireplumber
-    brightnessctl
-    playerctl
-)
-
-sudo apt install -y "${APT_PACKAGES[@]}"
+# The list itself lives in lib/manifest.sh, so doctor.sh can check the same one.
+# APT_BUILD_PACKAGES is what swww needs to compile; see the note there.
+sudo apt install -y "${APT_PACKAGES[@]}" "${APT_BUILD_PACKAGES[@]}"
 
 # ─── Docker permissions ───────────────────────────────────────────────────────
 # /var/run/docker.sock is root:docker, so without group membership every docker
@@ -235,28 +184,17 @@ install_deb() {
     info "Installed: $name"
 }
 
-# Obsidian — snap doesn't work; use the official GitHub release .deb
-# To get the latest: https://github.com/obsidianmd/obsidian-releases/releases
-OBSIDIAN_VERSION="1.12.7"
+# Obsidian — snap doesn't work; use the official GitHub release .deb.
+# OBSIDIAN_VERSION comes from lib/manifest.sh.
 install_deb "obsidian" \
     "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/obsidian_${OBSIDIAN_VERSION}_amd64.deb"
 
 # ─── 3. snap packages ─────────────────────────────────────────────────────────
 section "Installing snap packages"
 
-snap_install() {
-    local pkg="$1"; shift
-    if snap list "$pkg" &>/dev/null 2>&1; then
-        info "Snap already installed: $pkg"
-    else
-        info "Installing snap: $pkg"
-        sudo snap install "$pkg" "$@"
-    fi
-}
-
-snap_install firefox
-snap_install code        --classic
-snap_install cmake       --classic
+for entry in "${SNAP_PACKAGES[@]}"; do
+    snap_install_entry "$entry"
+done
 
 # ─── 4. Rust toolchain ────────────────────────────────────────────────────────
 # Installed via the official rustup.rs script rather than the rustup snap —
@@ -292,8 +230,6 @@ fi
 # the client that talks to it.
 section "Installing swww"
 
-SWWW_VERSION="v0.11.2"
-
 if ! command -v swww &>/dev/null || ! command -v swww-daemon &>/dev/null; then
     info "Installing swww $SWWW_VERSION"
     cargo install --git https://github.com/LGFae/swww --tag "$SWWW_VERSION" --locked swww swww-daemon
@@ -315,7 +251,6 @@ fi
 section "Installing NVM + Node.js"
 
 NVM_DIR="$USER_HOME/.config/nvm"
-NODE_VERSION="v24.18.0"
 
 mkdir -p "$NVM_DIR"
 

@@ -9,11 +9,13 @@ set -euo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ─── colours ──────────────────────────────────────────────────────────────────
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-info()    { echo -e "${GREEN}[+]${NC} $*"; }
-warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
-section() { echo -e "\n${GREEN}══${NC} $* ${GREEN}══${NC}"; }
+# ─── shared helpers ───────────────────────────────────────────────────────────
+if [ ! -f "$DOTFILES/lib/common.sh" ]; then
+    echo "Missing $DOTFILES/lib/common.sh — run this from a full clone of the repo" >&2
+    exit 1
+fi
+# shellcheck source=/dev/null
+source "$DOTFILES/lib/common.sh"
 
 # ─── NVIDIA — only if this machine has an NVIDIA GPU ──────────────────────────
 section "NVIDIA drivers"
@@ -36,16 +38,9 @@ fi
 # ─── snap packages ─────────────────────────────────────────────────────────────
 section "Installing snap packages"
 
-snap_install() {
-    local pkg="$1"; shift
-    if snap list "$pkg" &>/dev/null 2>&1; then
-        info "Snap already installed: $pkg"
-    else
-        info "Installing snap: $pkg"
-        sudo snap install "$pkg" "$@"
-    fi
-}
-
+# snap_install comes from lib/common.sh. These two stay listed here rather than
+# in the manifest: they're the optional extras this script exists for, and
+# doctor.sh deliberately doesn't check them.
 snap_install opencode --classic
 snap_install steam
 

@@ -232,6 +232,16 @@ Edit the defaults in the script once you've settled on one — the environment v
 
 ---
 
+## One list of what's installed
+
+`lib/manifest.sh` holds the apt packages, the snaps, and the version pins for Node, swww and Obsidian. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
+
+`lib/common.sh` holds what all five scripts print with (`info`, `warn`, `ok`, `issue`, `section`) plus `pkg_installed` and `snap_install`. `pkg_installed` is the one worth not copy-pasting: `dpkg -s` exits 0 for packages in the `rc` state — removed, config files left behind — so it matches on the status field instead.
+
+Build-only packages are tagged separately as `APT_BUILD_PACKAGES` (`liblz4-dev`, `libwayland-dev`, `wayland-protocols`). `install.sh` installs them; `doctor.sh` deliberately doesn't check them. They're only needed to *compile* swww — the binary links `liblz4.so.1` from `liblz4-1`, a different package — so a machine that built swww and later cleaned up its build deps is perfectly healthy, and flagging it would be doctor crying wolf. The thing that actually matters, swww being installed and running, is checked directly.
+
+---
+
 ## Keeping configs up to date
 
 When you change any config on your current machine and want to save it to the repo, run:
@@ -326,6 +336,9 @@ backup-os/
 ├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
 ├── update.sh                               # Run on current machine to snapshot changes
 ├── doctor.sh                               # Diagnose drift on an existing, already-set-up machine
+├── lib/
+│   ├── common.sh                           # Shared helpers: info/warn/ok/issue, pkg_installed, snap_install
+│   └── manifest.sh                         # What gets installed: apt + snap lists, version pins
 ├── home/
 │   ├── .bashrc
 │   ├── .profile

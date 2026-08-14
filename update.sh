@@ -16,9 +16,13 @@ for arg in "$@"; do
     esac
 done
 
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-info() { echo -e "${GREEN}[+]${NC} $*"; }
-warn() { echo -e "${YELLOW}[!]${NC} $*"; }
+# ─── shared helpers ───────────────────────────────────────────────────────────
+if [ ! -f "$DOTFILES/lib/common.sh" ]; then
+    echo "Missing $DOTFILES/lib/common.sh — run this from a full clone of the repo" >&2
+    exit 1
+fi
+# shellcheck source=/dev/null
+source "$DOTFILES/lib/common.sh"
 
 # ─── Guarding against overwriting work that exists nowhere else ───────────────
 # Copying a live file over the repo's is this script's entire job, so "these two

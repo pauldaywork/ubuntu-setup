@@ -18,12 +18,20 @@ set -uo pipefail
 FIX=false
 [ "${1:-}" = "--fix" ] && FIX=true
 
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-ISSUES=0
-ok()      { echo -e "${GREEN}[✓]${NC} $*"; }
-issue()   { ISSUES=$((ISSUES + 1)); echo -e "${RED}[✗]${NC} $*"; }
-note()    { echo -e "${YELLOW}[!]${NC} $*"; }
-section() { echo -e "\n${GREEN}══${NC} $* ${GREEN}══${NC}"; }
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ─── shared helpers + the package/version manifest ────────────────────────────
+# The manifest is the point: this script used to keep its own copy of the
+# package list with a comment asking whoever edited install.sh to remember to
+# edit this one too.
+for lib in lib/common.sh lib/manifest.sh; do
+    if [ ! -f "$DOTFILES/$lib" ]; then
+        echo "Missing $DOTFILES/$lib — run this from a full clone of the repo" >&2
+        exit 1
+    fi
+    # shellcheck source=/dev/null
+    source "$DOTFILES/$lib"
+done
 
 RC_FILES=("$HOME/.bashrc" "$HOME/.profile")
 
@@ -41,24 +49,11 @@ backup() {
 # ─── 1. Installation completeness ─────────────────────────────────────────────
 # Report-only, same as everything else here — installing software isn't a
 # dotfile fix, so even --fix just prints the command install.sh would run.
-# Keep this list in sync with install.sh if that ever changes.
+#
+# APT_PACKAGES and SNAP_PACKAGES come from lib/manifest.sh, the same lists
+# install.sh installs from. APT_BUILD_PACKAGES is deliberately not checked: see
+# the note there.
 section "Checking installation completeness"
-
-# `dpkg -s` exits 0 for packages in the 'rc' state (removed, config files left
-# behind), which would report a package that isn't actually there as present.
-# Match on the status field instead.
-pkg_installed() {
-    [ "$(dpkg-query -W -f='${db:Status-Status}' "$1" 2>/dev/null)" = "installed" ]
-}
-
-APT_PACKAGES=(
-    niri dms ghostty fuzzel
-    git curl build-essential jq tmux libudev-dev util-linux-extra zenity
-    liblz4-dev libwayland-dev wayland-protocols inotify-tools
-    taskwarrior sublime-text google-chrome-stable
-    docker.io docker-compose-v2 docker-buildx
-    pipewire wireplumber brightnessctl playerctl
-)
 
 MISSING_APT=()
 for pkg in "${APT_PACKAGES[@]}"; do
@@ -104,7 +99,6 @@ else
     ok "mako-notifier not installed (as expected)"
 fi
 
-SNAP_PACKAGES=(firefox code:classic cmake:classic)
 for entry in "${SNAP_PACKAGES[@]}"; do
     pkg="${entry%%:*}"
     flag=""; [[ "$entry" == *:classic ]] && flag=" --classic"
@@ -131,7 +125,6 @@ else
 fi
 
 NVM_INSTALL_DIR="$HOME/.config/nvm"
-NODE_VERSION="v24.18.0"
 if [ -s "$NVM_INSTALL_DIR/nvm.sh" ]; then
     ok "nvm installed"
     if [ -d "$NVM_INSTALL_DIR/versions/node/$NODE_VERSION" ]; then
@@ -192,7 +185,7 @@ if command -v swww &>/dev/null && command -v swww-daemon &>/dev/null; then
     ok "swww installed ($(swww --version 2>/dev/null))"
 else
     issue "swww not installed — animated wallpapers won't render"
-    note "  Install with: cargo install --git https://github.com/LGFae/swww --tag v0.11.2 --locked swww swww-daemon"
+    note "  Install with: cargo install --git https://github.com/LGFae/swww --tag $SWWW_VERSION --locked swww swww-daemon"
 fi
 
 # Both run as systemd user units, so ask systemd rather than looking for the
