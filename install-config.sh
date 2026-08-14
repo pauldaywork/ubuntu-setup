@@ -79,16 +79,23 @@ fi
 
 # config.kdl carries an unconditional `include "dms/binds.kdl"`, and niri
 # refuses to load a config whose include is missing — it falls back to its
-# built-in defaults, which looks like "my keybinds vanished". DMS owns that
-# file, but nothing sequences DMS's first write before niri first parses the
-# config, so seed an empty stub when it's absent. DMS overwrites it freely;
-# our binds live in config.kdl's own binds block.
+# built-in defaults, which looks like "my keybinds vanished". So seed an empty
+# stub when the file is absent. DMS overwrites it freely; our binds live in
+# config.kdl's own binds block.
 #
-# Note this only closes the gap for binds.kdl. config.kdl also includes
-# dms/colors.kdl, alttab.kdl, outputs.kdl and cursor.kdl, none of which are
-# installed here either — a fresh machine still depends on DMS having written
-# those before niri first reads the config. An empty file satisfies the
-# include, so the same trick would work for them.
+# This is not the same situation as the other dms/*.kdl includes. colors.kdl,
+# alttab.kdl, outputs.kdl and cursor.kdl are written automatically on first
+# launch (matugen templates, monitor profiles), and dms.service is a systemd
+# user unit, so DMS starts and generates them even when niri fell back to its
+# defaults — one login later they exist. Don't bother seeding those.
+#
+# binds.kdl is never written unprompted. In DMS's KeybindsService.qml the only
+# writers are saveBind() and fixDmsBindsInclude(), both driven from the
+# keybinds UI, and the repair path returns early when `dmsBindsIncluded` is
+# set — which our include line is what makes true. The line that needs the
+# file is the line that stops DMS from creating it, so without this stub a
+# fresh machine has an invalid niri config on every login until someone
+# happens to save a keybind through the DMS settings tab.
 if [ ! -e "$USER_HOME/.config/niri/dms/binds.kdl" ]; then
     mkdir -p "$USER_HOME/.config/niri/dms"
     printf 'binds {\n\n}\n' > "$USER_HOME/.config/niri/dms/binds.kdl"
