@@ -10,7 +10,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Terminal multiplexer | tmux (`.tmux.conf` + TPM-managed plugins) |
 | Window manager | Niri config + custom DMS keybindings + swappable window-rules/layout profiles (`Mod+Alt+R`) |
 | Notifications | DankMaterialShell (built-in) |
-| Terminal | Ghostty |
+| Terminal | Ghostty (deb from the danklinux PPA, not the snap) |
 | Bar / shell | DankMaterialShell (theme, settings, plugins) |
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
 | Task manager | Taskwarrior (+ DMS taskwarrior widget plugin) |
@@ -54,7 +54,7 @@ The script will:
 3. Install all apt packages
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
 5. Install apps without an apt repo (Obsidian) via their official installers
-6. Install snap packages (Firefox, VS Code, Ghostty, CMake)
+6. Install snap packages (Firefox, VS Code, CMake)
 7. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
 8. Install Bun via the official installer
 9. Install NVM + Node.js v24.18.0

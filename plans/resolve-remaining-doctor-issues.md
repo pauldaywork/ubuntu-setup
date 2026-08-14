@@ -1,7 +1,7 @@
 # Plan: Resolve remaining doctor.sh issues
 
 **Created:** 2026-08-14
-**Status:** Task 1 complete (2026-08-14). Tasks 2 and 3 open.
+**Status:** ✅ Complete (2026-08-14). `./doctor.sh` reports no issues.
 **Scope:** Finish the docker-ce → docker.io migration, de-duplicate Ghostty, and correct doctor.sh's `--fix` message.
 
 ---
@@ -74,7 +74,7 @@ tracks the upstream Compose version. 2.40.3 is the newer Compose.
 
 ---
 
-## Task 2 — Make the deb Ghostty canonical, drop the snap
+## Task 2 — Make the deb Ghostty canonical, drop the snap ✅ DONE
 
 **Problem.** Ghostty is installed twice: snap v1.3.1 (installed by `install.sh:176`) and deb
 1.3.1ppa11 from the `avengemedia/danklinux` PPA. `/usr/bin` precedes `/snap/bin` in PATH, so the
@@ -131,7 +131,7 @@ snap list ghostty         # expect "no matching snaps installed"
 
 ---
 
-## Task 3 — Correct doctor.sh's `--fix` message
+## Task 3 — Correct doctor.sh's `--fix` message ✅ DONE
 
 **Problem.** `doctor.sh:280` prints:
 
@@ -198,12 +198,12 @@ Left over from the migration, all harmless:
 
 - [x] `docker compose version` reports v2.40.3, owned by `docker-compose-v2`
 - [x] `docker-compose-plugin` no longer installed
-- [ ] `snap list ghostty` reports nothing; `command -v ghostty` is `/usr/bin/ghostty`
-- [ ] `install.sh` installs ghostty via apt, not snap
-- [ ] `doctor.sh` package lists match `install.sh`
-- [ ] `--fix` message names only the NVM_DIR repair
-- [ ] `./doctor.sh` exits with "No issues found"
-- [ ] Changes committed
+- [x] `snap list ghostty` reports nothing; `command -v ghostty` is `/usr/bin/ghostty`
+- [x] `install.sh` installs ghostty via apt, not snap
+- [x] `doctor.sh` package lists match `install.sh`
+- [x] `--fix` message names only the NVM_DIR repair
+- [x] `./doctor.sh` exits with "No issues found"
+- [x] Changes committed
 
 ---
 

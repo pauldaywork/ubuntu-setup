@@ -81,9 +81,12 @@ sudo apt update
 section "Installing apt packages"
 
 APT_PACKAGES=(
-    # window manager + shell
+    # window manager + shell — all from the danklinux PPA added above.
+    # ghostty comes from there too, which is why it isn't a snap: the repo is
+    # already configured, and the deb avoids classic-snap confinement.
     niri
     dms
+    ghostty
 
     # dev tools
     git
@@ -173,7 +176,6 @@ snap_install() {
 
 snap_install firefox
 snap_install code        --classic
-snap_install ghostty     --classic
 snap_install cmake       --classic
 
 # ─── 4. Rust toolchain ────────────────────────────────────────────────────────

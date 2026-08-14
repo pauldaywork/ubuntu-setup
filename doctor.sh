@@ -52,7 +52,7 @@ pkg_installed() {
 }
 
 APT_PACKAGES=(
-    niri dms
+    niri dms ghostty
     git curl build-essential jq tmux libudev-dev util-linux-extra zenity
     taskwarrior sublime-text google-chrome-stable
     docker.io docker-compose-v2 docker-buildx
@@ -103,7 +103,7 @@ else
     ok "mako-notifier not installed (as expected)"
 fi
 
-SNAP_PACKAGES=(firefox code:classic ghostty:classic cmake:classic)
+SNAP_PACKAGES=(firefox code:classic cmake:classic)
 for entry in "${SNAP_PACKAGES[@]}"; do
     pkg="${entry%%:*}"
     flag=""; [[ "$entry" == *:classic ]] && flag=" --classic"
@@ -277,5 +277,7 @@ if [ "$ISSUES" -eq 0 ]; then
     ok "No issues found"
 else
     note "$ISSUES issue(s) found."
-    $FIX || note "Re-run with --fix to interactively repair dangling PATH/env references."
+    # --fix only covers the NVM_DIR check; every other check here is report-only
+    # by design (see the header comment), so don't advertise more than it does.
+    $FIX || note "Re-run with --fix to interactively repair a misconfigured NVM_DIR."
 fi
