@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] store longer detail against a task with taskwarrior annotations (`task <uuid> annotate`): add an "Annotate" action to the menu in task-list.sh alongside Edit/Delete/Complete/Set active, mark annotated rows in the list (export carries them as `.annotations[]`), and consider an "Open in editor" action shelling out to `task <uuid> edit` for anything longer.
+Nothing outstanding. Add new items here.
 
 ## Done
 
@@ -15,3 +15,4 @@
 - [x] can we style fuzzel to be similar to how the ghostty terminal on this desktop is currently styled with the blury transparent background?
 - [x] top nav bar has a dropdown shadow when it shouldn't. this might need to be updated for DMS settings in a config file somewhere.
 - [x] animated GIF wallpapers — DMS renders one still frame, so swww draws the background instead and wallpaper-sync.sh keeps it pointed at whatever the DMS picker selected
+- [x] store longer detail against a task with taskwarrior annotations — a **Note** action on the list opens the task box with the existing notes listed above the input, and rows carrying notes are marked `¶`. The "open in editor" half was dropped: shelling out to `task <uuid> edit` means launching a terminal, which is the thing the box exists to avoid.

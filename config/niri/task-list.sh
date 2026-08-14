@@ -24,12 +24,19 @@ TASKS_JSON=$(task rc.verbose=nothing rc.json.array=on "+$TAG" status:pending exp
 [ -n "$TASKS_JSON" ] || TASKS_JSON='[]'
 
 # Most urgent first — the same order `task next` would show, so the picker
-# agrees with the terminal. The marker flags the active task (taskwarrior sets
-# `start` when a task is started).
+# agrees with the terminal. The leading marker flags the active task
+# (taskwarrior sets `start` when a task is started); the trailing ¶ flags a task
+# carrying notes, which are otherwise invisible from here — the row shows a
+# description, and an annotation isn't one.
+#
+# `.annotations` is absent rather than empty on a task that has none, hence the
+# // [] before counting.
 mapfile -t ROWS < <(jq -r '
     sort_by(-.urgency)
     | .[]
-    | [.uuid, ((if .start then "▶ " else "  " end) + .description)]
+    | [.uuid, ((if .start then "▶ " else "  " end)
+               + .description
+               + (if ((.annotations // []) | length) > 0 then " ¶" else "" end))]
     | @tsv' <<<"$TASKS_JSON")
 
 # A workspace with no tasks yet used to fire a notification and exit without
@@ -100,8 +107,8 @@ fi
 
 DESCRIPTION=$(jq -r --arg uuid "$UUID" 'first(.[] | select(.uuid == $uuid) | .description) // ""' <<<"$TASKS_JSON")
 
-ACTION=$(printf 'Edit\nDelete\nComplete\nSet active\n' | task_fuzzel \
-    --lines=4 \
+ACTION=$(printf 'Edit\nNote\nDelete\nComplete\nSet active\n' | task_fuzzel \
+    --lines=5 \
     --width=20 \
     --prompt="" || true)
 
@@ -132,6 +139,26 @@ case "$ACTION" in
             exit 0
         fi
         exec "$(dirname "$(readlink -f "$0")")/task-edit-text.sh" "$UUID" "$NEW"
+        ;;
+
+    Note)
+        # Taskwarrior annotations: many per task, each stamped with when it was
+        # written, and searched by a bare `task <word>` alongside descriptions.
+        # This is where detail that doesn't belong in a one-line description
+        # goes — the box lists what's already there above the input.
+        if command -v dms >/dev/null && dms ipc call taskBox annotate "$UUID" >/dev/null 2>&1; then
+            exit 0
+        fi
+
+        # Fallback for a session without DMS. No list of existing notes here —
+        # fuzzel has nowhere to put one.
+        NOTE=$(printf '' | task_fuzzel \
+            --lines=0 \
+            --width="$WIDTH" \
+            --prompt="note " \
+            --placeholder="New note…" || true)
+
+        exec "$(dirname "$(readlink -f "$0")")/task-annotate-text.sh" "$UUID" "$NOTE"
         ;;
 
     Delete)

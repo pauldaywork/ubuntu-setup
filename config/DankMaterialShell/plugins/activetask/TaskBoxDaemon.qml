@@ -1,8 +1,9 @@
 // Daemon half of the activetask plugin: owns the task box and the IPC calls
 // that open it.
 //
-//     dms ipc call taskBox open           # Mod+Alt+T
-//     dms ipc call taskBox edit <uuid>    # the Edit action in task-list.sh
+//     dms ipc call taskBox open               # Mod+Alt+T
+//     dms ipc call taskBox edit <uuid>        # the Edit action in task-list.sh
+//     dms ipc call taskBox annotate <uuid>    # the Note action in task-list.sh
 //
 // The point of doing it this way is that nothing starts: DMS is already
 // running, so the shortcut is a message to a live process rather than a
@@ -31,9 +32,13 @@ Item {
 
     readonly property string scriptDir: Paths.expandTilde("~/.config/niri")
 
-    // Held between the edit() call and the description arriving, since the
-    // fetch is asynchronous and the modal needs both at once.
+    // Held while the shell answers, since the fetches are asynchronous and the
+    // modal needs everything at once. Annotating takes two of them — the
+    // description to head the box with, then the notes to list — so the mode
+    // has to survive the first one to know whether a second is coming.
     property string pendingUuid: ""
+    property string pendingMode: ""
+    property string pendingDescription: ""
 
     // Resolving the tag is a shell question (which workspace is focused, and
     // what does its name reduce to), and task-lib.sh already answers it for the
@@ -78,19 +83,63 @@ Item {
                 // in another window since.
                 ToastService.showWarning("Task not found",
                                          "It may have been completed or deleted already.");
-                root.pendingUuid = "";
+                root.clearPending();
+                return;
+            }
+            if (root.pendingMode === "annotate") {
+                root.pendingDescription = description;
+                notesProcess.command = [root.scriptDir + "/task-get-notes.sh", root.pendingUuid];
+                notesProcess.running = true;
                 return;
             }
             modal.showEdit(root.pendingUuid, description);
-            root.pendingUuid = "";
+            root.clearPending();
         }
     }
 
+    Process {
+        id: notesProcess
+        running: false
+
+        stdout: StdioCollector {
+            id: notesCollector
+        }
+
+        onExited: exitCode => {
+            // A task with no notes yet is the normal case, not a failure, so an
+            // empty answer still opens the box — just without the list.
+            const existingNotes = exitCode === 0 ? notesCollector.text.trim() : "";
+            modal.showAnnotate(root.pendingUuid, root.pendingDescription, existingNotes);
+            root.clearPending();
+        }
+    }
+
+    function clearPending() {
+        pendingUuid = "";
+        pendingMode = "";
+        pendingDescription = "";
+    }
+
+    // Both per-task openers start the same way — the description is needed to
+    // pre-fill an edit and to head a note box — so they differ only in the mode
+    // carried through to the other side of the fetch.
+    function openForTask(uuid, wantedMode) {
+        if (!uuid)
+            return "no uuid given";
+        pendingUuid = uuid;
+        pendingMode = wantedMode;
+        pendingDescription = "";
+        descriptionProcess.command = [scriptDir + "/task-get-text.sh", uuid];
+        descriptionProcess.running = true;
+        return "opening";
+    }
+
     // Writing is a shell question too. Adding word-splits the description so
-    // taskwarrior's attribute syntax works ("ship it due:friday"); editing
-    // quotes it so a "due:" typed mid-rename stays text. Both rules are already
-    // written and commented in their scripts, and calling them means the box
-    // and the fuzzel fallbacks can't drift apart.
+    // taskwarrior's attribute syntax works ("ship it due:friday"); editing and
+    // noting quote it, so a "due:" typed mid-rename or inside a note stays text
+    // rather than setting a date. Those rules are already written and commented
+    // in their scripts, and calling them means the box and the fuzzel fallbacks
+    // can't drift apart.
     Process {
         id: writeProcess
         running: false
@@ -99,10 +148,13 @@ Item {
     TaskBoxModal {
         id: modal
 
-        onSubmitted: description => {
-            writeProcess.command = modal.editing
-                ? [root.scriptDir + "/task-edit-text.sh", modal.taskUuid, description]
-                : [root.scriptDir + "/task-add-text.sh", modal.tag, description];
+        onSubmitted: text => {
+            if (modal.annotating)
+                writeProcess.command = [root.scriptDir + "/task-annotate-text.sh", modal.taskUuid, text];
+            else if (modal.editing)
+                writeProcess.command = [root.scriptDir + "/task-edit-text.sh", modal.taskUuid, text];
+            else
+                writeProcess.command = [root.scriptDir + "/task-add-text.sh", modal.tag, text];
             writeProcess.running = true;
         }
     }
@@ -119,12 +171,11 @@ Item {
         }
 
         function edit(uuid: string): string {
-            if (!uuid)
-                return "no uuid given";
-            root.pendingUuid = uuid;
-            descriptionProcess.command = [root.scriptDir + "/task-get-text.sh", uuid];
-            descriptionProcess.running = true;
-            return "opening";
+            return root.openForTask(uuid, "edit");
+        }
+
+        function annotate(uuid: string): string {
+            return root.openForTask(uuid, "annotate");
         }
 
         function close(): string {

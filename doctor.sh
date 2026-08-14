@@ -162,7 +162,7 @@ fi
 # The workspace task shortcuts and the Active Task widget share task-lib.sh, so
 # a missing file here breaks Mod+Alt+T, Mod+Alt+L and the bar pill together.
 for f in task-lib.sh task-tag.sh task-add-text.sh task-get-text.sh task-edit-text.sh \
-         task-add.sh task-list.sh task-active.sh; do
+         task-get-notes.sh task-annotate-text.sh task-add.sh task-list.sh task-active.sh; do
     if [ -f "$HOME/.config/niri/$f" ]; then
         ok "Workspace task script present: $f"
     else

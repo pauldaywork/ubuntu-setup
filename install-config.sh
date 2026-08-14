@@ -250,6 +250,10 @@ copy "$DOTFILES/config/niri/task-get-text.sh"             "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/task-get-text.sh"
 copy "$DOTFILES/config/niri/task-edit-text.sh"            "$USER_HOME/.config/niri/task-edit-text.sh"
 chmod +x "$USER_HOME/.config/niri/task-edit-text.sh"
+copy "$DOTFILES/config/niri/task-get-notes.sh"            "$USER_HOME/.config/niri/task-get-notes.sh"
+chmod +x "$USER_HOME/.config/niri/task-get-notes.sh"
+copy "$DOTFILES/config/niri/task-annotate-text.sh"        "$USER_HOME/.config/niri/task-annotate-text.sh"
+chmod +x "$USER_HOME/.config/niri/task-annotate-text.sh"
 copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
 copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
 

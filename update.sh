@@ -151,6 +151,8 @@ pull "$HOME/.config/niri/task-tag.sh"               "$DOTFILES/config/niri/task-
 pull "$HOME/.config/niri/task-add-text.sh"          "$DOTFILES/config/niri/task-add-text.sh"
 pull "$HOME/.config/niri/task-get-text.sh"          "$DOTFILES/config/niri/task-get-text.sh"
 pull "$HOME/.config/niri/task-edit-text.sh"         "$DOTFILES/config/niri/task-edit-text.sh"
+pull "$HOME/.config/niri/task-get-notes.sh"         "$DOTFILES/config/niri/task-get-notes.sh"
+pull "$HOME/.config/niri/task-annotate-text.sh"     "$DOTFILES/config/niri/task-annotate-text.sh"
 pull "$HOME/.config/niri/task-add.sh"               "$DOTFILES/config/niri/task-add.sh"
 pull "$HOME/.config/niri/task-list.sh"              "$DOTFILES/config/niri/task-list.sh"
 pull "$HOME/.config/niri/task-active.sh"            "$DOTFILES/config/niri/task-active.sh"
