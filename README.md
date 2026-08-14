@@ -114,7 +114,9 @@ Press **`Mod+Alt+P`** to jump to a project. This runs `config/niri/open_project_
 1. Lists the folders in `~/Projects` in a fuzzel picker — just the names, no prompt or buttons. Up/Down moves, Enter or a mouse click selects, Esc cancels, and typing filters
 2. Creates the folder if what you typed doesn't match anything (see below)
 3. Focuses that project's workspace if it already exists, otherwise names the empty workspace at the end of the current output after the folder
-4. Spawns a Ghostty window on it
+4. Spawns a Ghostty window on it — but only for a workspace that's new or empty
+
+Re-picking a project you already have open is a "take me back there", not a request for another terminal, so the shortcut is safe to hit repeatedly. The exception is a workspace you've closed every window on: niri keeps the name, and the picker treats it like a fresh one and gives you a terminal again.
 
 ### Creating a project from the picker
 

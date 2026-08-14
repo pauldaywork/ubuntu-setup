@@ -8,6 +8,9 @@
 #
 # The terminal lands in the right directory because tmux-niri-session.sh starts
 # tmux in ~/Projects/<workspace name> when that folder exists.
+#
+# Picking a project that's already on a workspace just switches to it, and only
+# opens a terminal if that workspace has no windows left.
 set -euo pipefail
 
 PROJECTS_DIR="$HOME/Projects"
@@ -90,12 +93,23 @@ fi
 
 WORKSPACES=$(niri msg -j workspaces)
 
-if jq -e --arg name "$PROJECT" \
-    'any(.[]; (.name // "") | ascii_downcase == ($name | ascii_downcase))' \
-    <<<"$WORKSPACES" >/dev/null; then
+WORKSPACE_ID=$(jq -r --arg name "$PROJECT" \
+    'first(.[] | select((.name // "") | ascii_downcase == ($name | ascii_downcase)) | .id) // ""' \
+    <<<"$WORKSPACES")
+
+if [ -n "$WORKSPACE_ID" ]; then
     # Already opened this project once — go back to its workspace rather than
     # ending up with two workspaces sharing a name.
     niri msg action focus-workspace "$PROJECT"
+
+    # Re-picking a project you already have open means "take me back to it",
+    # not "give me another terminal" — so only spawn one if the workspace is
+    # empty (you closed everything, but niri kept the name).
+    WINDOW_COUNT=$(niri msg -j windows \
+        | jq --argjson id "$WORKSPACE_ID" '[.[] | select(.workspace_id == $id)] | length')
+    if [ "$WINDOW_COUNT" -eq 0 ]; then
+        niri msg action spawn -- ghostty
+    fi
 else
     # focus-workspace-down only creates a new workspace when you're already on
     # the last one; otherwise it just moves to (and would rename) whatever
@@ -107,6 +121,5 @@ else
 
     niri msg action focus-workspace "$LAST_IDX"
     niri msg action set-workspace-name "$PROJECT"
+    niri msg action spawn -- ghostty
 fi
-
-niri msg action spawn -- ghostty
