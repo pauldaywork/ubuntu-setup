@@ -16,9 +16,12 @@ done
 
 session="${ws_clean}${n}"
 
-# Start new sessions in ~/Projects (created by install-config.sh); fall back
-# to $HOME if it's missing so this still works standalone.
-start_dir="$HOME/Projects"
+# Start new sessions in the project folder that matches the workspace name —
+# that's what makes open_project_workspace.sh land you in the project. Fall
+# back to ~/Projects (created by install-config.sh), then to $HOME if that's
+# missing too, so this still works standalone.
+start_dir="$HOME/Projects/$ws"
+[ -d "$start_dir" ] || start_dir="$HOME/Projects"
 [ -d "$start_dir" ] || start_dir="$HOME"
 
 exec tmux new-session -A -s "$session" -c "$start_dir"

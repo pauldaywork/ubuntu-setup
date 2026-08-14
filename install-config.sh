@@ -59,6 +59,8 @@ copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
 copy "$DOTFILES/config/niri/rename_workspace.sh"          "$USER_HOME/.config/niri/rename_workspace.sh"
 chmod +x "$USER_HOME/.config/niri/rename_workspace.sh"
+copy "$DOTFILES/config/niri/open_project_workspace.sh"     "$USER_HOME/.config/niri/open_project_workspace.sh"
+chmod +x "$USER_HOME/.config/niri/open_project_workspace.sh"
 copy "$DOTFILES/config/niri/default_workspace_name.sh"    "$USER_HOME/.config/niri/default_workspace_name.sh"
 chmod +x "$USER_HOME/.config/niri/default_workspace_name.sh"
 copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/niri/toggle-window-rules.sh"
@@ -80,6 +82,10 @@ if [ "$LAPTOP" = true ]; then
     copy "$DOTFILES/config/niri/dms/laptop.kdl" "$USER_HOME/.config/niri/dms/laptop.kdl"
     printf '\ninclude "dms/laptop.kdl"\n' >> "$USER_HOME/.config/niri/config.kdl"
 fi
+
+# fuzzel — picker theme for open_project_workspace.sh (fuzzel.ini itself is
+# left alone; the picker passes this file with --config=)
+copy "$DOTFILES/config/fuzzel/project-picker.ini" "$USER_HOME/.config/fuzzel/project-picker.ini"
 
 # ghostty
 copy "$DOTFILES/config/ghostty/config.ghostty" "$USER_HOME/.config/ghostty/config.ghostty"

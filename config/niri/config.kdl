@@ -517,6 +517,10 @@ binds {
     // Press Mod + Shift + Alt + W to rename the current workspace
     Mod+Shift+Alt+W { spawn "~/.config/niri/rename_workspace.sh"; }
 
+    // Press Mod + Alt + P to pick a folder from ~/Projects, put it on its own
+    // named workspace, and open a terminal in it
+    Mod+Alt+P hotkey-overlay-title="Open Project Workspace" { spawn "~/.config/niri/open_project_workspace.sh"; }
+
     // Toggle between window-rules profiles (normal / focus-dimming)
     Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/toggle-window-rules.sh"; }
 
@@ -540,3 +544,4 @@ include "dms/cursor.kdl"
 // include "dms/windowrules.kdl"
 
 prefer-no-csd
+

@@ -88,6 +88,11 @@ APT_PACKAGES=(
     dms
     ghostty
 
+    # dmenu-style picker used by open_project_workspace.sh (Mod+Alt+P).
+    # Usually pulled in as a niri dependency, but named here so it can't
+    # silently disappear from under the shortcut.
+    fuzzel
+
     # dev tools
     git
     curl

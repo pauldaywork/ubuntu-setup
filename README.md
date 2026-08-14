@@ -107,6 +107,22 @@ The symlink and state file are machine-local, not tracked in git — `install.sh
 
 ---
 
+## Project workspaces
+
+Press **`Mod+Alt+P`** to jump to a project. This runs `config/niri/open_project_workspace.sh`, which:
+
+1. Lists the folders in `~/Projects` in a fuzzel picker — just the names, no prompt or buttons. Up/Down moves, Enter or a mouse click selects, Esc cancels, and typing filters
+2. Focuses that project's workspace if it already exists, otherwise names the empty workspace at the end of the current output after the folder
+3. Spawns a Ghostty window on it
+
+The picker's look lives in `config/fuzzel/project-picker.ini`, passed to fuzzel with `--config=` so it stays separate from any `fuzzel.ini` you use elsewhere. The script sizes the window to the folder list at runtime (`--lines`/`--width`), so only the ini's font, padding and colours are worth editing.
+
+The terminal lands in the project directory because Ghostty launches `tmux-niri-session.sh`, which starts its tmux session in `~/Projects/<workspace name>` when such a folder exists (falling back to `~/Projects`, then `$HOME`). So any terminal opened on a project workspace — not just the one this shortcut spawns — starts in the right place.
+
+Related workspace shortcuts: **`Mod+Alt+W`** to create and name a workspace by hand, **`Mod+Shift+Alt+W`** to rename the focused one.
+
+---
+
 ## Keeping configs up to date
 
 When you change any config on your current machine and want to save it to the repo, run:
@@ -134,6 +150,7 @@ git push
 | Niri config | `~/.config/niri/` |
 | Niri window-rules profiles | `~/.config/niri/window-rules/*.kdl`, `toggle-window-rules.sh` |
 | DMS keybindings | `~/.config/niri/dms/binds.kdl` |
+| Fuzzel project picker | `~/.config/fuzzel/project-picker.ini` |
 | Ghostty | `~/.config/ghostty/` |
 | DankMaterialShell | `~/.config/DankMaterialShell/` |
 | VS Code settings | `~/.config/Code/User/settings.json` |
@@ -185,14 +202,17 @@ backup-os/
 │   │   ├── config.kdl
 │   │   ├── create_named_workspace.sh       # GUI prompt to name a new workspace (zenity)
 │   │   ├── rename_workspace.sh             # GUI prompt to rename the focused workspace (zenity)
+│   │   ├── open_project_workspace.sh       # Picks a ~/Projects folder, names a workspace after it, opens a terminal there (Mod+Alt+P)
 │   │   ├── default_workspace_name.sh       # Names workspace 1 "general" on startup if unnamed
-│   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace
+│   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace, in the matching ~/Projects folder
 │   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
 │   │   ├── window-rules/
 │   │   │   ├── normal.kdl                  # Fully opaque windows
 │   │   │   └── focus.kdl                   # Unfocused windows fade out
 │   │   └── dms/
 │   │       └── laptop.kdl                  # Only installed with `install.sh --laptop`
+│   ├── fuzzel/
+│   │   └── project-picker.ini              # Minimal picker theme for open_project_workspace.sh
 │   ├── ghostty/
 │   │   └── config.ghostty
 │   ├── DankMaterialShell/

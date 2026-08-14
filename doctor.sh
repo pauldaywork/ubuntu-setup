@@ -52,7 +52,7 @@ pkg_installed() {
 }
 
 APT_PACKAGES=(
-    niri dms ghostty
+    niri dms ghostty fuzzel
     git curl build-essential jq tmux libudev-dev util-linux-extra zenity
     taskwarrior sublime-text google-chrome-stable
     docker.io docker-compose-v2 docker-buildx

@@ -42,11 +42,17 @@ else
     warn "Not found, skipping: $HOME/.config/niri/config.kdl"
 fi
 pull "$HOME/.config/niri/create_named_workspace.sh" "$DOTFILES/config/niri/create_named_workspace.sh"
+pull "$HOME/.config/niri/rename_workspace.sh"       "$DOTFILES/config/niri/rename_workspace.sh"
+pull "$HOME/.config/niri/open_project_workspace.sh" "$DOTFILES/config/niri/open_project_workspace.sh"
 pull "$HOME/.config/niri/default_workspace_name.sh" "$DOTFILES/config/niri/default_workspace_name.sh"
+pull "$HOME/.config/niri/tmux-niri-session.sh"      "$DOTFILES/config/niri/tmux-niri-session.sh"
 pull "$HOME/.config/niri/toggle-window-rules.sh"    "$DOTFILES/config/niri/toggle-window-rules.sh"
 pull "$HOME/.config/niri/window-rules/normal.kdl"   "$DOTFILES/config/niri/window-rules/normal.kdl"
 pull "$HOME/.config/niri/window-rules/focus.kdl"    "$DOTFILES/config/niri/window-rules/focus.kdl"
 pull "$HOME/.config/niri/dms/binds.kdl"             "$DOTFILES/config/niri/dms/binds.kdl"
+
+# ─── fuzzel ───────────────────────────────────────────────────────────────────
+pull "$HOME/.config/fuzzel/project-picker.ini" "$DOTFILES/config/fuzzel/project-picker.ini"
 
 # ─── ghostty ──────────────────────────────────────────────────────────────────
 pull "$HOME/.config/ghostty/config.ghostty" "$DOTFILES/config/ghostty/config.ghostty"
