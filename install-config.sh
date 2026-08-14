@@ -28,19 +28,89 @@ section "Copying dotfiles"
 BACKUP_DIR="$USER_HOME/.config-backups/$(date +%Y%m%d-%H%M%S)"
 BACKED_UP_ANYTHING=false
 
+backup_existing() {
+    local dst="$1"
+    [ -e "$dst" ] || return 0
+    local rel="${dst#"$USER_HOME"/}"
+    local backup_dst="$BACKUP_DIR/$rel"
+    mkdir -p "$(dirname "$backup_dst")"
+    cp -a "$dst" "$backup_dst"
+    warn "Backed up existing: $dst → $backup_dst"
+    BACKED_UP_ANYTHING=true
+}
+
 copy() {
     local src="$1" dst="$2"
     mkdir -p "$(dirname "$dst")"
-    if [ -e "$dst" ]; then
-        local rel="${dst#"$USER_HOME"/}"
-        local backup_dst="$BACKUP_DIR/$rel"
-        mkdir -p "$(dirname "$backup_dst")"
-        cp -a "$dst" "$backup_dst"
-        warn "Backed up existing: $dst → $backup_dst"
-        BACKED_UP_ANYTHING=true
-    fi
+    backup_existing "$dst"
     cp "$src" "$dst"
     info "Copied $dst"
+}
+
+# For config files the *app* owns and rewrites as it gains features — DMS's
+# settings.json above all. Its live file grows keys and climbs a configVersion
+# with each release, while the copy in this repo is a snapshot from whenever
+# update.sh last ran. Copying ours flat over the top deletes every key our
+# snapshot has never heard of: on this machine that was 147 of them, including
+# the display profiles and the whole battery section.
+#
+# So merge rather than replace. Our value wins for every key we actually carry
+# (that's the point of installing), and anything only the live file has is left
+# where it is.
+#
+# configVersion is deliberately *not* max()'d — it comes from our file, i.e. the
+# older number. That makes DMS re-run its migrations over the merged result on
+# next load, which is what forward-migrates the stale-shaped values our snapshot
+# contributed (ours still carries the pre-v13 `*Pins` keys, which migration 13
+# moves out to cache.json). Re-running those migrations over already-current
+# keys is safe: each one is either guarded on a key that no longer exists or a
+# plain delete.
+#
+# Only top-level keys are merged. Nested structures like barConfigs are replaced
+# wholesale, which is right — the bar layout is exactly the thing being
+# installed — and DMS defaults any per-bar key our snapshot predates.
+merge_json() {
+    local src="$1" dst="$2"
+    mkdir -p "$(dirname "$dst")"
+
+    if [ ! -f "$dst" ]; then
+        cp "$src" "$dst"
+        info "Copied $dst (no existing file to merge with)"
+        return
+    fi
+
+    backup_existing "$dst"
+
+    # stderr is dropped so a malformed live file reports as the warning below
+    # rather than as a python traceback in the middle of the install output.
+    if python3 - "$src" "$dst" 2>/dev/null <<'PYEOF'
+import json, sys
+
+src, dst = sys.argv[1], sys.argv[2]
+
+with open(src) as f:
+    ours = json.load(f)
+with open(dst) as f:
+    live = json.load(f)
+
+merged = dict(live)
+merged.update(ours)
+
+with open(dst, "w") as f:
+    json.dump(merged, f, indent=2)
+
+kept = len(set(live) - set(ours))
+print(f"{len(ours)} key(s) applied, {kept} live-only key(s) preserved")
+PYEOF
+    then
+        info "Merged $dst"
+    else
+        # A live file that isn't valid JSON can't be merged into. It's already
+        # backed up, so replacing it is recoverable and beats leaving the
+        # machine with settings that were never installed.
+        warn "Could not merge $dst (unreadable JSON?) — replacing it instead"
+        cp "$src" "$dst"
+    fi
 }
 
 # shell
@@ -127,14 +197,23 @@ copy "$DOTFILES/config/ghostty/config.ghostty" "$USER_HOME/.config/ghostty/confi
 sed -i "s|^command = .*|command = $USER_HOME/.config/niri/tmux-niri-session.sh|" \
     "$USER_HOME/.config/ghostty/config.ghostty"
 
-# DankMaterialShell
-copy "$DOTFILES/config/DankMaterialShell/settings.json"        "$USER_HOME/.config/DankMaterialShell/settings.json"
+# DankMaterialShell — merged, not copied, so a re-install doesn't roll the live
+# settings back to whenever update.sh last ran. See merge_json above.
+merge_json "$DOTFILES/config/DankMaterialShell/settings.json"        "$USER_HOME/.config/DankMaterialShell/settings.json"
 sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json\"|" \
     "$USER_HOME/.config/DankMaterialShell/settings.json"
-copy "$DOTFILES/config/DankMaterialShell/plugin_settings.json" "$USER_HOME/.config/DankMaterialShell/plugin_settings.json"
+merge_json "$DOTFILES/config/DankMaterialShell/plugin_settings.json" "$USER_HOME/.config/DankMaterialShell/plugin_settings.json"
 copy "$DOTFILES/config/DankMaterialShell/firefox.css"          "$USER_HOME/.config/DankMaterialShell/firefox.css"
 copy "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
      "$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json"
+
+# Our own DMS bar plugin. Third-party plugins are git-cloned by install.sh and
+# left alone on re-runs; this one is versioned here, so it's copied every time
+# like any other dotfile.
+copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/plugin.json" \
+     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/plugin.json"
+copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
+     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml"
 
 # VS Code settings (extensions are not installed here — see install.sh)
 copy "$DOTFILES/config/Code/settings.json" "$USER_HOME/.config/Code/User/settings.json"
