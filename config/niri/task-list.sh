@@ -92,7 +92,7 @@ done
 # a second, narrower one. Falls back to the fuzzel script when DMS isn't
 # answering, so the row still does something on a bare niri session.
 if [ "$UUID" = "$ADD_SENTINEL" ]; then
-    if command -v dms >/dev/null && dms ipc call taskAdd open >/dev/null 2>&1; then
+    if command -v dms >/dev/null && dms ipc call taskBox open >/dev/null 2>&1; then
         exit 0
     fi
     exec "$(dirname "$(readlink -f "$0")")/task-add.sh"
@@ -107,8 +107,20 @@ ACTION=$(printf 'Edit\nDelete\nComplete\nSet active\n' | task_fuzzel \
 
 case "$ACTION" in
     Edit)
-        # --search pre-fills the input with the current description, so this is
-        # an edit box rather than a retype-it-all box.
+        # Same multi-line box as Mod+Alt+T, which matters more here than when
+        # adding: the descriptions you reach for the edit box to fix are the
+        # long ones, and those are exactly the ones a single fuzzel row showed
+        # you a fraction of.
+        #
+        # Only the uuid is passed — the box fetches the description itself, so
+        # no task text goes through `dms ipc call` argument quoting.
+        if command -v dms >/dev/null && dms ipc call taskBox edit "$UUID" >/dev/null 2>&1; then
+            exit 0
+        fi
+
+        # Fallback for a session without DMS. --search pre-fills the input with
+        # the current description, so this is an edit box rather than a
+        # retype-it-all box.
         NEW=$(printf '' | task_fuzzel \
             --lines=0 \
             --width="$WIDTH" \
@@ -119,11 +131,7 @@ case "$ACTION" in
         if [ -z "$NEW" ] || [ "$NEW" = "$DESCRIPTION" ]; then
             exit 0
         fi
-        # Quoted, unlike task-add.sh: this replaces the description outright, and
-        # a stray "due:" typed mid-edit should stay text rather than silently
-        # setting a date on a task you were only renaming.
-        task rc.confirmation=no rc.verbose=nothing "$UUID" modify -- "$NEW" >/dev/null
-        task_notify "Renamed: $NEW"
+        exec "$(dirname "$(readlink -f "$0")")/task-edit-text.sh" "$UUID" "$NEW"
         ;;
 
     Delete)

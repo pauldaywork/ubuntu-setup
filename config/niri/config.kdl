@@ -567,7 +567,7 @@ binds {
     // multi-line, which fuzzel can't be, and it lives in the shell process
     // that's already running, so there's nothing to launch. task-add.sh is
     // still installed as the one-line fallback if DMS isn't up.
-    Mod+Alt+T hotkey-overlay-title="Add Task" { spawn "dms" "ipc" "call" "taskAdd" "open"; }
+    Mod+Alt+T hotkey-overlay-title="Add Task" { spawn "dms" "ipc" "call" "taskBox" "open"; }
     Mod+Alt+L hotkey-overlay-title="Workspace Tasks" { spawn "~/.config/niri/task-list.sh"; }
 
     

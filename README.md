@@ -128,9 +128,11 @@ backup-os/
 │   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace, in the matching ~/Projects folder
 │   │   ├── wallpaper-sync.sh               # Forwards the DMS wallpaper choice to swww, which is what animates GIFs
 │   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
-│   │   ├── task-lib.sh                     # Shared workspace-name → taskwarrior-tag rule; sourced by the five below
-│   │   ├── task-tag.sh                     # Prints the focused workspace's tag; how the DMS modal asks the same question
-│   │   ├── task-add-text.sh                # Adds one task from a tag + description; shared by the modal and the fuzzel box
+│   │   ├── task-lib.sh                     # Shared workspace-name → taskwarrior-tag rule; sourced by the six below
+│   │   ├── task-tag.sh                     # Prints the focused workspace's tag; how the task box asks the same question
+│   │   ├── task-add-text.sh                # Adds one task from a tag + description (word-split, so due:/priority: work)
+│   │   ├── task-get-text.sh                # Prints one task's description by uuid; pre-fills the edit box
+│   │   ├── task-edit-text.sh               # Replaces one task's description by uuid (quoted, so a due: stays text)
 │   │   ├── task-add.sh                     # One-line fuzzel add box; the fallback for when DMS isn't running
 │   │   ├── task-list.sh                    # Lists this workspace's tasks; edit/delete/complete/set-active (Mod+Alt+L)
 │   │   ├── task-active.sh                  # Prints the workspace's active task; read by the Active Task bar widget
@@ -147,7 +149,7 @@ backup-os/
 │   │   ├── settings.json
 │   │   ├── plugin_settings.json
 │   │   ├── firefox.css
-│   │   ├── plugins/activetask/             # Our own DMS plugin: the active-task bar widget + the Mod+Alt+T add modal
+│   │   ├── plugins/activetask/             # Our own DMS plugin: the active-task bar widget + the add/edit task box
 │   │   └── themes/peaceAndQuiet/theme.json
 │   ├── systemd/user/
 │   │   ├── swww-daemon.service             # Wallpaper daemon; restarts wallpaper-sync on start
@@ -216,17 +218,23 @@ Taskwarrior, scoped to whatever workspace you're on. The workspace name is the t
 | Shortcut | Does |
 | --- | --- |
 | **`Mod+Alt+T`** | Type a task into a multi-line box; it's added tagged with the current workspace. `Ctrl+Enter` adds, `Esc` cancels |
-| **`Mod+Alt+L`** | List this workspace's pending tasks, then edit / delete / complete / set-active the one you pick — or pick **＋ Add a task…**, the last row, which hands over to the add box |
+| **`Mod+Alt+L`** | List this workspace's pending tasks, then edit / delete / complete / set-active the one you pick — or pick **＋ Add a task…**, the last row, which hands over to the add box. **Edit** opens the same multi-line box, pre-filled |
 
 The bottom bar carries an **Active Task** widget showing the started task for the focused workspace, and nothing at all when there isn't one. It updates on niri's event stream, so switching workspace changes it immediately.
 
-### Why the add box isn't fuzzel
+### Why the task box isn't fuzzel
 
 Everything else here is a fuzzel picker, but fuzzel has no multi-line mode — its input is one line, and the popup can't grow much past 52 characters before it runs out of a 1080p screen (see the width cap in `task-list.sh`). So a long task was typed half-blind.
 
-Every obvious alternative meant launching something — a terminal running an editor, a GTK dialog — and launching was the slow part. `Mod+Alt+T` instead sends `dms ipc call taskAdd open` to DMS, which is already running, and a QML modal opens in that process. Nothing starts.
+Every obvious alternative meant launching something — a terminal running an editor, a GTK dialog — and launching was the slow part. `Mod+Alt+T` instead sends `dms ipc call taskBox open` to DMS, which is already running, and a QML modal opens in that process. Nothing starts.
 
-It's a `daemon` surface on our own `activetask` plugin, which is now a [composite plugin](https://github.com/AvengeMedia/DankMaterialShell/tree/master/quickshell/PLUGINS): one plugin, two surfaces — the bar widget (instantiated per bar, per screen) and the daemon (instantiated exactly once, which is what makes it the right home for an `IpcHandler` and a single shared window). `task-add.sh` is still installed as the one-line fuzzel fallback for a session where DMS isn't up, and `Mod+Alt+L`'s add row falls back to it the same way.
+It's a `daemon` surface on our own `activetask` plugin, which is now a [composite plugin](https://github.com/AvengeMedia/DankMaterialShell/tree/master/quickshell/PLUGINS): one plugin, two surfaces — the bar widget (instantiated per bar, per screen) and the daemon (instantiated exactly once, which is what makes it the right home for an `IpcHandler` and a single shared window). `task-add.sh` is still installed as the one-line fuzzel fallback for a session where DMS isn't up, and `Mod+Alt+L`'s add and edit rows fall back to it the same way.
+
+One window serves both jobs — `dms ipc call taskBox edit <uuid>` opens it pre-filled — because they differ only in wording and in what runs on submit, and two near-identical modals would drift the moment one was touched. The box knows nothing about taskwarrior: it reports a mode and some text, and the daemon picks the script.
+
+Editing is where the extra room pays off most. The descriptions you reach for the edit box to fix are the long ones, which are exactly the ones a single fuzzel row showed you a fraction of.
+
+**Only a uuid ever crosses the IPC boundary.** The description to pre-fill an edit with is fetched by `task-get-text.sh`, inside the daemon, rather than passed in — so nothing depends on how `dms ipc call` quotes an argument containing spaces or punctuation. A uuid is hex and dashes; there's nothing in it for an argument parser to misread.
 
 The box wraps while you type but the description that comes out of it is **one line**. Taskwarrior will store a newline — it does, and `task list` even wraps it over two rows — but everything downstream reads it back on one: the `@tsv` in `task-list.sh` escapes the newline, so the picker would show a literal `\n` mid-task, and the bar widget has the same problem. The extra room is for seeing what you type, not for storing shape, so whitespace collapses on submit.
 
@@ -248,7 +256,7 @@ The rule lives once, in `config/niri/task-lib.sh`, which the other task scripts 
 
 Both the modal and the fuzzel fallback hand a tag and a description to `task-add-text.sh`, so that splitting is written once and the two paths can't drift.
 
-Editing a description from `Mod+Alt+L` deliberately does the opposite — it's quoted, so a `due:` typed mid-rename stays text rather than silently putting a date on a task you were only retitling.
+Editing a description from `Mod+Alt+L` deliberately does the opposite — `task-edit-text.sh` quotes it, so a `due:` typed mid-rename stays text rather than silently putting a date on a task you were only retitling. An edit that changes nothing is dropped rather than written back over itself.
 
 ### Active tasks
 
@@ -328,7 +336,7 @@ Build-only packages are tagged separately as `APT_BUILD_PACKAGES` (`liblz4-dev`,
 When you change any config on your current machine and want to save it to the repo, run:
 
 ```bash
-cd ~/Documents/Code/backup-os
+cd ~/Projects/ubuntu-setup
 bash update.sh
 ```
 

@@ -1,11 +1,16 @@
-// Multi-line box for typing a new task, tagged with the focused workspace.
+// Multi-line box for writing a task description — a new one tagged with the
+// focused workspace, or an existing one being renamed.
 //
-// This exists because fuzzel can't do it. The fuzzel add box (task-add.sh) is a
+// This exists because fuzzel can't do it. The fuzzel boxes it replaced were a
 // single line roughly 48 characters wide, and the popup can't grow much past 52
 // before it runs out of screen — so a long task was typed half-blind. The
 // obvious fixes all meant launching something (a terminal, a GTK dialog), and
 // launching anything was the part that felt slow. Living inside the shell
 // process that's already running costs no launch at all.
+//
+// One window serves both jobs. They differ only in wording and in what happens
+// on submit, and two near-identical modals would drift the moment one of them
+// was touched.
 //
 // FloatingWindow rather than a layer shell surface: it's what
 // Modals/WorkspaceRenameModal.qml uses for the same job, and a fixed min == max
@@ -20,14 +25,26 @@ import qs.Widgets
 FloatingWindow {
     id: root
 
-    // Workspace tag the task will get, without the leading "+". The daemon
+    // "add" or "edit". The daemon reads this back on submit to decide which
+    // script runs, so the modal never has to know about taskwarrior itself.
+    property string mode: "add"
+    readonly property bool editing: mode === "edit"
+
+    // Workspace tag a new task will get, without the leading "+". The daemon
     // resolves it before opening — an empty one never gets this far.
     property string tag: ""
 
+    // Which task is being renamed, in edit mode. Unused when adding.
+    property string taskUuid: ""
+
+    // What the box opened with, so an edit that changes nothing can be dropped
+    // rather than writing the description back over itself.
+    property string originalText: ""
+
     signal submitted(string description)
 
-    objectName: "taskAddModal"
-    title: "Add Task"
+    objectName: "taskBoxModal"
+    title: root.editing ? "Edit Task" : "Add Task"
     // Wide enough for a sentence and tall enough for about five lines. Fixed,
     // because a resizable window here would be a decision to make every time
     // rather than a box that's always the same shape.
@@ -39,10 +56,28 @@ FloatingWindow {
     onClosed: hide()
 
     function show(workspaceTag) {
+        mode = "add";
         tag = workspaceTag;
+        taskUuid = "";
+        originalText = "";
         input.text = "";
         visible = true;
         Qt.callLater(() => input.forceActiveFocus());
+    }
+
+    function showEdit(uuid, description) {
+        mode = "edit";
+        taskUuid = uuid;
+        originalText = description;
+        input.text = description;
+        // Cursor to the end rather than selecting the lot: this is an edit box,
+        // and a select-all would mean the first keystroke silently wipes a
+        // description you only meant to append a word to.
+        Qt.callLater(() => {
+            input.forceActiveFocus();
+            input.cursorPosition = input.length;
+        });
+        visible = true;
     }
 
     function hide() {
@@ -60,8 +95,11 @@ FloatingWindow {
     function submitAndClose() {
         const description = input.text.replace(/\s+/g, " ").trim();
         hide();
-        if (description.length > 0)
-            root.submitted(description);
+        if (description.length === 0)
+            return;
+        if (root.editing && description === root.originalText)
+            return;
+        root.submitted(description);
     }
 
     onVisibleChanged: {
@@ -101,10 +139,12 @@ FloatingWindow {
 
                 StyledText {
                     id: headerText
-                    // The tag is the whole point of the box — it's what scopes
-                    // the task to the project you're looking at — so it's in
-                    // the header rather than left implicit.
-                    text: "New task in +" + root.tag
+                    // When adding, the tag is the whole point of the box — it's
+                    // what scopes the task to the project you're looking at —
+                    // so it's in the header rather than left implicit. When
+                    // editing it's already decided, and repeating it would only
+                    // suggest the box could change it.
+                    text: root.editing ? "Edit task" : "New task in +" + root.tag
                     font.pixelSize: Theme.fontSizeMedium
                     color: Theme.surfaceTextMedium
                     anchors.verticalCenter: parent.verticalCenter
@@ -156,7 +196,7 @@ FloatingWindow {
                         StyledText {
                             anchors.left: parent.left
                             anchors.top: parent.top
-                            text: "New task…"
+                            text: root.editing ? "Task description…" : "New task…"
                             font.pixelSize: Theme.fontSizeMedium
                             color: Theme.surfaceTextMedium
                             visible: input.text.length === 0
@@ -193,7 +233,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     // Ctrl+Enter isn't guessable the way Enter was in the
                     // fuzzel box, so the box says so.
-                    text: "Ctrl+Enter to add · Esc to cancel"
+                    text: (root.editing ? "Ctrl+Enter to save" : "Ctrl+Enter to add") + " · Esc to cancel"
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceTextMedium
                 }
@@ -238,7 +278,7 @@ FloatingWindow {
                         StyledText {
                             id: addText
                             anchors.centerIn: parent
-                            text: "Add"
+                            text: root.editing ? "Save" : "Add"
                             font.pixelSize: Theme.fontSizeMedium
                             color: Theme.background
                             font.weight: Font.Medium

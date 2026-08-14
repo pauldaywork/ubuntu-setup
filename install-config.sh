@@ -246,6 +246,10 @@ copy "$DOTFILES/config/niri/task-tag.sh"                  "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/task-tag.sh"
 copy "$DOTFILES/config/niri/task-add-text.sh"             "$USER_HOME/.config/niri/task-add-text.sh"
 chmod +x "$USER_HOME/.config/niri/task-add-text.sh"
+copy "$DOTFILES/config/niri/task-get-text.sh"             "$USER_HOME/.config/niri/task-get-text.sh"
+chmod +x "$USER_HOME/.config/niri/task-get-text.sh"
+copy "$DOTFILES/config/niri/task-edit-text.sh"            "$USER_HOME/.config/niri/task-edit-text.sh"
+chmod +x "$USER_HOME/.config/niri/task-edit-text.sh"
 copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
 copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
 
@@ -323,17 +327,24 @@ copy "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
      "$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json"
 
 # Our own DMS plugin: a bar widget showing the active task, plus a daemon
-# holding the add-task modal that Mod+Alt+T opens over IPC. Third-party plugins
-# are git-cloned by install.sh and left alone on re-runs; this one is versioned
-# here, so it's copied every time like any other dotfile.
+# holding the task box that Mod+Alt+T and the list's Edit action open over IPC.
+# Third-party plugins are git-cloned by install.sh and left alone on re-runs;
+# this one is versioned here, so it's copied every time like any other dotfile.
 copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/plugin.json" \
      "$USER_HOME/.config/DankMaterialShell/plugins/activetask/plugin.json"
 copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
      "$USER_HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml"
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml"
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskAddModal.qml" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddModal.qml"
+copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml" \
+     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml"
+copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml" \
+     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml"
+
+# The rename from TaskAdd* leaves the old pair behind on any machine installed
+# before it. They're inert — plugin.json names its components, so nothing loads
+# a file it doesn't list — but a folder holding two copies of the modal is a
+# trap for whoever next opens one to edit it.
+rm -f "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml" \
+      "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddModal.qml"
 
 # VS Code settings (extensions are not installed here — see install.sh)
 copy "$DOTFILES/config/Code/settings.json" "$USER_HOME/.config/Code/User/settings.json"

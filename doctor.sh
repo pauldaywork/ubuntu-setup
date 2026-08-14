@@ -161,7 +161,8 @@ fi
 
 # The workspace task shortcuts and the Active Task widget share task-lib.sh, so
 # a missing file here breaks Mod+Alt+T, Mod+Alt+L and the bar pill together.
-for f in task-lib.sh task-tag.sh task-add-text.sh task-add.sh task-list.sh task-active.sh; do
+for f in task-lib.sh task-tag.sh task-add-text.sh task-get-text.sh task-edit-text.sh \
+         task-add.sh task-list.sh task-active.sh; do
     if [ -f "$HOME/.config/niri/$f" ]; then
         ok "Workspace task script present: $f"
     else
@@ -171,10 +172,10 @@ for f in task-lib.sh task-tag.sh task-add-text.sh task-add.sh task-list.sh task-
 done
 
 # Both surfaces of the activetask plugin: the bar pill and the daemon holding
-# the Mod+Alt+T modal. The daemon files missing is the quieter failure — the bar
-# still works, the shortcut just does nothing.
+# the task box. The daemon files missing is the quieter failure — the bar still
+# works, the shortcut just does nothing.
 ACTIVETASK_DIR="$HOME/.config/DankMaterialShell/plugins/activetask"
-for f in plugin.json ActiveTaskWidget.qml TaskAddDaemon.qml TaskAddModal.qml; do
+for f in plugin.json ActiveTaskWidget.qml TaskBoxDaemon.qml TaskBoxModal.qml; do
     if [ -f "$ACTIVETASK_DIR/$f" ]; then
         ok "DMS activetask plugin file present: $f"
     else
@@ -186,13 +187,22 @@ done
 # The manifest is only parsed at DMS startup (PluginService.resyncAll skips
 # manifests it already knows), so files on disk aren't proof the daemon is live.
 if command -v dms >/dev/null; then
-    if dms ipc call taskAdd close >/dev/null 2>&1; then
-        ok "Add-task modal reachable (dms ipc call taskAdd)"
+    if dms ipc call taskBox close >/dev/null 2>&1; then
+        ok "Task box reachable (dms ipc call taskBox)"
     else
-        issue "DMS isn't answering on the taskAdd IPC target — Mod+Alt+T will do nothing"
+        issue "DMS isn't answering on the taskBox IPC target — Mod+Alt+T and the list's Edit action will do nothing"
         note "  Restart the shell with: systemctl --user restart dms.service"
     fi
 fi
+
+# Left behind by the TaskAdd* → TaskBox* rename. Harmless, but two copies of
+# the modal in one folder is a trap for whoever edits the wrong one.
+for f in TaskAddDaemon.qml TaskAddModal.qml; do
+    if [ -f "$ACTIVETASK_DIR/$f" ]; then
+        issue "Stale $f in $ACTIVETASK_DIR — superseded by the TaskBox* pair"
+        note "  Remove it with: bash install-config.sh"
+    fi
+done
 
 # Wallpapers. Three things have to agree or the desktop goes black: swww has to
 # be installed and running, DMS's own wallpaper layer has to stay disabled (it
