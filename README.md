@@ -97,6 +97,70 @@ If the machine has an NVIDIA GPU, edit `extra.sh` and uncomment the NVIDIA lines
 
 After running, re-download any LM Studio models you need (not included in this repo) and log into Steam.
 
+
+
+---
+
+## Repo structure
+
+```
+backup-os/
+├── install.sh                              # Run on a new machine
+├── install-config.sh                       # Config files + wallpapers only (no app installs)
+├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
+├── update.sh                               # Run on current machine to snapshot changes
+├── doctor.sh                               # Diagnose drift on an existing, already-set-up machine
+├── lib/
+│   ├── common.sh                           # Shared helpers: info/warn/ok/issue, pkg_installed, snap_install
+│   └── manifest.sh                         # What gets installed: apt + snap lists, version pins
+├── home/
+│   ├── .bashrc
+│   ├── .profile
+│   ├── .taskrc
+│   └── .tmux.conf
+├── config/
+│   ├── niri/
+│   │   ├── config.kdl
+│   │   ├── create_named_workspace.sh       # GUI prompt to name a new workspace (zenity)
+│   │   ├── rename_workspace.sh             # GUI prompt to rename the focused workspace (zenity)
+│   │   ├── open_project_workspace.sh       # Picks (or creates) a ~/Projects folder, names a workspace after it, opens a terminal there (Mod+Alt+P)
+│   │   ├── default_workspace_name.sh       # Names workspace 1 "general" on startup if unnamed
+│   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace, in the matching ~/Projects folder
+│   │   ├── wallpaper-sync.sh               # Forwards the DMS wallpaper choice to swww, which is what animates GIFs
+│   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
+│   │   ├── task-lib.sh                     # Shared workspace-name → taskwarrior-tag rule; sourced by the three below
+│   │   ├── task-add.sh                     # Types a task tagged with the current workspace (Mod+Alt+T)
+│   │   ├── task-list.sh                    # Lists this workspace's tasks; edit/delete/complete/set-active (Mod+Alt+L)
+│   │   ├── task-active.sh                  # Prints the workspace's active task; read by the Active Task bar widget
+│   │   ├── window-rules/
+│   │   │   ├── normal.kdl                  # Fully opaque windows
+│   │   │   └── focus.kdl                   # Unfocused windows fade out
+│   │   └── dms/
+│   │       └── laptop.kdl                  # Installed on laptops (auto-detected; --laptop/--desktop override)
+│   ├── fuzzel/
+│   │   └── project-picker.ini              # Minimal picker theme shared by the project and task pickers
+│   ├── ghostty/
+│   │   └── config.ghostty
+│   ├── DankMaterialShell/
+│   │   ├── settings.json
+│   │   ├── plugin_settings.json
+│   │   ├── firefox.css
+│   │   ├── plugins/activetask/             # Our own DMS bar widget: the workspace's active task
+│   │   └── themes/peaceAndQuiet/theme.json
+│   ├── systemd/user/
+│   │   ├── swww-daemon.service             # Wallpaper daemon; restarts wallpaper-sync on start
+│   │   └── wallpaper-sync.service          # Runs wallpaper-sync.sh for the session
+│   └── Code/
+│       ├── settings.json
+│       └── extensions.txt
+└── wallpapers/
+    ├── active                              # Filename of the wallpaper DMS had selected at the last update.sh run
+    ├── 205.png
+    └── *.gif                               # Animated; rendered by swww, not DMS
+```
+
+
+
 ---
 
 ## Niri window-rules / layout profiles
@@ -345,63 +409,3 @@ What it checks:
 | Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
 
 The wallpaper row is the one worth running after a reboot: every other check can be green while the screen shows a stale image, because swww restores its own cache when it starts.
-
----
-
-## Repo structure
-
-```
-backup-os/
-├── install.sh                              # Run on a new machine
-├── install-config.sh                       # Config files + wallpapers only (no app installs)
-├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
-├── update.sh                               # Run on current machine to snapshot changes
-├── doctor.sh                               # Diagnose drift on an existing, already-set-up machine
-├── lib/
-│   ├── common.sh                           # Shared helpers: info/warn/ok/issue, pkg_installed, snap_install
-│   └── manifest.sh                         # What gets installed: apt + snap lists, version pins
-├── home/
-│   ├── .bashrc
-│   ├── .profile
-│   ├── .taskrc
-│   └── .tmux.conf
-├── config/
-│   ├── niri/
-│   │   ├── config.kdl
-│   │   ├── create_named_workspace.sh       # GUI prompt to name a new workspace (zenity)
-│   │   ├── rename_workspace.sh             # GUI prompt to rename the focused workspace (zenity)
-│   │   ├── open_project_workspace.sh       # Picks (or creates) a ~/Projects folder, names a workspace after it, opens a terminal there (Mod+Alt+P)
-│   │   ├── default_workspace_name.sh       # Names workspace 1 "general" on startup if unnamed
-│   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace, in the matching ~/Projects folder
-│   │   ├── wallpaper-sync.sh               # Forwards the DMS wallpaper choice to swww, which is what animates GIFs
-│   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
-│   │   ├── task-lib.sh                     # Shared workspace-name → taskwarrior-tag rule; sourced by the three below
-│   │   ├── task-add.sh                     # Types a task tagged with the current workspace (Mod+Alt+T)
-│   │   ├── task-list.sh                    # Lists this workspace's tasks; edit/delete/complete/set-active (Mod+Alt+L)
-│   │   ├── task-active.sh                  # Prints the workspace's active task; read by the Active Task bar widget
-│   │   ├── window-rules/
-│   │   │   ├── normal.kdl                  # Fully opaque windows
-│   │   │   └── focus.kdl                   # Unfocused windows fade out
-│   │   └── dms/
-│   │       └── laptop.kdl                  # Installed on laptops (auto-detected; --laptop/--desktop override)
-│   ├── fuzzel/
-│   │   └── project-picker.ini              # Minimal picker theme shared by the project and task pickers
-│   ├── ghostty/
-│   │   └── config.ghostty
-│   ├── DankMaterialShell/
-│   │   ├── settings.json
-│   │   ├── plugin_settings.json
-│   │   ├── firefox.css
-│   │   ├── plugins/activetask/             # Our own DMS bar widget: the workspace's active task
-│   │   └── themes/peaceAndQuiet/theme.json
-│   ├── systemd/user/
-│   │   ├── swww-daemon.service             # Wallpaper daemon; restarts wallpaper-sync on start
-│   │   └── wallpaper-sync.service          # Runs wallpaper-sync.sh for the session
-│   └── Code/
-│       ├── settings.json
-│       └── extensions.txt
-└── wallpapers/
-    ├── active                              # Filename of the wallpaper DMS had selected at the last update.sh run
-    ├── 205.png
-    └── *.gif                               # Animated; rendered by swww, not DMS
-```
