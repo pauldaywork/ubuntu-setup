@@ -214,6 +214,35 @@ for unit in swww-daemon wallpaper-sync; do
     fi
 done
 
+# The end-to-end check: what swww has on screen should be what DMS thinks is
+# selected. Those two diverging is the whole failure mode this setup guards
+# against — a paint missed while the daemon was down leaves the screen on swww's
+# cached image forever — and nothing else here would catch it. Skipped when
+# per-monitor wallpapers are on, since then there's no single right answer.
+DMS_SESSION="$HOME/.local/state/DankMaterialShell/session.json"
+if [ -f "$DMS_SESSION" ] && command -v swww &>/dev/null \
+   && systemctl --user is-active --quiet swww-daemon.service 2>/dev/null; then
+    WANTED=$(python3 -c "
+import json, sys
+d = json.load(open('$DMS_SESSION'))
+print('' if d.get('perMonitorWallpaper') else d.get('wallpaperPath', ''))" 2>/dev/null || true)
+    ON_SCREEN=$(swww query 2>/dev/null | sed -n 's/.*currently displaying: image: //p' | sort -u)
+
+    if [ -z "$WANTED" ]; then
+        :   # per-monitor wallpapers, or nothing selected — nothing to compare
+    elif [ -z "$ON_SCREEN" ]; then
+        issue "swww isn't displaying an image — the desktop background is blank"
+        note "  Repaint with: systemctl --user restart swww-daemon.service"
+    elif [ "$ON_SCREEN" = "$WANTED" ]; then
+        ok "Wallpaper on screen matches DMS's selection ($(basename "$WANTED"))"
+    else
+        issue "Wallpaper on screen isn't the one DMS has selected"
+        note "  DMS wants:  $WANTED"
+        note "  On screen:  $ON_SCREEN"
+        note "  Repaint with: systemctl --user restart swww-daemon.service"
+    fi
+fi
+
 DMS_SETTINGS="$HOME/.config/DankMaterialShell/settings.json"
 if [ -f "$DMS_SETTINGS" ]; then
     if python3 -c "import json,sys; d=json.load(open('$DMS_SETTINGS')); sys.exit(0 if d.get('screenPreferences',{}).get('wallpaper') == [] else 1)" 2>/dev/null; then
