@@ -45,6 +45,13 @@ backup_existing() {
 
 copy() {
     local src="$1" dst="$2"
+    # A file that already matches needs neither writing nor backing up. Without
+    # this, re-running the installer on an in-sync machine still archived a
+    # complete copy of every config it touched — which is how ~/.config-backups
+    # grew to nine directories of near-identical files.
+    if cmp -s "$src" "$dst"; then
+        return 0
+    fi
     mkdir -p "$(dirname "$dst")"
     backup_existing "$dst"
     cp "$src" "$dst"
@@ -83,14 +90,19 @@ merge_json() {
         return
     fi
 
-    backup_existing "$dst"
-
+    # Merged into a temp file first, so a merge that changes nothing — the usual
+    # case on a machine already in sync — neither rewrites the live file nor
+    # leaves a backup copy of it behind.
+    #
     # stderr is dropped so a malformed live file reports as the warning below
     # rather than as a python traceback in the middle of the install output.
-    if python3 - "$src" "$dst" 2>/dev/null <<'PYEOF'
+    local merged_tmp merge_summary
+    merged_tmp=$(mktemp)
+
+    if merge_summary=$(python3 - "$src" "$dst" "$merged_tmp" 2>/dev/null <<'PYEOF'
 import json, sys
 
-src, dst = sys.argv[1], sys.argv[2]
+src, dst, out = sys.argv[1], sys.argv[2], sys.argv[3]
 
 with open(src) as f:
     ours = json.load(f)
@@ -100,21 +112,30 @@ with open(dst) as f:
 merged = dict(live)
 merged.update(ours)
 
-with open(dst, "w") as f:
+with open(out, "w") as f:
     json.dump(merged, f, indent=2)
 
 kept = len(set(live) - set(ours))
 print(f"{len(ours)} key(s) applied, {kept} live-only key(s) preserved")
 PYEOF
-    then
-        info "Merged $dst"
+    ); then
+        if cmp -s "$merged_tmp" "$dst"; then
+            info "Unchanged $dst — $merge_summary"
+        else
+            backup_existing "$dst"
+            cat "$merged_tmp" > "$dst"
+            info "Merged $dst — $merge_summary"
+        fi
     else
-        # A live file that isn't valid JSON can't be merged into. It's already
-        # backed up, so replacing it is recoverable and beats leaving the
-        # machine with settings that were never installed.
+        # A live file that isn't valid JSON can't be merged into. Backing it up
+        # first makes replacing it recoverable, which beats leaving the machine
+        # with settings that were never installed.
         warn "Could not merge $dst (unreadable JSON?) — replacing it instead"
+        backup_existing "$dst"
         cp "$src" "$dst"
     fi
+
+    rm -f "$merged_tmp"
 }
 
 # shell
@@ -127,8 +148,76 @@ copy "$DOTFILES/home/.taskrc" "$USER_HOME/.taskrc"
 # tmux
 copy "$DOTFILES/home/.tmux.conf" "$USER_HOME/.tmux.conf"
 
+# Laptop-specific niri config (display on/off binds, vertical workspace binds).
+#
+# This used to hang entirely on remembering `--laptop` every single time. The
+# copy above replaces config.kdl with the repo's, which never carries the
+# include line, so one re-run without the flag silently deleted those binds —
+# no error, nothing to notice until you reached for a shortcut that had gone.
+#
+# So the machine decides for itself, and the decision is remembered the way the
+# window-rules profile above already is. The flags stay as an override, and
+# --desktop is how you undo a wrong guess.
+# The record holds "laptop" or "desktop" rather than existing/not existing, so
+# that an explicit --desktop on laptop hardware sticks too. A bare marker file
+# would be re-detected away on the next flagless run, which is the same "the
+# decision wasn't remembered" bug in the other direction.
+mkdir -p "$USER_HOME/.config/niri"
+MACHINE_TYPE_FILE="$USER_HOME/.config/niri/.machine-type"
+
+# DMI chassis types: 8 portable, 9 laptop, 10 notebook, 11 hand held,
+# 14 sub-notebook, 30 tablet, 31 convertible, 32 detachable. Some machines
+# report something useless there, so a battery is the fallback tell — same
+# read-sysfs-directly approach install.sh uses to spot an NVIDIA GPU.
+is_laptop_hardware() {
+    local chassis
+    if [ -r /sys/class/dmi/id/chassis_type ]; then
+        read -r chassis < /sys/class/dmi/id/chassis_type
+        case "$chassis" in
+            8|9|10|11|14|30|31|32) return 0 ;;
+        esac
+    fi
+    compgen -G "/sys/class/power_supply/BAT*" > /dev/null
+}
+
+RECORDED_TYPE=""
+[ -f "$MACHINE_TYPE_FILE" ] && RECORDED_TYPE="$(head -n1 "$MACHINE_TYPE_FILE")"
+
+if [ "$DESKTOP" = true ]; then
+    MACHINE_TYPE="desktop"; MACHINE_REASON="--desktop given"
+elif [ "$LAPTOP" = true ]; then
+    MACHINE_TYPE="laptop";  MACHINE_REASON="--laptop given"
+elif [ "$RECORDED_TYPE" = "laptop" ] || [ "$RECORDED_TYPE" = "desktop" ]; then
+    MACHINE_TYPE="$RECORDED_TYPE"; MACHINE_REASON="remembered from a previous install"
+elif is_laptop_hardware; then
+    MACHINE_TYPE="laptop";  MACHINE_REASON="detected from chassis type/battery"
+else
+    MACHINE_TYPE="desktop"; MACHINE_REASON="no laptop hardware detected"
+fi
+
+echo "$MACHINE_TYPE" > "$MACHINE_TYPE_FILE"
+
+if [ "$MACHINE_TYPE" = "laptop" ]; then
+    info "Laptop-specific niri config: on ($MACHINE_REASON)"
+    copy "$DOTFILES/config/niri/dms/laptop.kdl" "$USER_HOME/.config/niri/dms/laptop.kdl"
+else
+    info "Laptop-specific niri config: off ($MACHINE_REASON)"
+fi
+
+
 # niri
-copy "$DOTFILES/config/niri/config.kdl"                   "$USER_HOME/.config/niri/config.kdl"
+# config.kdl is assembled before being installed — the repo's copy plus the
+# laptop include when this is a laptop — so copy() can compare the finished
+# article and skip a file that already matches. Appending after copying meant
+# the live file could never equal the repo's, so every run rewrote it and
+# archived the old one, which is most of how ~/.config-backups filled up.
+NIRI_CONFIG_TMP=$(mktemp)
+cat "$DOTFILES/config/niri/config.kdl" > "$NIRI_CONFIG_TMP"
+if [ "$MACHINE_TYPE" = "laptop" ]; then
+    printf '\ninclude "dms/laptop.kdl"\n' >> "$NIRI_CONFIG_TMP"
+fi
+copy "$NIRI_CONFIG_TMP" "$USER_HOME/.config/niri/config.kdl"
+rm -f "$NIRI_CONFIG_TMP"
 copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/niri/create_named_workspace.sh"
 chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
 copy "$DOTFILES/config/niri/rename_workspace.sh"          "$USER_HOME/.config/niri/rename_workspace.sh"
@@ -186,62 +275,6 @@ if [ ! -e "$USER_HOME/.config/niri/dms/binds.kdl" ]; then
     mkdir -p "$USER_HOME/.config/niri/dms"
     printf 'binds {\n\n}\n' > "$USER_HOME/.config/niri/dms/binds.kdl"
     info "Seeded empty $USER_HOME/.config/niri/dms/binds.kdl"
-fi
-
-# Laptop-specific niri config (display on/off binds, vertical workspace binds).
-#
-# This used to hang entirely on remembering `--laptop` every single time. The
-# copy above replaces config.kdl with the repo's, which never carries the
-# include line, so one re-run without the flag silently deleted those binds —
-# no error, nothing to notice until you reached for a shortcut that had gone.
-#
-# So the machine decides for itself, and the decision is remembered the way the
-# window-rules profile above already is. The flags stay as an override, and
-# --desktop is how you undo a wrong guess.
-# The record holds "laptop" or "desktop" rather than existing/not existing, so
-# that an explicit --desktop on laptop hardware sticks too. A bare marker file
-# would be re-detected away on the next flagless run, which is the same "the
-# decision wasn't remembered" bug in the other direction.
-MACHINE_TYPE_FILE="$USER_HOME/.config/niri/.machine-type"
-
-# DMI chassis types: 8 portable, 9 laptop, 10 notebook, 11 hand held,
-# 14 sub-notebook, 30 tablet, 31 convertible, 32 detachable. Some machines
-# report something useless there, so a battery is the fallback tell — same
-# read-sysfs-directly approach install.sh uses to spot an NVIDIA GPU.
-is_laptop_hardware() {
-    local chassis
-    if [ -r /sys/class/dmi/id/chassis_type ]; then
-        read -r chassis < /sys/class/dmi/id/chassis_type
-        case "$chassis" in
-            8|9|10|11|14|30|31|32) return 0 ;;
-        esac
-    fi
-    compgen -G "/sys/class/power_supply/BAT*" > /dev/null
-}
-
-RECORDED_TYPE=""
-[ -f "$MACHINE_TYPE_FILE" ] && RECORDED_TYPE="$(head -n1 "$MACHINE_TYPE_FILE")"
-
-if [ "$DESKTOP" = true ]; then
-    MACHINE_TYPE="desktop"; MACHINE_REASON="--desktop given"
-elif [ "$LAPTOP" = true ]; then
-    MACHINE_TYPE="laptop";  MACHINE_REASON="--laptop given"
-elif [ "$RECORDED_TYPE" = "laptop" ] || [ "$RECORDED_TYPE" = "desktop" ]; then
-    MACHINE_TYPE="$RECORDED_TYPE"; MACHINE_REASON="remembered from a previous install"
-elif is_laptop_hardware; then
-    MACHINE_TYPE="laptop";  MACHINE_REASON="detected from chassis type/battery"
-else
-    MACHINE_TYPE="desktop"; MACHINE_REASON="no laptop hardware detected"
-fi
-
-echo "$MACHINE_TYPE" > "$MACHINE_TYPE_FILE"
-
-if [ "$MACHINE_TYPE" = "laptop" ]; then
-    info "Applying laptop-specific niri config ($MACHINE_REASON)"
-    copy "$DOTFILES/config/niri/dms/laptop.kdl" "$USER_HOME/.config/niri/dms/laptop.kdl"
-    printf '\ninclude "dms/laptop.kdl"\n' >> "$USER_HOME/.config/niri/config.kdl"
-else
-    info "Skipping laptop-specific niri config ($MACHINE_REASON)"
 fi
 
 # systemd user units for the wallpaper pair. They're units rather than niri
@@ -316,19 +349,17 @@ section "Setting up wallpapers"
 WALLPAPER_DIR="$USER_HOME/Documents/Wallpapers"
 mkdir -p "$WALLPAPER_DIR"
 
-# A same-named file that differs is stale, not "already installed" — an edited
-# or truncated copy, or one this machine picked up before the repo's version
-# changed — so it gets replaced with the repo's, via copy() so the old one is
-# backed up like any other config. Wallpapers this machine has that the repo
-# doesn't are left alone; installing is not the same as pruning.
+# copy() compares before writing, so a same-named file that *differs* is treated
+# as stale — an edited or truncated copy, or one from before the repo's version
+# changed — and gets replaced, with the old one backed up like any other config.
+# Wallpapers this machine has that the repo doesn't are left alone; installing is
+# not the same as pruning.
 for wall in "$DOTFILES/wallpapers"/*; do
     [ -f "$wall" ] || continue
     name="$(basename "$wall")"
     # `active` is our own bookkeeping, not a wallpaper.
     [ "$name" = "active" ] && continue
-    if ! cmp -s "$wall" "$WALLPAPER_DIR/$name"; then
-        copy "$wall" "$WALLPAPER_DIR/$name"
-    fi
+    copy "$wall" "$WALLPAPER_DIR/$name"
 done
 
 # Which one to select on a fresh machine. update.sh rewrites this file from
@@ -396,9 +427,33 @@ PYEOF
     esac
 fi
 
+# ─── Prune old backups ────────────────────────────────────────────────────────
+# Backups are only worth keeping while they're plausibly the version you want
+# back. Nothing ever deleted them before, so they accumulated one directory per
+# run forever. Keep the newest few and drop the rest — the names are timestamps,
+# so sorting them by name sorts them by age.
+#
+# Only directories whose names match the timestamp format are touched, so
+# anything else parked in there by hand is left alone.
+KEEP_BACKUPS=5
+BACKUP_ROOT="$USER_HOME/.config-backups"
+
+if [ -d "$BACKUP_ROOT" ]; then
+    mapfile -t OLD_BACKUPS < <(
+        find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
+            | grep -E '^[0-9]{8}-[0-9]{6}' | sort -r | tail -n +$((KEEP_BACKUPS + 1))
+    )
+    for old in "${OLD_BACKUPS[@]}"; do
+        rm -rf "${BACKUP_ROOT:?}/${old:?}"
+        info "Pruned old config backup: $old"
+    done
+fi
+
 # ─── Done ─────────────────────────────────────────────────────────────────────
 section "Config install complete"
 
 if [ "$BACKED_UP_ANYTHING" = true ]; then
     info "Pre-existing configs backed up to $BACKUP_DIR"
+else
+    info "Nothing needed replacing — no backup taken"
 fi

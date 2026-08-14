@@ -270,6 +270,12 @@ Run non-interactively it never overwrites; it keeps the repo version and tells y
 
 This exists because it already bit once: the `Mod+Alt+P` spawn-only-if-empty change was edited in the repo but never installed to `~/.config/niri/`, so the next `update.sh` copied the stale live version over the top of it. **The lesson the warning encodes: a repo edit isn't safe until it's either installed live or committed.**
 
+### Re-running the installer is a no-op
+
+`install-config.sh` compares before it writes: a file that already matches is neither copied nor backed up, and a JSON merge that would change nothing leaves the live file alone. `config.kdl` is assembled first — the repo's copy plus the laptop include where that applies — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
+
+The upshot is that a re-run on an in-sync machine says "Nothing needed replacing — no backup taken" and touches nothing. `~/.config-backups` also keeps only the **5** most recent snapshots now; it grew to nine directories of near-identical files before anything pruned it. Directories in there that aren't named like a timestamp are left alone.
+
 ### DMS settings are merged, not replaced
 
 `install-config.sh` copies most files straight over the live one. The two DankMaterialShell JSON files are the exception: they're merged, because DMS owns and rewrites them. Every DMS release adds keys and bumps `configVersion`, so the copy in this repo is only ever a snapshot of whenever `update.sh` last ran — and copying it flat over a newer live file deletes every key the snapshot has never heard of. Measured on this machine, that was 147 keys, including the display profiles and the entire battery section.
