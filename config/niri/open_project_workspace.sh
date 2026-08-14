@@ -3,7 +3,8 @@
 # and open a terminal in it. The picker is fuzzel in dmenu mode with a
 # stripped-down config (see fuzzel/project-picker.ini): no prompt, no headings,
 # no buttons — just the folder names. Up/Down moves, Enter or a mouse click
-# selects, Esc cancels, and typing filters.
+# selects, Esc cancels, and typing filters. Typing a name that matches nothing
+# and pressing Enter creates that folder and opens it like any other.
 #
 # The terminal lands in the right directory because tmux-niri-session.sh starts
 # tmux in ~/Projects/<workspace name> when that folder exists.
@@ -12,12 +13,16 @@ set -euo pipefail
 PROJECTS_DIR="$HOME/Projects"
 PICKER_CONFIG="$HOME/.config/fuzzel/project-picker.ini"
 
-fail() {
+notify() {
     if command -v notify-send >/dev/null; then
         notify-send "Open Project" "$1"
     else
         echo "$1" >&2
     fi
+}
+
+fail() {
+    notify "$1"
     exit 1
 }
 
@@ -26,7 +31,13 @@ fail() {
 mapfile -t PROJECTS < <(find "$PROJECTS_DIR" -mindepth 1 -maxdepth 1 -type d \
     -not -name '.*' -printf '%f\n' | sort)
 
-[ "${#PROJECTS[@]}" -gt 0 ] || fail "No project folders in $PROJECTS_DIR."
+# An empty ~/Projects isn't an error: fuzzel shows a bare input box (lines=0)
+# and whatever you type becomes the first project. Go through this rather than
+# printf'ing the array directly — for an empty array printf would emit one
+# blank line, which fuzzel would show as an empty row.
+list_projects() {
+    [ "${#PROJECTS[@]}" -eq 0 ] || printf '%s\n' "${PROJECTS[@]}"
+}
 
 # Size the window to the list so there are no empty rows and no truncated
 # names: as many lines as folders (up to 12, then it scrolls), and wide enough
@@ -44,10 +55,37 @@ WIDTH=$((WIDTH + 4))
 FUZZEL_ARGS=(--dmenu --no-sort --lines="$LINES" --width="$WIDTH")
 [ -f "$PICKER_CONFIG" ] && FUZZEL_ARGS+=(--config="$PICKER_CONFIG")
 
-PROJECT=$(printf '%s\n' "${PROJECTS[@]}" | fuzzel "${FUZZEL_ARGS[@]}" || true)
+PROJECT=$(list_projects | fuzzel "${FUZZEL_ARGS[@]}" || true)
 
 if [ -z "$PROJECT" ]; then
     exit 0
+fi
+
+# fuzzel echoes the typed text verbatim when it matches no entry, which is what
+# turns the picker into a "new project" box. Trim whitespace before it becomes
+# a folder name.
+PROJECT=$(printf '%s' "$PROJECT" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+[ -n "$PROJECT" ] || exit 0
+
+if ! list_projects | grep -qxF -- "$PROJECT"; then
+    # Not one of the listed folders, so this is something you typed. Runs of
+    # whitespace become a single dash — new folders never get spaces in their
+    # names, which keeps them painless to type at a shell prompt.
+    PROJECT=$(printf '%s' "$PROJECT" | sed 's/[[:space:]]\+/-/g')
+
+    # Re-check: "my project" may well have just become an existing
+    # "my-project", in which case open that instead of failing to create it.
+    if ! list_projects | grep -qxF -- "$PROJECT"; then
+        # Guard the cases that would write outside ~/Projects or make a folder
+        # the picker can never show again (it filters dotfiles from its list).
+        case "$PROJECT" in
+            */*) fail "Project name can't contain '/': $PROJECT" ;;
+            .*)  fail "Project name can't start with '.': $PROJECT" ;;
+        esac
+
+        mkdir -- "$PROJECTS_DIR/$PROJECT" || fail "Could not create $PROJECTS_DIR/$PROJECT"
+        notify "Created $PROJECTS_DIR/$PROJECT"
+    fi
 fi
 
 WORKSPACES=$(niri msg -j workspaces)
