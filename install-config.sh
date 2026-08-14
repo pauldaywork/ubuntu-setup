@@ -77,6 +77,24 @@ if [ ! -e "$USER_HOME/.config/niri/window-rules-active.kdl" ]; then
     echo "focus" > "$USER_HOME/.config/niri/.window-rules-profile"
 fi
 
+# config.kdl carries an unconditional `include "dms/binds.kdl"`, and niri
+# refuses to load a config whose include is missing — it falls back to its
+# built-in defaults, which looks like "my keybinds vanished". DMS owns that
+# file, but nothing sequences DMS's first write before niri first parses the
+# config, so seed an empty stub when it's absent. DMS overwrites it freely;
+# our binds live in config.kdl's own binds block.
+#
+# Note this only closes the gap for binds.kdl. config.kdl also includes
+# dms/colors.kdl, alttab.kdl, outputs.kdl and cursor.kdl, none of which are
+# installed here either — a fresh machine still depends on DMS having written
+# those before niri first reads the config. An empty file satisfies the
+# include, so the same trick would work for them.
+if [ ! -e "$USER_HOME/.config/niri/dms/binds.kdl" ]; then
+    mkdir -p "$USER_HOME/.config/niri/dms"
+    printf 'binds {\n\n}\n' > "$USER_HOME/.config/niri/dms/binds.kdl"
+    info "Seeded empty $USER_HOME/.config/niri/dms/binds.kdl"
+fi
+
 if [ "$LAPTOP" = true ]; then
     info "Applying laptop-specific niri config"
     copy "$DOTFILES/config/niri/dms/laptop.kdl" "$USER_HOME/.config/niri/dms/laptop.kdl"

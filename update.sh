@@ -49,7 +49,7 @@ pull "$HOME/.config/niri/tmux-niri-session.sh"      "$DOTFILES/config/niri/tmux-
 pull "$HOME/.config/niri/toggle-window-rules.sh"    "$DOTFILES/config/niri/toggle-window-rules.sh"
 pull "$HOME/.config/niri/window-rules/normal.kdl"   "$DOTFILES/config/niri/window-rules/normal.kdl"
 pull "$HOME/.config/niri/window-rules/focus.kdl"    "$DOTFILES/config/niri/window-rules/focus.kdl"
-pull "$HOME/.config/niri/dms/binds.kdl"             "$DOTFILES/config/niri/dms/binds.kdl"
+# dms/binds.kdl is deliberately not pulled — see .gitignore.
 
 # ─── fuzzel ───────────────────────────────────────────────────────────────────
 pull "$HOME/.config/fuzzel/project-picker.ini" "$DOTFILES/config/fuzzel/project-picker.ini"
