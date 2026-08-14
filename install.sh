@@ -141,6 +141,69 @@ else
     warn "Log out and back in before docker works without sudo"
 fi
 
+# Running `sudo docker` even once creates ~/.docker owned by root, and after
+# that every rootless docker command fails on its own config directory — a
+# confusing failure, since group membership looks correct. Hand it back.
+DOCKER_CONFIG_DIR="$USER_HOME/.docker"
+if [ -d "$DOCKER_CONFIG_DIR" ] && [ ! -O "$DOCKER_CONFIG_DIR" ]; then
+    warn "$DOCKER_CONFIG_DIR is not owned by $CURRENT_USER (left behind by a sudo docker run) — fixing"
+    sudo chown -R "$CURRENT_USER":"$CURRENT_USER" "$DOCKER_CONFIG_DIR"
+fi
+
+# ─── NVIDIA Container Toolkit ─────────────────────────────────────────────────
+# Lets containers use the host GPU (`docker run --gpus all ...`). Only useful on
+# machines with an NVIDIA card, and it pulls in an extra apt repo, so it's gated
+# on the hardware actually being present.
+section "NVIDIA Container Toolkit"
+
+# Read the PCI vendor/class straight from sysfs rather than shelling out to
+# lspci — pciutils isn't in APT_PACKAGES, and this works before any NVIDIA
+# driver is installed. 0x10de is NVIDIA; class 0x0300xx is a VGA controller and
+# 0x0302xx a 3D controller (compute cards with no display output).
+has_nvidia_gpu() {
+    local dev vendor class
+    for dev in /sys/bus/pci/devices/*; do
+        [ -r "$dev/vendor" ] && [ -r "$dev/class" ] || continue
+        read -r vendor < "$dev/vendor"
+        [ "$vendor" = "0x10de" ] || continue
+        read -r class < "$dev/class"
+        case "$class" in
+            0x0300*|0x0302*) return 0 ;;
+        esac
+    done
+    return 1
+}
+
+if ! has_nvidia_gpu; then
+    info "No NVIDIA GPU detected — skipping the container toolkit"
+elif pkg_installed nvidia-container-toolkit; then
+    info "nvidia-container-toolkit already installed"
+else
+    info "NVIDIA GPU detected — installing nvidia-container-toolkit"
+
+    # Upstream's .list file is the only source for these packages; Ubuntu
+    # doesn't ship them. It contains a literal $(ARCH) that apt expands itself,
+    # so it must be written through verbatim — don't let the shell touch it.
+    curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+        | sudo gpg --dearmor --yes -o /etc/apt/keyrings/nvidia-container-toolkit-keyring.gpg
+    sudo chmod a+r /etc/apt/keyrings/nvidia-container-toolkit-keyring.gpg
+
+    curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+        | sed 's#deb https://#deb [signed-by=/etc/apt/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+        | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null
+
+    sudo apt update
+    sudo apt install -y nvidia-container-toolkit
+
+    # Registers the nvidia runtime in /etc/docker/daemon.json. Root-owned and
+    # read by the daemon, so this needs no user-level permissions — but the
+    # daemon only picks it up on restart.
+    sudo nvidia-ctk runtime configure --runtime=docker
+    sudo systemctl restart docker
+
+    warn "GPU containers also need the NVIDIA driver — see extra.sh if it isn't installed yet"
+fi
+
 # ─── .deb installs (no apt repo — downloaded directly) ───────────────────────
 section "Installing .deb packages"
 
