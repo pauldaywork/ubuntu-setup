@@ -54,6 +54,7 @@ pkg_installed() {
 APT_PACKAGES=(
     niri dms ghostty fuzzel
     git curl build-essential jq tmux libudev-dev util-linux-extra zenity
+    liblz4-dev libwayland-dev wayland-protocols inotify-tools
     taskwarrior sublime-text google-chrome-stable
     docker.io docker-compose-v2 docker-buildx
     pipewire wireplumber brightnessctl playerctl
@@ -181,6 +182,41 @@ if [ -f "$HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml
 else
     issue "DMS activetask widget not installed at ~/.config/DankMaterialShell/plugins/activetask"
     note "  Install with: bash install-config.sh"
+fi
+
+# Wallpapers. Three things have to agree or the desktop goes black: swww has to
+# be installed and running, DMS's own wallpaper layer has to stay disabled (it
+# would paint a still frame over the top), and wallpaper-sync.sh has to be alive
+# to carry picker changes across.
+if command -v swww &>/dev/null && command -v swww-daemon &>/dev/null; then
+    ok "swww installed ($(swww --version 2>/dev/null))"
+
+    if pgrep -x swww-daemon &>/dev/null; then
+        ok "swww-daemon running"
+    else
+        issue "swww-daemon not running — the desktop background will be empty"
+        note "  Start with: ~/.cargo/bin/swww-daemon &   (niri spawns it at startup)"
+    fi
+else
+    issue "swww not installed — animated wallpapers won't render"
+    note "  Install with: cargo install --git https://github.com/LGFae/swww --tag v0.11.2 --locked swww swww-daemon"
+fi
+
+if pgrep -f "wallpaper-sync.sh" &>/dev/null; then
+    ok "wallpaper-sync.sh running"
+else
+    issue "wallpaper-sync.sh not running — DMS wallpaper changes won't reach swww"
+    note "  Start with: ~/.config/niri/wallpaper-sync.sh &   (niri spawns it at startup)"
+fi
+
+DMS_SETTINGS="$HOME/.config/DankMaterialShell/settings.json"
+if [ -f "$DMS_SETTINGS" ]; then
+    if python3 -c "import json,sys; d=json.load(open('$DMS_SETTINGS')); sys.exit(0 if d.get('screenPreferences',{}).get('wallpaper') == [] else 1)" 2>/dev/null; then
+        ok "DMS built-in wallpapers disabled (swww owns the background)"
+    else
+        issue "DMS built-in wallpapers are enabled — they'll cover swww with a still frame"
+        note "  Fix in Settings → Wallpaper → Disable Built-in Wallpapers, or re-run install-config.sh"
+    fi
 fi
 
 # ─── 2. Dangling PATH / env references in dotfiles ───────────────────────────

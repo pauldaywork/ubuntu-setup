@@ -15,7 +15,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
 | Task manager | Taskwarrior (+ DMS taskwarrior widget plugin) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
-| Wallpaper | Active wallpaper at time of last `update.sh` run |
+| Wallpaper | Wallpaper collection + the active choice, rendered by swww so animated GIFs animate |
 
 ## Setting up a new machine
 
@@ -56,15 +56,16 @@ The script will:
 5. Install apps without an apt repo (Obsidian) via their official installers
 6. Install snap packages (Firefox, VS Code, CMake)
 7. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
-8. Install Bun via the official installer
-9. Install NVM + Node.js v24.18.0
-10. Install Claude Code via npm
-11. Copy all config files to their correct locations, create `~/Projects/`, and copy the wallpaper to `~/Documents/Wallpapers/`
-12. Install TPM (tmux plugin manager) and fetch tmux plugins
-13. Install DMS plugins (taskwarrior widget)
-14. Install VS Code extensions from `config/Code/extensions.txt`
-15. Prompt for your git name and email
-16. Generate a new SSH key and print the public key so you can add it to GitHub
+8. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers))
+9. Install Bun via the official installer
+10. Install NVM + Node.js v24.18.0
+11. Install Claude Code via npm
+12. Copy all config files to their correct locations, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
+13. Install TPM (tmux plugin manager) and fetch tmux plugins
+14. Install DMS plugins (taskwarrior widget)
+15. Install VS Code extensions from `config/Code/extensions.txt`
+16. Prompt for your git name and email
+17. Generate a new SSH key and print the public key so you can add it to GitHub
 
 ### 4. After the script finishes
 
@@ -169,6 +170,55 @@ Editing a description from `Mod+Alt+L` deliberately does the opposite — it's q
 
 ---
 
+## Animated wallpapers
+
+DMS can't animate a wallpaper. It paints the background with a QML `Image` (`Modules/WallpaperBackground.qml` in `/usr/share/quickshell/dms`), which decodes exactly one frame, so a GIF picked in its wallpaper tab shows up as a still. Upstream won't change that in-shell — [DankMaterialShell#793](https://github.com/AvengeMedia/DankMaterialShell/issues/793) was closed with *"we do not intend to add swww as a dependency/optional dependency, within the shell itself"* — and instead offers an escape hatch: **Settings → Wallpaper → Disable Built-in Wallpapers**, which stops DMS creating the wallpaper layer surface at all and leaves the background to an external daemon.
+
+So that toggle is on (it's the empty `screenPreferences.wallpaper` array in `config/DankMaterialShell/settings.json`) and [swww](https://github.com/LGFae/swww) draws the background instead. Three pieces, all started by niri at login:
+
+| Piece | Role |
+|---|---|
+| `swww-daemon` | Holds the background layer surface and plays the animation |
+| `config/niri/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each wallpaper change to `swww` |
+| `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background sits still instead of scrolling with the workspaces, and shows through in Overview |
+
+Everything else about DMS is untouched: the wallpaper picker, cycling, and matugen theming all key off `session.json`, and matugen reads a GIF's first frame happily, so dynamic colours still follow the wallpaper. **Pick wallpapers exactly as before** — the DMS tab is still the UI.
+
+`wallpaper-sync.sh` re-applies only when the resolved wallpaper actually changes, because DMS rewrites `session.json` for unrelated things (launcher history, night mode); without that guard every launcher search would replay a fade transition. It picks the scaling filter per file: `Nearest` for GIFs, since the collection is pixel art that Lanczos would smear, and swww's default for everything else.
+
+swww isn't on crates.io or in apt, so `install.sh` builds it from the `v0.11.2` git tag into `~/.cargo/bin`. `doctor.sh` checks all three pieces plus the DMS toggle — if the background ever goes black, run it first.
+
+### Rotation: still DMS
+
+**Settings → Wallpaper → Automatic Cycling.** Toggle it on, then pick **Interval** (a dropdown from 5 seconds to 12 hours, default 5 minutes) or **Time** (once a day at a set clock time).
+
+Cycling never touched the rendering layer, so disabling DMS's wallpaper changed nothing about it. The `dms` server keeps the schedule, `WallpaperCyclingService.qml` picks the next file and writes it to `session.json`, and `wallpaper-sync.sh` carries it to swww like any other change. **The folder it cycles through is the directory of the current wallpaper** — it isn't a separate setting — so keeping wallpapers in `~/Documents/Wallpapers` is what makes them a rotation set. It also needs at least two files in there, and it sorts them alphabetically.
+
+`dms ipc call wallpaper next` / `prev` step manually.
+
+### Transition: now swww's
+
+The Transition dropdown in DMS's wallpaper tab drives QML shaders on a surface that no longer exists, so most of its names — disc, stripes, iris bloom, pixelate, portal — have nothing behind them now. swww animates the change instead, and the knobs are at the top of `config/niri/wallpaper-sync.sh`:
+
+```bash
+TRANSITION="${SWWW_TRANSITION:-dms}"
+TRANSITION_DURATION="${SWWW_TRANSITION_DURATION:-0.5}"   # seconds; swww's own default is 3
+TRANSITION_FPS="${SWWW_TRANSITION_FPS:-30}"
+```
+
+`dms` (the default) follows the DMS dropdown as far as it goes: `fade` and `wipe` are the two names both sides share, anything else lands on fade. Set `TRANSITION` to a swww name to pin it instead — `none simple fade left right top bottom wipe wave grow center outer any random`.
+
+To audition one without editing the file, the environment wins:
+
+```bash
+pkill -f wallpaper-sync.sh
+SWWW_TRANSITION=grow SWWW_TRANSITION_DURATION=1.5 ~/.config/niri/wallpaper-sync.sh &
+```
+
+Then change wallpaper to see it. Edit the defaults in the script once you've settled on one — the environment version dies with the shell, and niri restarts the plain script at next login. Anything more exotic (`--transition-angle`, `--transition-pos`, `--transition-bezier`, `--transition-wave`) is a flag in `swww img --help`; add it next to the others in `apply()`.
+
+---
+
 ## Keeping configs up to date
 
 When you change any config on your current machine and want to save it to the repo, run:
@@ -178,7 +228,7 @@ cd ~/Documents/Code/backup-os
 bash update.sh
 ```
 
-This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also detects if you've changed your wallpaper in DMS and updates the repo to match.
+This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpapers/` and records which one DMS currently has selected in `wallpapers/active`. Nothing is deleted from `wallpapers/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
 
 ### update.sh protects uncommitted repo edits
 
@@ -224,7 +274,7 @@ git push
 | VS Code settings | `~/.config/Code/User/settings.json` |
 | VS Code extensions | generated by `code --list-extensions` |
 | Taskwarrior | `~/.taskrc` |
-| Wallpaper | active wallpaper read from DMS session |
+| Wallpapers | `~/Documents/Wallpapers/` (whole folder); the active one read from the DMS session into `wallpapers/active` |
 
 ### What is NOT tracked
 
@@ -256,7 +306,7 @@ It only ever edits dotfile references, and only after you confirm each one. If i
 ```
 backup-os/
 ├── install.sh                              # Run on a new machine
-├── install-config.sh                       # Config files + wallpaper only (no app installs)
+├── install-config.sh                       # Config files + wallpapers only (no app installs)
 ├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
 ├── update.sh                               # Run on current machine to snapshot changes
 ├── doctor.sh                               # Diagnose drift on an existing, already-set-up machine
@@ -273,6 +323,7 @@ backup-os/
 │   │   ├── open_project_workspace.sh       # Picks (or creates) a ~/Projects folder, names a workspace after it, opens a terminal there (Mod+Alt+P)
 │   │   ├── default_workspace_name.sh       # Names workspace 1 "general" on startup if unnamed
 │   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace, in the matching ~/Projects folder
+│   │   ├── wallpaper-sync.sh               # Forwards the DMS wallpaper choice to swww, which is what animates GIFs
 │   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
 │   │   ├── task-lib.sh                     # Shared workspace-name → taskwarrior-tag rule; sourced by the three below
 │   │   ├── task-add.sh                     # Types a task tagged with the current workspace (Mod+Alt+T)
@@ -297,5 +348,7 @@ backup-os/
 │       ├── settings.json
 │       └── extensions.txt
 └── wallpapers/
-    └── 205.png                             # Active wallpaper
+    ├── active                              # Filename of the wallpaper DMS had selected at the last update.sh run
+    ├── 205.png
+    └── *.gif                               # Animated; rendered by swww, not DMS
 ```

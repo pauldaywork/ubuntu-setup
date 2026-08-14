@@ -137,6 +137,8 @@ copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
 copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/niri/tmux-niri-session.sh"
 chmod +x "$USER_HOME/.config/niri/tmux-niri-session.sh"
+copy "$DOTFILES/config/niri/wallpaper-sync.sh"            "$USER_HOME/.config/niri/wallpaper-sync.sh"
+chmod +x "$USER_HOME/.config/niri/wallpaper-sync.sh"
 
 # taskwarrior shortcuts — task-lib.sh is sourced by the other three, not run,
 # so it's the one file here that doesn't need the executable bit.
@@ -229,22 +231,48 @@ else
     info "Projects folder already exists: $PROJECTS_DIR"
 fi
 
-# ─── Wallpaper ────────────────────────────────────────────────────────────────
-section "Setting up wallpaper"
+# ─── Wallpapers ───────────────────────────────────────────────────────────────
+section "Setting up wallpapers"
 
-WALLPAPER_DST="$USER_HOME/Documents/Wallpapers/205.png"
-mkdir -p "$USER_HOME/Documents/Wallpapers"
+# The whole folder is installed, not just the active one, so the DMS picker has
+# something to pick from — animated GIFs included, which swww is what actually
+# renders (see config/niri/wallpaper-sync.sh).
+WALLPAPER_DIR="$USER_HOME/Documents/Wallpapers"
+mkdir -p "$WALLPAPER_DIR"
 
-if [ ! -f "$WALLPAPER_DST" ]; then
-    cp "$DOTFILES/wallpapers/205.png" "$WALLPAPER_DST"
-    info "Wallpaper copied to $WALLPAPER_DST"
+for wall in "$DOTFILES/wallpapers"/*; do
+    [ -f "$wall" ] || continue
+    name="$(basename "$wall")"
+    # `active` is our own bookkeeping, not a wallpaper.
+    [ "$name" = "active" ] && continue
+    if [ ! -f "$WALLPAPER_DIR/$name" ]; then
+        cp "$wall" "$WALLPAPER_DIR/$name"
+        info "Installed wallpaper: $name"
+    fi
+done
+
+# Which one to select on a fresh machine. update.sh rewrites this file from
+# whatever DMS has live, so the repo tracks the choice without install-config.sh
+# needing a hardcoded filename.
+ACTIVE_WALLPAPER=""
+if [ -s "$DOTFILES/wallpapers/active" ]; then
+    ACTIVE_WALLPAPER="$(head -n1 "$DOTFILES/wallpapers/active")"
+fi
+if [ -z "$ACTIVE_WALLPAPER" ] || [ ! -f "$WALLPAPER_DIR/$ACTIVE_WALLPAPER" ]; then
+    warn "wallpapers/active names no installed file — falling back to the first wallpaper"
+    ACTIVE_WALLPAPER="$(cd "$WALLPAPER_DIR" && ls | head -n1)"
 fi
 
-# Write the DMS session wallpaper path so it loads on first launch
+WALLPAPER_DST="$WALLPAPER_DIR/$ACTIVE_WALLPAPER"
+
+# Write the DMS session wallpaper path so it loads on first launch. Skipped when
+# there are no wallpapers at all, rather than writing a path to nothing.
 DMS_SESSION="$USER_HOME/.local/state/DankMaterialShell/session.json"
 mkdir -p "$(dirname "$DMS_SESSION")"
 
-if [ ! -f "$DMS_SESSION" ]; then
+if [ -z "$ACTIVE_WALLPAPER" ]; then
+    warn "No wallpapers installed — leaving the DMS session wallpaper alone"
+elif [ ! -f "$DMS_SESSION" ]; then
     info "Creating DMS session with wallpaper path"
     python3 - <<PYEOF
 import json, os

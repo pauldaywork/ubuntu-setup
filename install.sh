@@ -103,6 +103,14 @@ APT_PACKAGES=(
     util-linux-extra
     zenity
 
+    # wallpaper — swww is built from source below, and needs lz4 (it compresses
+    # animation frames) plus the wayland-protocols pkg-config files. inotify-tools
+    # is what wallpaper-sync.sh watches the DMS session file with.
+    liblz4-dev
+    libwayland-dev
+    wayland-protocols
+    inotify-tools
+
     # apps (from external repos)
     taskwarrior
     sublime-text
@@ -267,6 +275,26 @@ if ! rustup toolchain list 2>/dev/null | grep -q "stable"; then
     rustup default stable
 else
     info "Rust stable already installed ($(rustc --version))"
+fi
+
+# ─── swww (animated wallpaper daemon) ─────────────────────────────────────────
+# DMS renders wallpapers with a QML Image, which shows one still frame of a GIF,
+# and upstream won't animate it in-shell (DankMaterialShell#793). So the shell's
+# own wallpaper layer is disabled in its settings.json and swww draws the
+# background instead — see config/niri/wallpaper-sync.sh for the whole picture.
+#
+# Not on crates.io and not packaged for Ubuntu, so it's installed from the git
+# tag. Both binaries are needed: swww-daemon holds the layer surface, swww is
+# the client that talks to it.
+section "Installing swww"
+
+SWWW_VERSION="v0.11.2"
+
+if ! command -v swww &>/dev/null || ! command -v swww-daemon &>/dev/null; then
+    info "Installing swww $SWWW_VERSION"
+    cargo install --git https://github.com/LGFae/swww --tag "$SWWW_VERSION" --locked swww swww-daemon
+else
+    info "swww already installed ($(swww --version 2>/dev/null))"
 fi
 
 # ─── 5. Bun ────────────────────────────────────────────────────────────────────

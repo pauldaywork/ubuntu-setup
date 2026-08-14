@@ -140,6 +140,7 @@ pull "$HOME/.config/niri/rename_workspace.sh"       "$DOTFILES/config/niri/renam
 pull "$HOME/.config/niri/open_project_workspace.sh" "$DOTFILES/config/niri/open_project_workspace.sh"
 pull "$HOME/.config/niri/default_workspace_name.sh" "$DOTFILES/config/niri/default_workspace_name.sh"
 pull "$HOME/.config/niri/tmux-niri-session.sh"      "$DOTFILES/config/niri/tmux-niri-session.sh"
+pull "$HOME/.config/niri/wallpaper-sync.sh"         "$DOTFILES/config/niri/wallpaper-sync.sh"
 pull "$HOME/.config/niri/toggle-window-rules.sh"    "$DOTFILES/config/niri/toggle-window-rules.sh"
 pull "$HOME/.config/niri/task-lib.sh"               "$DOTFILES/config/niri/task-lib.sh"
 pull "$HOME/.config/niri/task-add.sh"               "$DOTFILES/config/niri/task-add.sh"
@@ -175,22 +176,46 @@ info "Pulling VS Code extensions list"
 code --list-extensions 2>/dev/null > "$DOTFILES/config/Code/extensions.txt"
 info "  $(wc -l < "$DOTFILES/config/Code/extensions.txt") extension(s) saved"
 
-# ─── Wallpaper ────────────────────────────────────────────────────────────────
+# ─── Wallpapers ───────────────────────────────────────────────────────────────
+# The repo carries a wallpaper *collection*, not a single file: the DMS picker
+# needs something to pick from, so ~/Documents/Wallpapers is mirrored in whole.
+# Nothing is deleted here — a wallpaper removed from the live folder stays in
+# the repo until it's deleted there deliberately.
+mkdir -p "$DOTFILES/wallpapers"
+
+WALLPAPER_DIR="$HOME/Documents/Wallpapers"
+if [ -d "$WALLPAPER_DIR" ]; then
+    PULLED=0
+    for wall in "$WALLPAPER_DIR"/*; do
+        [ -f "$wall" ] || continue
+        WALL_DST="$DOTFILES/wallpapers/$(basename "$wall")"
+        if [ ! -f "$WALL_DST" ] || ! cmp -s "$wall" "$WALL_DST"; then
+            info "Pulling wallpaper: $(basename "$wall")"
+            cp "$wall" "$WALL_DST"
+            PULLED=$((PULLED + 1))
+        fi
+    done
+    [ "$PULLED" -eq 0 ] && info "Wallpapers unchanged"
+fi
+
+# Which one is selected right now. install-config.sh reads this file rather than
+# carrying a hardcoded filename.
 DMS_SESSION="$HOME/.local/state/DankMaterialShell/session.json"
 if [ -f "$DMS_SESSION" ]; then
     ACTIVE_WALL=$(python3 -c "import json; d=json.load(open('$DMS_SESSION')); print(d.get('wallpaperPath',''))" 2>/dev/null || true)
     if [ -n "$ACTIVE_WALL" ] && [ -f "$ACTIVE_WALL" ]; then
         WALL_FILE=$(basename "$ACTIVE_WALL")
-        WALL_DST="$DOTFILES/wallpapers/$WALL_FILE"
-        if [ ! -f "$WALL_DST" ] || ! cmp -s "$ACTIVE_WALL" "$WALL_DST"; then
-            info "Pulling wallpaper: $WALL_FILE"
-            mkdir -p "$DOTFILES/wallpapers"
-            find "$DOTFILES/wallpapers" -type f -delete
-            cp "$ACTIVE_WALL" "$WALL_DST"
-            sed -i "s|wallpapers/[^ ]*|wallpapers/$WALL_FILE|g" "$DOTFILES/install.sh"
-            sed -i "s|Documents/Wallpapers/[^ \"]*|Documents/Wallpapers/$WALL_FILE|g" "$DOTFILES/install.sh"
+        # A wallpaper picked from outside ~/Documents/Wallpapers won't have been
+        # copied by the mirror above, so pull it in before recording it.
+        if [ ! -f "$DOTFILES/wallpapers/$WALL_FILE" ]; then
+            info "Pulling active wallpaper from outside $WALLPAPER_DIR: $WALL_FILE"
+            cp "$ACTIVE_WALL" "$DOTFILES/wallpapers/$WALL_FILE"
+        fi
+        if [ "$(cat "$DOTFILES/wallpapers/active" 2>/dev/null)" != "$WALL_FILE" ]; then
+            info "Active wallpaper: $WALL_FILE"
+            echo "$WALL_FILE" > "$DOTFILES/wallpapers/active"
         else
-            info "Wallpaper unchanged: $WALL_FILE"
+            info "Active wallpaper unchanged: $WALL_FILE"
         fi
     else
         warn "Could not read active wallpaper from DMS session"
