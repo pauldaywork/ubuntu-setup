@@ -165,6 +165,24 @@ else
     note "  Install with: git clone https://github.com/cyrylas/dms-taskwarrior ~/.config/DankMaterialShell/plugins/taskwarrior"
 fi
 
+# The workspace task shortcuts and the Active Task widget share task-lib.sh, so
+# a missing file here breaks Mod+Alt+T, Mod+Alt+L and the bar pill together.
+for f in task-lib.sh task-add.sh task-list.sh task-active.sh; do
+    if [ -f "$HOME/.config/niri/$f" ]; then
+        ok "Workspace task script present: $f"
+    else
+        issue "Missing ~/.config/niri/$f"
+        note "  Install with: bash install-config.sh"
+    fi
+done
+
+if [ -f "$HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" ]; then
+    ok "DMS activetask widget installed"
+else
+    issue "DMS activetask widget not installed at ~/.config/DankMaterialShell/plugins/activetask"
+    note "  Install with: bash install-config.sh"
+fi
+
 # ─── 2. Dangling PATH / env references in dotfiles ───────────────────────────
 # Finds lines like `export FOO_DIR="$HOME/x"` or `. "$HOME/x/env"` and checks
 # the path they point at still exists. Catches the general case of "a tool

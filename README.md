@@ -136,6 +136,37 @@ Related workspace shortcuts: **`Mod+Alt+W`** to create and name a workspace by h
 
 ---
 
+## Workspace tasks
+
+Taskwarrior, scoped to whatever workspace you're on. The workspace name is the tag, so the tasks you see are always the tasks for the project in front of you.
+
+| Shortcut | Does |
+| --- | --- |
+| **`Mod+Alt+T`** | Type a task into a fuzzel box; it's added tagged with the current workspace |
+| **`Mod+Alt+L`** | List this workspace's pending tasks, then edit / delete / complete / set-active the one you pick |
+
+The bottom bar carries an **Active Task** widget showing the started task for the focused workspace, and nothing at all when there isn't one. It updates on niri's event stream, so switching workspace changes it immediately.
+
+### The tag rule
+
+Workspace name → tag is lowercase, with everything that isn't a letter, digit or underscore folded to `_`. Taskwarrior tags are a single bare word: a dash reads as an operator inside a filter and a space splits the argument, so neither survives `task +<tag>`. Folding also means `Ubuntu-Setup`, `ubuntu setup` and `ubuntu-setup` all resolve to `ubuntu_setup` rather than to three tags each holding a third of the project's tasks.
+
+An unnamed workspace has no tag, so both shortcuts refuse to run and say so — writing untagged tasks would put them somewhere no list ever looks.
+
+The rule lives once, in `config/niri/task-lib.sh`, which the three scripts source.
+
+### Adding vs editing
+
+`Mod+Alt+T` passes what you type to `task` as separate words, so taskwarrior's own attribute syntax works: `ship the release due:friday priority:H` sets a due date and a priority instead of burying them in the description. (The script runs with globbing off, so a `*` in a task stays a `*`.)
+
+Editing a description from `Mod+Alt+L` deliberately does the opposite — it's quoted, so a `due:` typed mid-rename stays text rather than silently putting a date on a task you were only retitling.
+
+### Active tasks
+
+"Set active" runs `task start`, having first run `task stop` on any other task carrying the tag. One active task per workspace, always — which is what lets the bar widget show a single unambiguous answer. Starting a task by hand in a terminal still works; the widget just takes the first if you somehow end up with two.
+
+---
+
 ## Keeping configs up to date
 
 When you change any config on your current machine and want to save it to the repo, run:
@@ -218,19 +249,24 @@ backup-os/
 │   │   ├── default_workspace_name.sh       # Names workspace 1 "general" on startup if unnamed
 │   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace, in the matching ~/Projects folder
 │   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
+│   │   ├── task-lib.sh                     # Shared workspace-name → taskwarrior-tag rule; sourced by the three below
+│   │   ├── task-add.sh                     # Types a task tagged with the current workspace (Mod+Alt+T)
+│   │   ├── task-list.sh                    # Lists this workspace's tasks; edit/delete/complete/set-active (Mod+Alt+L)
+│   │   ├── task-active.sh                  # Prints the workspace's active task; read by the Active Task bar widget
 │   │   ├── window-rules/
 │   │   │   ├── normal.kdl                  # Fully opaque windows
 │   │   │   └── focus.kdl                   # Unfocused windows fade out
 │   │   └── dms/
 │   │       └── laptop.kdl                  # Only installed with `install.sh --laptop`
 │   ├── fuzzel/
-│   │   └── project-picker.ini              # Minimal picker theme for open_project_workspace.sh
+│   │   └── project-picker.ini              # Minimal picker theme shared by the project and task pickers
 │   ├── ghostty/
 │   │   └── config.ghostty
 │   ├── DankMaterialShell/
 │   │   ├── settings.json
 │   │   ├── plugin_settings.json
 │   │   ├── firefox.css
+│   │   ├── plugins/activetask/             # Our own DMS bar widget: the workspace's active task
 │   │   └── themes/peaceAndQuiet/theme.json
 │   └── Code/
 │       ├── settings.json

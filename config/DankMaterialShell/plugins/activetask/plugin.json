@@ -1,0 +1,12 @@
+{
+    "id": "activetask",
+    "name": "Active Task",
+    "description": "Show the started Taskwarrior task tagged with the current niri workspace",
+    "version": "1.0.0",
+    "author": "paul",
+    "icon": "play_circle",
+    "type": "widget",
+    "capabilities": ["dankbar-widget"],
+    "component": "./ActiveTaskWidget.qml",
+    "permissions": ["process"]
+}

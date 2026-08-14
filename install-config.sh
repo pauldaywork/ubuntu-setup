@@ -67,6 +67,16 @@ copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/ni
 chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
 copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/niri/tmux-niri-session.sh"
 chmod +x "$USER_HOME/.config/niri/tmux-niri-session.sh"
+
+# taskwarrior shortcuts — task-lib.sh is sourced by the other three, not run,
+# so it's the one file here that doesn't need the executable bit.
+copy "$DOTFILES/config/niri/task-lib.sh"                  "$USER_HOME/.config/niri/task-lib.sh"
+copy "$DOTFILES/config/niri/task-add.sh"                  "$USER_HOME/.config/niri/task-add.sh"
+chmod +x "$USER_HOME/.config/niri/task-add.sh"
+copy "$DOTFILES/config/niri/task-list.sh"                 "$USER_HOME/.config/niri/task-list.sh"
+chmod +x "$USER_HOME/.config/niri/task-list.sh"
+copy "$DOTFILES/config/niri/task-active.sh"               "$USER_HOME/.config/niri/task-active.sh"
+chmod +x "$USER_HOME/.config/niri/task-active.sh"
 copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
 copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
 

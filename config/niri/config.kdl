@@ -524,6 +524,12 @@ binds {
     // Toggle between window-rules profiles (normal / focus-dimming)
     Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/toggle-window-rules.sh"; }
 
+    // Taskwarrior, scoped to the current workspace's name as a tag.
+    // Mod+Alt+T types a new task; Mod+Alt+L lists this workspace's tasks and
+    // offers edit / delete / complete / set-active on the one you pick.
+    Mod+Alt+T hotkey-overlay-title="Add Task" { spawn "~/.config/niri/task-add.sh"; }
+    Mod+Alt+L hotkey-overlay-title="Workspace Tasks" { spawn "~/.config/niri/task-list.sh"; }
+
     
     Mod+Space hotkey-overlay-title="Application Launcher" { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
     Super+Shift+M hotkey-overlay-title="Bar: Toggle (Primary)" { spawn "dms" "ipc" "call" "bar" "toggle" "index" "0"; }

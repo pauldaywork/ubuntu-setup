@@ -47,6 +47,10 @@ pull "$HOME/.config/niri/open_project_workspace.sh" "$DOTFILES/config/niri/open_
 pull "$HOME/.config/niri/default_workspace_name.sh" "$DOTFILES/config/niri/default_workspace_name.sh"
 pull "$HOME/.config/niri/tmux-niri-session.sh"      "$DOTFILES/config/niri/tmux-niri-session.sh"
 pull "$HOME/.config/niri/toggle-window-rules.sh"    "$DOTFILES/config/niri/toggle-window-rules.sh"
+pull "$HOME/.config/niri/task-lib.sh"               "$DOTFILES/config/niri/task-lib.sh"
+pull "$HOME/.config/niri/task-add.sh"               "$DOTFILES/config/niri/task-add.sh"
+pull "$HOME/.config/niri/task-list.sh"              "$DOTFILES/config/niri/task-list.sh"
+pull "$HOME/.config/niri/task-active.sh"            "$DOTFILES/config/niri/task-active.sh"
 pull "$HOME/.config/niri/window-rules/normal.kdl"   "$DOTFILES/config/niri/window-rules/normal.kdl"
 pull "$HOME/.config/niri/window-rules/focus.kdl"    "$DOTFILES/config/niri/window-rules/focus.kdl"
 # dms/binds.kdl is deliberately not pulled — see .gitignore.

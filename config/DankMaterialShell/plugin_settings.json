@@ -5,5 +5,8 @@
   },
   "taskwarrior": {
     "enabled": true
+  },
+  "activetask": {
+    "enabled": true
   }
 }
