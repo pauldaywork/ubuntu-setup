@@ -1,6 +1,6 @@
 #!/bin/bash
 # Show this workspace's pending tasks in fuzzel, and act on the one you pick:
-# edit, delete, complete, or set active. Bound to Mod+Alt+L.
+# edit, delete, complete, or set active — or add a new one. Bound to Mod+Alt+L.
 #
 # "This workspace's tasks" means tasks tagged with the workspace name — the same
 # tag task-add.sh writes. Only one task per workspace is ever active: setting one
@@ -32,10 +32,17 @@ mapfile -t ROWS < <(jq -r '
     | [.uuid, ((if .start then "▶ " else "  " end) + .description)]
     | @tsv' <<<"$TASKS_JSON")
 
-if [ "${#ROWS[@]}" -eq 0 ]; then
-    task_notify "No pending tasks for +$TAG"
-    exit 0
-fi
+# A workspace with no tasks yet used to fire a notification and exit without
+# ever showing the picker, which is indistinguishable from a dead shortcut —
+# especially at a 1s notification timeout. Always show the picker, and give it a
+# row that opens the add box, so the list is never empty and pressing the key
+# always visibly does something.
+#
+# This is a real row rather than a reliance on fuzzel echoing text that matches
+# no entry. That echo is what lets the project picker create folders, but it
+# isn't documented to survive --accept-nth, and a row can't be misread.
+ADD_SENTINEL="__add__"
+ROWS+=("$ADD_SENTINEL"$'\t'"＋ Add a task…")
 
 LINES=${#ROWS[@]}
 [ "$LINES" -le 12 ] || LINES=12
@@ -69,6 +76,13 @@ for row in "${ROWS[@]}"; do
     fi
 done
 [ -n "$UUID" ] || exit 0
+
+# Hand straight over to the add box rather than reimplementing it here, so
+# there's one definition of what "adding a task" means (and one place where
+# taskwarrior's attribute syntax keeps working).
+if [ "$UUID" = "$ADD_SENTINEL" ]; then
+    exec "$(dirname "$(readlink -f "$0")")/task-add.sh"
+fi
 
 DESCRIPTION=$(jq -r --arg uuid "$UUID" 'first(.[] | select(.uuid == $uuid) | .description) // ""' <<<"$TASKS_JSON")
 

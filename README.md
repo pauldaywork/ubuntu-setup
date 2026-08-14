@@ -143,7 +143,7 @@ Taskwarrior, scoped to whatever workspace you're on. The workspace name is the t
 | Shortcut | Does |
 | --- | --- |
 | **`Mod+Alt+T`** | Type a task into a fuzzel box; it's added tagged with the current workspace |
-| **`Mod+Alt+L`** | List this workspace's pending tasks, then edit / delete / complete / set-active the one you pick |
+| **`Mod+Alt+L`** | List this workspace's pending tasks, then edit / delete / complete / set-active the one you pick — or pick **＋ Add a task…**, the last row, which hands over to the add box |
 
 The bottom bar carries an **Active Task** widget showing the started task for the focused workspace, and nothing at all when there isn't one. It updates on niri's event stream, so switching workspace changes it immediately.
 
@@ -152,6 +152,8 @@ The bottom bar carries an **Active Task** widget showing the started task for th
 Workspace name → tag is lowercase, with everything that isn't a letter, digit or underscore folded to `_`. Taskwarrior tags are a single bare word: a dash reads as an operator inside a filter and a space splits the argument, so neither survives `task +<tag>`. Folding also means `Ubuntu-Setup`, `ubuntu setup` and `ubuntu-setup` all resolve to `ubuntu_setup` rather than to three tags each holding a third of the project's tasks.
 
 An unnamed workspace has no tag, so both shortcuts refuse to run and say so — writing untagged tasks would put them somewhere no list ever looks.
+
+The task list always has at least the **＋ Add a task…** row, so it never comes up empty. An earlier version fired a `notify-send` and exited when a workspace had no tasks yet, which — at a 1s notification timeout — was indistinguishable from the shortcut being broken.
 
 The rule lives once, in `config/niri/task-lib.sh`, which the three scripts source.
 
