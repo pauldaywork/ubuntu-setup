@@ -70,7 +70,7 @@ PYEOF
 }
 
 apply() {
-    local output path filter transition outputs
+    local output path filter transition outputs failed=0
 
     if [ "$TRANSITION" = "dms" ]; then
         case "$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("wallpaperTransition",""))' "$SESSION" 2>/dev/null)" in
@@ -84,7 +84,7 @@ apply() {
     while IFS=$'\t' read -r output path; do
         [ -f "$path" ] || continue
 
-        # These wallpapers are small pixel-art loops stretched across a 1440p
+        # These wallpapers are small pixel-art loops stretched to fill the
         # screen, and Lanczos turns pixel art into mush. Photographs still get
         # swww's default filter.
         case "${path,,}" in
@@ -100,31 +100,45 @@ apply() {
         swww img "$path" "${outputs[@]}" --resize crop --filter "$filter" \
             --transition-type "$transition" \
             --transition-duration "$TRANSITION_DURATION" \
-            --transition-fps "$TRANSITION_FPS"
+            --transition-fps "$TRANSITION_FPS" || failed=1
     done
+    return "$failed"
 }
 
-# swww-daemon is spawned alongside this script at niri startup, so it may not
-# have its socket up yet.
-for _ in $(seq 1 50); do
-    swww query &>/dev/null && break
-    sleep 0.2
-done
-
 last=""
+last_pid=""
 
 sync_now() {
-    local spec
-    spec="$(resolve)" || return 0
+    local spec pid
+    spec="$(resolve)" || return 1
+    pid="$(pgrep -x swww-daemon || true)"
+
     # DMS rewrites session.json for unrelated things — launcher history, night
     # mode, the notepad — so re-apply only when the wallpaper itself moved.
     # Without this every launcher search would replay a fade transition.
-    [ "$spec" = "$last" ] && return 0
+    #
+    # A restarted daemon counts as a move even when the wallpaper didn't: it
+    # comes back showing its own cached image, which is whatever it last drew
+    # rather than whatever DMS has since selected. Comparing the pid catches
+    # that; an empty pid (daemon down) never matches, so we keep trying.
+    [ "$spec" = "$last" ] && [ "$pid" = "$last_pid" ] && return 0
+
+    # Only remember it as applied if it actually applied. Recording it up front
+    # meant one failed paint — daemon still starting, daemon crashed — left the
+    # screen and DMS permanently disagreeing, because every later check saw a
+    # spec it thought was already on screen and skipped it.
+    printf '%s\n' "$spec" | apply || return 1
     last="$spec"
-    printf '%s\n' "$spec" | apply
+    last_pid="$pid"
 }
 
-sync_now
+# swww-daemon is spawned alongside this script at niri startup, so the first
+# paint usually loses a race with it. Retrying until one lands replaces waiting
+# on `swww query`, and also covers a daemon that takes its time or dies once.
+for _ in $(seq 1 30); do
+    sync_now && break
+    sleep 1
+done
 
 # The session file is replaced rather than written in place, so watch its
 # directory: an atomic rename shows up as moved_to, and QML's FileView writes

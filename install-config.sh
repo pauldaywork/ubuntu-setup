@@ -269,31 +269,55 @@ fi
 
 WALLPAPER_DST="$WALLPAPER_DIR/$ACTIVE_WALLPAPER"
 
-# Write the DMS session wallpaper path so it loads on first launch. Skipped when
-# there are no wallpapers at all, rather than writing a path to nothing.
+# Seed the DMS session wallpaper so one is selected on first launch.
+#
+# Only when nothing valid is selected already. This used to overwrite the path
+# unconditionally, which meant re-running the installer to pick up an unrelated
+# config change silently threw away whichever wallpaper you'd since chosen and
+# put the repo's back. A wallpaper you picked on this machine is live state,
+# like the window-rules profile seeded further up — the installer's job is to
+# make sure there *is* one, not to have the last word on which.
+#
+# Paths go in through argv rather than being pasted into the source, so a quote
+# or backslash in a filename can't end the string early.
 DMS_SESSION="$USER_HOME/.local/state/DankMaterialShell/session.json"
 mkdir -p "$(dirname "$DMS_SESSION")"
 
 if [ -z "$ACTIVE_WALLPAPER" ]; then
     warn "No wallpapers installed — leaving the DMS session wallpaper alone"
-elif [ ! -f "$DMS_SESSION" ]; then
-    info "Creating DMS session with wallpaper path"
-    python3 - <<PYEOF
-import json, os
-session = {"wallpaperPath": "$WALLPAPER_DST"}
-with open("$DMS_SESSION", "w") as f:
-    json.dump(session, f, indent=2)
-PYEOF
 else
-    info "Updating wallpaper path in existing DMS session"
-    python3 - <<PYEOF
-import json
-with open("$DMS_SESSION") as f:
-    session = json.load(f)
-session["wallpaperPath"] = "$WALLPAPER_DST"
-with open("$DMS_SESSION", "w") as f:
-    json.dump(session, f, indent=2)
+    SESSION_RESULT=$(python3 - "$DMS_SESSION" "$WALLPAPER_DST" <<'PYEOF'
+import json, os, sys
+
+session_path, wallpaper = sys.argv[1], sys.argv[2]
+
+try:
+    with open(session_path) as f:
+        session = json.load(f)
+except FileNotFoundError:
+    session = {}
+except (OSError, ValueError):
+    # An unreadable session file is DMS's to repair — it rewrites the whole
+    # thing from its own defaults on next launch. Replacing it here would throw
+    # away every other bit of session state it holds.
+    print("!Could not read the DMS session file — leaving it untouched")
+    raise SystemExit
+
+current = session.get("wallpaperPath", "")
+if current and os.path.isfile(current):
+    print(f"Wallpaper already selected, leaving it alone: {os.path.basename(current)}")
+else:
+    session["wallpaperPath"] = wallpaper
+    with open(session_path, "w") as f:
+        json.dump(session, f, indent=2)
+    print(f"DMS session wallpaper set to {os.path.basename(wallpaper)}")
 PYEOF
+)
+    # A leading "!" marks the warning case; everything else is routine.
+    case "$SESSION_RESULT" in
+        "!"*) warn "${SESSION_RESULT#!}" ;;
+        *)    info "$SESSION_RESULT" ;;
+    esac
 fi
 
 # ─── Done ─────────────────────────────────────────────────────────────────────

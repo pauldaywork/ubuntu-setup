@@ -202,7 +202,9 @@ else
     note "  Install with: cargo install --git https://github.com/LGFae/swww --tag v0.11.2 --locked swww swww-daemon"
 fi
 
-if pgrep -f "wallpaper-sync.sh" &>/dev/null; then
+# Matched on the installed path, not the bare filename: a bare "wallpaper-sync.sh"
+# also matches an editor with the script open, or the grep looking for it.
+if pgrep -f "$HOME/.config/niri/wallpaper-sync.sh" &>/dev/null; then
     ok "wallpaper-sync.sh running"
 else
     issue "wallpaper-sync.sh not running — DMS wallpaper changes won't reach swww"
