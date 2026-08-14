@@ -54,7 +54,13 @@ for row in "${ROWS[@]}"; do
 done
 WIDTH=$((WIDTH + 6))
 [ "$WIDTH" -ge 40 ] || WIDTH=40
-[ "$WIDTH" -le 90 ] || WIDTH=90
+# fuzzel's --width is in characters, but at this font each one costs roughly
+# 30px, so the old cap of 90 asked for ~2700px on a 1920px screen. fuzzel
+# clamped that to the display, and the popup lost its margins and its rounded
+# corners to the screen edge — which only showed up once a task description got
+# long enough to reach the cap. 52 keeps the widest case comfortably inside a
+# 1080p screen; longer descriptions are elided rather than widening the popup.
+[ "$WIDTH" -le 52 ] || WIDTH=52
 
 SELECTED=$(printf '%s\n' "${ROWS[@]}" | task_fuzzel \
     --with-nth=2 \

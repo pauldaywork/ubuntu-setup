@@ -65,6 +65,30 @@ PluginComponent {
         onTriggered: workspaceWatcher.running = true
     }
 
+    // Setting a task active changes taskwarrior's data but emits no niri event,
+    // so the pill used to sit stale until the timer below came round — up to
+    // 30 seconds of "why hasn't it updated". Watch the task database directly
+    // instead. This also catches a `task start` typed into a terminal, which
+    // the event stream never saw either.
+    //
+    // The path follows data.location in home/.taskrc. If that's ever moved this
+    // watch quietly does nothing and the timer still covers it, so a wrong path
+    // can't leave the widget worse off than it was before.
+    FileView {
+        path: Paths.expandTilde("~/.task/pending.data")
+        watchChanges: true
+        printErrors: false
+
+        // reload() is what re-arms the watch for the next write.
+        onFileChanged: {
+            reload()
+            activeTaskProcess.running = true
+        }
+    }
+
+    // Fallback only, now that the file watch carries the common case: covers a
+    // moved task database, and anything that changes what's active without
+    // touching pending.data.
     Timer {
         interval: 30000
         repeat: true
