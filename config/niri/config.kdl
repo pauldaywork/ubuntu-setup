@@ -551,6 +551,12 @@ binds {
     // Toggle between window-rules profiles (normal / focus-dimming)
     Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/toggle-window-rules.sh"; }
 
+    // Step to the next wallpaper, alphabetically, within the folder the current
+    // one lives in — the same action the picker's next button runs, so it also
+    // resets the automatic-cycling timer. wallpaper-sync.sh carries the result
+    // through to swww. Needs at least two images in that folder to do anything.
+    Mod+Alt+B hotkey-overlay-title="Next Wallpaper" { spawn "dms" "ipc" "call" "wallpaper" "next"; }
+
     // Taskwarrior, scoped to the current workspace's name as a tag.
     // Mod+Alt+T types a new task; Mod+Alt+L lists this workspace's tasks and
     // offers edit / delete / complete / set-active on the one you pick.

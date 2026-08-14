@@ -240,14 +240,18 @@ section "Setting up wallpapers"
 WALLPAPER_DIR="$USER_HOME/Documents/Wallpapers"
 mkdir -p "$WALLPAPER_DIR"
 
+# A same-named file that differs is stale, not "already installed" — an edited
+# or truncated copy, or one this machine picked up before the repo's version
+# changed — so it gets replaced with the repo's, via copy() so the old one is
+# backed up like any other config. Wallpapers this machine has that the repo
+# doesn't are left alone; installing is not the same as pruning.
 for wall in "$DOTFILES/wallpapers"/*; do
     [ -f "$wall" ] || continue
     name="$(basename "$wall")"
     # `active` is our own bookkeeping, not a wallpaper.
     [ "$name" = "active" ] && continue
-    if [ ! -f "$WALLPAPER_DIR/$name" ]; then
-        cp "$wall" "$WALLPAPER_DIR/$name"
-        info "Installed wallpaper: $name"
+    if ! cmp -s "$wall" "$WALLPAPER_DIR/$name"; then
+        copy "$wall" "$WALLPAPER_DIR/$name"
     fi
 done
 

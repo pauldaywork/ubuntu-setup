@@ -190,11 +190,13 @@ swww isn't on crates.io or in apt, so `install.sh` builds it from the `v0.11.2` 
 
 ### Rotation: still DMS
 
-**Settings → Wallpaper → Automatic Cycling.** Toggle it on, then pick **Interval** (a dropdown from 5 seconds to 12 hours, default 5 minutes) or **Time** (once a day at a set clock time).
+**`Mod+Alt+B`** steps to the next wallpaper by hand, any time.
+
+For automatic rotation: **Settings → Wallpaper → Automatic Cycling.** Toggle it on, then pick **Interval** (a dropdown from 5 seconds to 12 hours, default 5 minutes) or **Time** (once a day at a set clock time).
 
 Cycling never touched the rendering layer, so disabling DMS's wallpaper changed nothing about it. The `dms` server keeps the schedule, `WallpaperCyclingService.qml` picks the next file and writes it to `session.json`, and `wallpaper-sync.sh` carries it to swww like any other change. **The folder it cycles through is the directory of the current wallpaper** — it isn't a separate setting — so keeping wallpapers in `~/Documents/Wallpapers` is what makes them a rotation set. It also needs at least two files in there, and it sorts them alphabetically.
 
-`dms ipc call wallpaper next` / `prev` step manually.
+`Mod+Alt+B` is bound to `dms ipc call wallpaper next`; `prev` exists too if you ever want a bind for it. Stepping by hand also resets the cycling timer.
 
 ### Transition: now swww's
 
@@ -229,6 +231,8 @@ bash update.sh
 ```
 
 This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpapers/` and records which one DMS currently has selected in `wallpapers/active`. Nothing is deleted from `wallpapers/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
+
+In the other direction, `install-config.sh` copies a wallpaper across whenever the machine's copy is missing **or differs** from the repo's, backing the old one up first. Wallpapers this machine has that the repo doesn't are left alone — installing isn't pruning.
 
 ### update.sh protects uncommitted repo edits
 
