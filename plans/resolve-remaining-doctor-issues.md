@@ -1,7 +1,7 @@
 # Plan: Resolve remaining doctor.sh issues
 
 **Created:** 2026-08-14
-**Status:** Not started
+**Status:** Task 1 complete (2026-08-14). Tasks 2 and 3 open.
 **Scope:** Finish the docker-ce → docker.io migration, de-duplicate Ghostty, and correct doctor.sh's `--fix` message.
 
 ---
@@ -24,7 +24,18 @@ so images and volumes survived the swap.
 
 ---
 
-## Task 1 — Swap docker-compose-plugin for docker-compose-v2
+## Task 1 — Swap docker-compose-plugin for docker-compose-v2 ✅ DONE
+
+> **Completed 2026-08-14.** The file conflict below was not hypothetical — `apt install
+> docker-compose-v2` failed with `Sub-process /usr/bin/dpkg returned an error code (1)` on three
+> separate attempts (08-13 11:58, 08-14 10:58 ×2) before `docker-compose-plugin` was removed. The
+> removal at 10:59:08 unblocked the install at 10:59:18. Final state verified: `docker-compose-v2`
+> 2.40.3 owns `/usr/libexec/docker/cli-plugins/docker-compose`, `docker compose version` reports
+> 2.40.3, `docker-compose-plugin` is fully gone, `dpkg --audit` clean.
+>
+> Note for future swaps: apt reports this failure as a generic dpkg subprocess error. The package
+> silently stays uninstalled while the rest of the transaction succeeds — which is why doctor.sh kept
+> reporting `docker-compose-v2` missing alongside a successful docker.io install.
 
 **Problem.** `docker compose` is currently served by `docker-compose-plugin` 5.1.4, left behind from
 the docker-ce repo. That repo is gone, so the package is orphaned (apt priority 100, no upgrade
@@ -171,10 +182,22 @@ must be run by hand (`! <command>` runs them inside a Claude Code session).
 
 ---
 
+## Optional tidy-up (not blocking)
+
+Left over from the migration, all harmless:
+
+- **`rc`-state packages** — `containerd.io`, `docker-ce`, and `mako-notifier` are removed but retain
+  config files. Purge with `sudo apt purge -y containerd.io docker-ce mako-notifier` if you want a
+  clean `dpkg -l`. Note this would make doctor.sh's mako check report differently only in wording —
+  `pkg_installed` already treats `rc` as not installed.
+- **29 autoremove candidates** — orphaned dependencies (`python3-numpy`, `libgtkmm`, `slirp4netns`,
+  and others) accumulated across the docker churn and earlier installs. Review before running:
+  `apt-get -s autoremove` lists them. Some (e.g. `cmake-data`) may be wanted by the cmake snap.
+
 ## Definition of done
 
-- [ ] `docker compose version` reports v2.40.3, owned by `docker-compose-v2`
-- [ ] `docker-compose-plugin` no longer installed
+- [x] `docker compose version` reports v2.40.3, owned by `docker-compose-v2`
+- [x] `docker-compose-plugin` no longer installed
 - [ ] `snap list ghostty` reports nothing; `command -v ghostty` is `/usr/bin/ghostty`
 - [ ] `install.sh` installs ghostty via apt, not snap
 - [ ] `doctor.sh` package lists match `install.sh`
