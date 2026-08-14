@@ -121,6 +121,11 @@ sync_now() {
     # comes back showing its own cached image, which is whatever it last drew
     # rather than whatever DMS has since selected. Comparing the pid catches
     # that; an empty pid (daemon down) never matches, so we keep trying.
+    #
+    # This only fires on the next session.json write, though, so it can't be the
+    # whole answer — a daemon restart writes nothing. swww-daemon.service has an
+    # ExecStartPost that restarts this script for exactly that reason. The pid
+    # check is what keeps the script correct when run by hand, without systemd.
     [ "$spec" = "$last" ] && [ "$pid" = "$last_pid" ] && return 0
 
     # Only remember it as applied if it actually applied. Recording it up front

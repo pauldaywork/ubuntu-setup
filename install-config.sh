@@ -190,6 +190,28 @@ if [ "$LAPTOP" = true ]; then
     printf '\ninclude "dms/laptop.kdl"\n' >> "$USER_HOME/.config/niri/config.kdl"
 fi
 
+# systemd user units for the wallpaper pair. They're units rather than niri
+# spawn-at-startup lines so that a crash is restarted instead of leaving the
+# desktop bare until the next login, and so `systemctl --user status` can say
+# what went wrong. graphical-session.target starts and stops them with niri.
+copy "$DOTFILES/config/systemd/user/swww-daemon.service"    "$USER_HOME/.config/systemd/user/swww-daemon.service"
+copy "$DOTFILES/config/systemd/user/wallpaper-sync.service" "$USER_HOME/.config/systemd/user/wallpaper-sync.service"
+
+# `enable` alone is enough: graphical-session.target pulls them in at login.
+# Starting them here would fail on a fresh machine that has no session yet
+# (Requisite=graphical-session.target), so that's left to the next login —
+# except when there *is* a session, where it saves a re-login.
+if command -v systemctl &>/dev/null; then
+    systemctl --user daemon-reload 2>/dev/null || true
+    systemctl --user enable swww-daemon.service wallpaper-sync.service 2>/dev/null \
+        && info "Enabled swww-daemon + wallpaper-sync user units" \
+        || warn "Could not enable the wallpaper user units (no systemd user session?)"
+    if systemctl --user is-active --quiet graphical-session.target 2>/dev/null; then
+        systemctl --user restart swww-daemon.service wallpaper-sync.service 2>/dev/null \
+            && info "Started the wallpaper units" || true
+    fi
+fi
+
 # fuzzel — picker theme for open_project_workspace.sh (fuzzel.ini itself is
 # left alone; the picker passes this file with --config=)
 copy "$DOTFILES/config/fuzzel/project-picker.ini" "$USER_HOME/.config/fuzzel/project-picker.ini"

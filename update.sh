@@ -150,6 +150,10 @@ pull "$HOME/.config/niri/window-rules/normal.kdl"   "$DOTFILES/config/niri/windo
 pull "$HOME/.config/niri/window-rules/focus.kdl"    "$DOTFILES/config/niri/window-rules/focus.kdl"
 # dms/binds.kdl is deliberately not pulled — see .gitignore.
 
+# ─── systemd user units ───────────────────────────────────────────────────────
+pull "$HOME/.config/systemd/user/swww-daemon.service"    "$DOTFILES/config/systemd/user/swww-daemon.service"
+pull "$HOME/.config/systemd/user/wallpaper-sync.service" "$DOTFILES/config/systemd/user/wallpaper-sync.service"
+
 # ─── fuzzel ───────────────────────────────────────────────────────────────────
 pull "$HOME/.config/fuzzel/project-picker.ini" "$DOTFILES/config/fuzzel/project-picker.ini"
 
@@ -188,9 +192,18 @@ if [ -d "$WALLPAPER_DIR" ]; then
     PULLED=0
     for wall in "$WALLPAPER_DIR"/*; do
         [ -f "$wall" ] || continue
-        WALL_DST="$DOTFILES/wallpapers/$(basename "$wall")"
+        WALL_NAME="$(basename "$wall")"
+        # Only image types — the same list DMS's picker and its cycling service
+        # filter on. Without this, anything that lands in the folder ends up
+        # committed: a .DS_Store, a stray zip, the __MACOSX leftovers that come
+        # out of an unzipped download.
+        case "${WALL_NAME,,}" in
+            *.jpg|*.jpeg|*.png|*.bmp|*.gif|*.webp|*.jxl|*.avif|*.heif|*.exr) ;;
+            *) continue ;;
+        esac
+        WALL_DST="$DOTFILES/wallpapers/$WALL_NAME"
         if [ ! -f "$WALL_DST" ] || ! cmp -s "$wall" "$WALL_DST"; then
-            info "Pulling wallpaper: $(basename "$wall")"
+            info "Pulling wallpaper: $WALL_NAME"
             cp "$wall" "$WALL_DST"
             PULLED=$((PULLED + 1))
         fi

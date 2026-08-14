@@ -1,0 +1,22 @@
+[Unit]
+Description=Feed the DMS wallpaper choice to swww
+PartOf=graphical-session.target
+After=graphical-session.target swww-daemon.service
+Requisite=graphical-session.target
+# Wants, not Requires: the script retries its first paint for 30s and watches
+# the daemon's pid thereafter, so it survives the daemon being late, absent, or
+# restarted. Tying them harder would only mean one failing unit taking the
+# other down with it.
+Wants=swww-daemon.service
+
+[Service]
+Type=simple
+ExecStart=%h/.config/niri/wallpaper-sync.sh
+# Restart=always rather than on-failure: this is a watch loop, so it exiting at
+# all — inotifywait dying, a closed pipe — is a reason to bring it back, however
+# cleanly it went.
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

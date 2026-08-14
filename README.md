@@ -174,13 +174,17 @@ Editing a description from `Mod+Alt+L` deliberately does the opposite — it's q
 
 DMS can't animate a wallpaper. It paints the background with a QML `Image` (`Modules/WallpaperBackground.qml` in `/usr/share/quickshell/dms`), which decodes exactly one frame, so a GIF picked in its wallpaper tab shows up as a still. Upstream won't change that in-shell — [DankMaterialShell#793](https://github.com/AvengeMedia/DankMaterialShell/issues/793) was closed with *"we do not intend to add swww as a dependency/optional dependency, within the shell itself"* — and instead offers an escape hatch: **Settings → Wallpaper → Disable Built-in Wallpapers**, which stops DMS creating the wallpaper layer surface at all and leaves the background to an external daemon.
 
-So that toggle is on (it's the empty `screenPreferences.wallpaper` array in `config/DankMaterialShell/settings.json`) and [swww](https://github.com/LGFae/swww) draws the background instead. Three pieces, all started by niri at login:
+So that toggle is on (it's the empty `screenPreferences.wallpaper` array in `config/DankMaterialShell/settings.json`) and [swww](https://github.com/LGFae/swww) draws the background instead. Three pieces:
 
 | Piece | Role |
 |---|---|
-| `swww-daemon` | Holds the background layer surface and plays the animation |
-| `config/niri/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each wallpaper change to `swww` |
+| `swww-daemon.service` | Holds the background layer surface and plays the animation |
+| `wallpaper-sync.service` → `config/niri/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each wallpaper change to `swww` |
 | `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background sits still instead of scrolling with the workspaces, and shows through in Overview |
+
+Both are **systemd user units** (`config/systemd/user/`), pulled in by `graphical-session.target` so they start and stop with niri. They were `spawn-at-startup` lines at first, which fires once and doesn't look back — a crash meant no wallpaper until the next login. As units they get restarted, and `systemctl --user status swww-daemon` will tell you why if one won't stay up.
+
+One wrinkle that needed handling: a daemon that comes back restores *its own* cached image, which is whatever it last drew rather than whatever DMS has selected since. Nothing writes `session.json` when that happens, so the sync script has no event to react to and the two would sit there disagreeing. `swww-daemon.service` therefore carries an `ExecStartPost` that restarts `wallpaper-sync.service`, which repaints from DMS's actual choice on startup. Verified by `kill -9`ing the daemon with a wallpaper change landing during the outage: the change was on screen a few seconds later.
 
 Everything else about DMS is untouched: the wallpaper picker, cycling, and matugen theming all key off `session.json`, and matugen reads a GIF's first frame happily, so dynamic colours still follow the wallpaper. **Pick wallpapers exactly as before** — the DMS tab is still the UI.
 
@@ -213,11 +217,13 @@ TRANSITION_FPS="${SWWW_TRANSITION_FPS:-30}"
 To audition one without editing the file, the environment wins:
 
 ```bash
-pkill -f wallpaper-sync.sh
+systemctl --user stop wallpaper-sync.service      # not pkill — systemd would just restart it
 SWWW_TRANSITION=grow SWWW_TRANSITION_DURATION=1.5 ~/.config/niri/wallpaper-sync.sh &
+# …change wallpaper a few times, then:
+kill %1; systemctl --user start wallpaper-sync.service
 ```
 
-Then change wallpaper to see it. Edit the defaults in the script once you've settled on one — the environment version dies with the shell, and niri restarts the plain script at next login. Anything more exotic (`--transition-angle`, `--transition-pos`, `--transition-bezier`, `--transition-wave`) is a flag in `swww img --help`; add it next to the others in `apply()`.
+Edit the defaults in the script once you've settled on one — the environment version dies with the shell, and the unit runs the plain script. Anything more exotic (`--transition-angle`, `--transition-pos`, `--transition-bezier`, `--transition-wave`) is a flag in `swww img --help`; add it next to the others in `apply()`.
 
 ---
 
@@ -348,6 +354,9 @@ backup-os/
 │   │   ├── firefox.css
 │   │   ├── plugins/activetask/             # Our own DMS bar widget: the workspace's active task
 │   │   └── themes/peaceAndQuiet/theme.json
+│   ├── systemd/user/
+│   │   ├── swww-daemon.service             # Wallpaper daemon; restarts wallpaper-sync on start
+│   │   └── wallpaper-sync.service          # Runs wallpaper-sync.sh for the session
 │   └── Code/
 │       ├── settings.json
 │       └── extensions.txt

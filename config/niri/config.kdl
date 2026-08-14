@@ -129,9 +129,11 @@ spawn-at-startup "~/.config/niri/default_workspace_name.sh"
 // Wallpaper. DMS's built-in wallpaper layer is switched off (see
 // screenPreferences.wallpaper in its settings.json) because it renders GIFs as
 // a single still frame; swww draws the background instead and animates them.
-// wallpaper-sync.sh keeps swww pointed at whatever the DMS picker selected.
-spawn-at-startup "~/.cargo/bin/swww-daemon"
-spawn-at-startup "~/.config/niri/wallpaper-sync.sh"
+//
+// swww-daemon and wallpaper-sync.sh are not spawned here — they're systemd user
+// units (config/systemd/user/), pulled in by graphical-session.target, so that
+// either one crashing is restarted rather than leaving the desktop bare until
+// the next login. spawn-at-startup fires once and doesn't look back.
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"

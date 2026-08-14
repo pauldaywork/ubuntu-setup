@@ -190,26 +190,29 @@ fi
 # to carry picker changes across.
 if command -v swww &>/dev/null && command -v swww-daemon &>/dev/null; then
     ok "swww installed ($(swww --version 2>/dev/null))"
-
-    if pgrep -x swww-daemon &>/dev/null; then
-        ok "swww-daemon running"
-    else
-        issue "swww-daemon not running — the desktop background will be empty"
-        note "  Start with: ~/.cargo/bin/swww-daemon &   (niri spawns it at startup)"
-    fi
 else
     issue "swww not installed — animated wallpapers won't render"
     note "  Install with: cargo install --git https://github.com/LGFae/swww --tag v0.11.2 --locked swww swww-daemon"
 fi
 
-# Matched on the installed path, not the bare filename: a bare "wallpaper-sync.sh"
-# also matches an editor with the script open, or the grep looking for it.
-if pgrep -f "$HOME/.config/niri/wallpaper-sync.sh" &>/dev/null; then
-    ok "wallpaper-sync.sh running"
-else
-    issue "wallpaper-sync.sh not running — DMS wallpaper changes won't reach swww"
-    note "  Start with: ~/.config/niri/wallpaper-sync.sh &   (niri spawns it at startup)"
-fi
+# Both run as systemd user units, so ask systemd rather than looking for the
+# processes: it distinguishes "never installed" from "enabled but crashed", and
+# knows which one to tell you to look at.
+for unit in swww-daemon wallpaper-sync; do
+    if [ ! -f "$HOME/.config/systemd/user/$unit.service" ]; then
+        issue "$unit.service not installed"
+        note "  Install with: bash install-config.sh"
+    elif ! systemctl --user is-enabled --quiet "$unit.service" 2>/dev/null; then
+        issue "$unit.service is not enabled — it won't start at next login"
+        note "  Enable with: systemctl --user enable --now $unit.service"
+    elif systemctl --user is-active --quiet "$unit.service" 2>/dev/null; then
+        ok "$unit.service running"
+    else
+        issue "$unit.service is enabled but not running"
+        note "  Look at why with: systemctl --user status $unit.service"
+        note "  Start with: systemctl --user start $unit.service"
+    fi
+done
 
 DMS_SETTINGS="$HOME/.config/DankMaterialShell/settings.json"
 if [ -f "$DMS_SETTINGS" ]; then

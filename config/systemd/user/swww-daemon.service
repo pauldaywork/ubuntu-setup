@@ -1,0 +1,34 @@
+[Unit]
+Description=swww wallpaper daemon
+Documentation=https://github.com/LGFae/swww
+# DMS's own wallpaper layer is disabled (screenPreferences.wallpaper in its
+# settings.json), so this holds the background surface for the whole session.
+# Modelled on dms.service: tied to the compositor's lifetime, and Requisite
+# means it refuses to start rather than sitting there failing if there is no
+# graphical session to draw on.
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.cargo/bin/swww-daemon
+# It was previously a niri spawn-at-startup, which fires once and gives up: a
+# crash meant no wallpaper until the next login.
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=10
+
+# A daemon that comes back restores its *own* cache, which is whatever it last
+# drew — not necessarily what DMS has selected since. Nothing writes
+# session.json when that happens, so wallpaper-sync has no event to react to and
+# the two would sit there disagreeing. Kicking it here is that missing event;
+# it repaints as it starts up.
+#
+# --no-block because this runs while the daemon is still activating, and
+# wallpaper-sync is ordered After= it: waiting for that job to finish would
+# deadlock the two against each other.
+ExecStartPost=systemctl --user --no-block try-restart wallpaper-sync.service
+
+[Install]
+WantedBy=graphical-session.target
