@@ -15,13 +15,13 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
 | Task manager | Taskwarrior (+ DMS taskwarrior widget plugin) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
-| Wallpaper | Wallpaper collection + the active choice, rendered by swww so animated GIFs animate |
+| Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user units) so animated GIFs animate |
 
 ## Setting up a new machine
 
 ### 1. Install Ubuntu
 
-Install Ubuntu 25.04 (Resolute) — the PPAs used here target this release.
+Install Ubuntu 26.04 LTS (Resolute Raccoon) — the PPAs used here target this release.
 
 ### 2. Clone this repo
 
@@ -32,7 +32,7 @@ sudo apt install git
 git clone git@github.com:yourusername/backup-os.git ~/Documents/Code/backup-os
 ```
 
-If you don't have your SSH key yet, clone with HTTPS instead and set up the key during the install script (step 4).
+If you don't have your SSH key yet, clone with HTTPS instead — `install.sh` generates one near the end and prints the public half for you to paste into GitHub.
 
 ### 3. Run the install script
 
@@ -50,27 +50,28 @@ bash install.sh --laptop     # force it on
 bash install.sh --desktop    # force it off, and keep it off
 ```
 
-This used to hang on remembering the flag. `install-config.sh` replaces `config.kdl` with the repo's copy, which never carries the `include "dms/laptop.kdl"` line, then appends it — so a single re-run without `--laptop` deleted those binds with no error and nothing to notice until you reached for one. `doctor.sh` now also flags a machine with a battery whose config is missing that include.
+This used to hang on remembering the flag: the installer copied the repo's `config.kdl` over the live one and *then* appended the include, so a single re-run without `--laptop` deleted those binds with no error and nothing to notice until you reached for one. The config is now assembled with the include already in it before anything is written, and `doctor.sh` flags a machine that has a battery but no laptop include — or an include whose target file is missing, which niri refuses to load at all.
 
 The script will:
 
 1. Remove a leftover `mako-notifier` install if present (DMS owns notifications now, and the two fight over the notification socket)
 2. Add PPAs for Niri, DankMaterialShell, Sublime Text, and Google Chrome
-3. Install all apt packages
+3. Install all apt packages, from the list in `lib/manifest.sh`
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
-5. Install apps without an apt repo (Obsidian) via their official installers
-6. Install snap packages (Firefox, VS Code, CMake)
-7. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
-8. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers))
-9. Install Bun via the official installer
-10. Install NVM + Node.js v24.18.0
-11. Install Claude Code via npm
-12. Copy all config files to their correct locations, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
-13. Install TPM (tmux plugin manager) and fetch tmux plugins
-14. Install DMS plugins (taskwarrior widget)
-15. Install VS Code extensions from `config/Code/extensions.txt`
-16. Prompt for your git name and email
-17. Generate a new SSH key and print the public key so you can add it to GitHub
+5. Install the NVIDIA container toolkit, but only if an NVIDIA GPU is actually present (read from sysfs, so it works before any driver is)
+6. Install apps without an apt repo (Obsidian) via their official installers
+7. Install snap packages (Firefox, VS Code, CMake)
+8. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
+9. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers))
+10. Install Bun via the official installer
+11. Install NVM + Node.js v24.18.0
+12. Install Claude Code via npm
+13. Copy all config files to their correct locations, install the wallpaper systemd units, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
+14. Install TPM (tmux plugin manager) and fetch tmux plugins
+15. Install DMS plugins (taskwarrior widget)
+16. Install VS Code extensions from `config/Code/extensions.txt`
+17. Prompt for your git name and email
+18. Generate a new SSH key and print the public key so you can add it to GitHub
 
 ### 4. After the script finishes
 
@@ -251,9 +252,9 @@ cd ~/Documents/Code/backup-os
 bash update.sh
 ```
 
-This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpapers/` and records which one DMS currently has selected in `wallpapers/active`. Nothing is deleted from `wallpapers/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
+This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpapers/` — image files only, so a stray `.DS_Store` or an unzipped download's `__MACOSX` leftovers don't get committed as wallpapers — and records which one DMS currently has selected in `wallpapers/active`. Nothing is deleted from `wallpapers/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
 
-In the other direction, `install-config.sh` copies a wallpaper across whenever the machine's copy is missing **or differs** from the repo's, backing the old one up first. Wallpapers this machine has that the repo doesn't are left alone — installing isn't pruning.
+In the other direction, `install-config.sh` copies a wallpaper across whenever the machine's copy is missing **or differs** from the repo's, backing the old one up first. Wallpapers a machine has that the repo doesn't are left alone — installing isn't pruning, so removing one everywhere means deleting it from `~/Documents/Wallpapers` as well as from the repo.
 
 ### update.sh protects uncommitted repo edits
 
@@ -303,7 +304,8 @@ git push
 | Ghostty | `~/.config/ghostty/` |
 | DankMaterialShell | `~/.config/DankMaterialShell/` |
 | VS Code settings | `~/.config/Code/User/settings.json` |
-| VS Code extensions | generated by `code --list-extensions` |
+| VS Code extensions | generated by `code --list-extensions`; the existing list is kept if `code` isn't on `PATH` or returns nothing |
+| Systemd user units | `~/.config/systemd/user/swww-daemon.service`, `wallpaper-sync.service` |
 | Taskwarrior | `~/.taskrc` |
 | Wallpapers | `~/Documents/Wallpapers/` (whole folder); the active one read from the DMS session into `wallpapers/active` |
 
@@ -330,6 +332,19 @@ bash doctor.sh --fix    # same, but offers to interactively repair dangling PATH
 ```
 
 It only ever edits dotfile references, and only after you confirm each one. If it finds the same tool installed two different ways (e.g. both snap and apt/rustup.rs), it reports that and prints the command to remove the redundant one — it won't uninstall anything on its own.
+
+What it checks:
+
+| Area | What it looks for |
+|---|---|
+| Packages | Everything in `lib/manifest.sh` — the same list `install.sh` installs from, so the two can't drift. Build-only packages are excluded on purpose |
+| Docker | Group membership, service running, and `docker-ce` conflicting with Ubuntu's `docker.io` |
+| Toolchains | rustup, bun, nvm (and that `NVM_DIR` points where nvm actually is), Node, Claude Code, TPM |
+| Wallpaper | swww installed, both user units enabled and running, DMS's built-in wallpapers still disabled, **and that what's on screen is what DMS has selected** — the one check that catches a missed paint |
+| Laptop config | A machine with a battery whose `config.kdl` lacks the laptop include, or an include pointing at a file that isn't there |
+| Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
+
+The wallpaper row is the one worth running after a reboot: every other check can be green while the screen shows a stale image, because swww restores its own cache when it starts.
 
 ---
 
