@@ -6,9 +6,11 @@ USER_HOME="$HOME"
 
 # ─── flags ─────────────────────────────────────────────────────────────────────
 LAPTOP=false
+DESKTOP=false
 for arg in "$@"; do
     case "$arg" in
-        --laptop) LAPTOP=true ;;
+        --laptop)  LAPTOP=true ;;
+        --desktop) DESKTOP=true ;;
     esac
 done
 
@@ -184,10 +186,60 @@ if [ ! -e "$USER_HOME/.config/niri/dms/binds.kdl" ]; then
     info "Seeded empty $USER_HOME/.config/niri/dms/binds.kdl"
 fi
 
-if [ "$LAPTOP" = true ]; then
-    info "Applying laptop-specific niri config"
+# Laptop-specific niri config (display on/off binds, vertical workspace binds).
+#
+# This used to hang entirely on remembering `--laptop` every single time. The
+# copy above replaces config.kdl with the repo's, which never carries the
+# include line, so one re-run without the flag silently deleted those binds —
+# no error, nothing to notice until you reached for a shortcut that had gone.
+#
+# So the machine decides for itself, and the decision is remembered the way the
+# window-rules profile above already is. The flags stay as an override, and
+# --desktop is how you undo a wrong guess.
+# The record holds "laptop" or "desktop" rather than existing/not existing, so
+# that an explicit --desktop on laptop hardware sticks too. A bare marker file
+# would be re-detected away on the next flagless run, which is the same "the
+# decision wasn't remembered" bug in the other direction.
+MACHINE_TYPE_FILE="$USER_HOME/.config/niri/.machine-type"
+
+# DMI chassis types: 8 portable, 9 laptop, 10 notebook, 11 hand held,
+# 14 sub-notebook, 30 tablet, 31 convertible, 32 detachable. Some machines
+# report something useless there, so a battery is the fallback tell — same
+# read-sysfs-directly approach install.sh uses to spot an NVIDIA GPU.
+is_laptop_hardware() {
+    local chassis
+    if [ -r /sys/class/dmi/id/chassis_type ]; then
+        read -r chassis < /sys/class/dmi/id/chassis_type
+        case "$chassis" in
+            8|9|10|11|14|30|31|32) return 0 ;;
+        esac
+    fi
+    compgen -G "/sys/class/power_supply/BAT*" > /dev/null
+}
+
+RECORDED_TYPE=""
+[ -f "$MACHINE_TYPE_FILE" ] && RECORDED_TYPE="$(head -n1 "$MACHINE_TYPE_FILE")"
+
+if [ "$DESKTOP" = true ]; then
+    MACHINE_TYPE="desktop"; MACHINE_REASON="--desktop given"
+elif [ "$LAPTOP" = true ]; then
+    MACHINE_TYPE="laptop";  MACHINE_REASON="--laptop given"
+elif [ "$RECORDED_TYPE" = "laptop" ] || [ "$RECORDED_TYPE" = "desktop" ]; then
+    MACHINE_TYPE="$RECORDED_TYPE"; MACHINE_REASON="remembered from a previous install"
+elif is_laptop_hardware; then
+    MACHINE_TYPE="laptop";  MACHINE_REASON="detected from chassis type/battery"
+else
+    MACHINE_TYPE="desktop"; MACHINE_REASON="no laptop hardware detected"
+fi
+
+echo "$MACHINE_TYPE" > "$MACHINE_TYPE_FILE"
+
+if [ "$MACHINE_TYPE" = "laptop" ]; then
+    info "Applying laptop-specific niri config ($MACHINE_REASON)"
     copy "$DOTFILES/config/niri/dms/laptop.kdl" "$USER_HOME/.config/niri/dms/laptop.kdl"
     printf '\ninclude "dms/laptop.kdl"\n' >> "$USER_HOME/.config/niri/config.kdl"
+else
+    info "Skipping laptop-specific niri config ($MACHINE_REASON)"
 fi
 
 # systemd user units for the wallpaper pair. They're units rather than niri

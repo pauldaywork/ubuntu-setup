@@ -177,8 +177,27 @@ pull "$HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
 # ─── VS Code ──────────────────────────────────────────────────────────────────
 pull "$HOME/.config/Code/User/settings.json" "$DOTFILES/config/Code/settings.json"
 info "Pulling VS Code extensions list"
-code --list-extensions 2>/dev/null > "$DOTFILES/config/Code/extensions.txt"
-info "  $(wc -l < "$DOTFILES/config/Code/extensions.txt") extension(s) saved"
+# Built in a temp file first. Redirecting straight into the repo truncates the
+# list before `code` has run, so on any machine where code isn't on PATH — a tty
+# session, an ssh login, a box where the snap isn't installed yet — the list was
+# emptied and then `set -e` killed the script on the failed command, committing
+# the loss. An empty result is treated the same way: more likely a broken `code`
+# than a genuine "no extensions installed".
+EXT_DST="$DOTFILES/config/Code/extensions.txt"
+if command -v code &>/dev/null; then
+    EXT_TMP=$(mktemp)
+    if code --list-extensions > "$EXT_TMP" 2>/dev/null && [ -s "$EXT_TMP" ]; then
+        # cat rather than mv: keeps the repo file's own permissions, and stays
+        # correct when /tmp is a different filesystem.
+        cat "$EXT_TMP" > "$EXT_DST"
+        info "  $(wc -l < "$EXT_DST") extension(s) saved"
+    else
+        warn "  code --list-extensions returned nothing — keeping the existing list"
+    fi
+    rm -f "$EXT_TMP"
+else
+    warn "  code not on PATH — keeping the existing extensions list"
+fi
 
 # ─── Wallpapers ───────────────────────────────────────────────────────────────
 # The repo carries a wallpaper *collection*, not a single file: the DMS picker

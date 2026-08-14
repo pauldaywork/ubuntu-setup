@@ -5,10 +5,14 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER_HOME="$HOME"
 
 # ─── flags ─────────────────────────────────────────────────────────────────────
+# --laptop / --desktop are overrides, not requirements: install-config.sh detects
+# laptop hardware on its own and remembers the answer. Passed straight through.
 LAPTOP=false
+DESKTOP=false
 for arg in "$@"; do
     case "$arg" in
-        --laptop) LAPTOP=true ;;
+        --laptop)  LAPTOP=true ;;
+        --desktop) DESKTOP=true ;;
     esac
 done
 
@@ -343,7 +347,8 @@ fi
 
 # ─── 8. Copy config files + wallpaper ─────────────────────────────────────────
 CONFIG_ARGS=()
-[ "$LAPTOP" = true ] && CONFIG_ARGS+=(--laptop)
+[ "$LAPTOP" = true ]  && CONFIG_ARGS+=(--laptop)
+[ "$DESKTOP" = true ] && CONFIG_ARGS+=(--desktop)
 "$DOTFILES/install-config.sh" "${CONFIG_ARGS[@]}"
 
 # ─── 9. TPM (tmux plugin manager) ─────────────────────────────────────────────

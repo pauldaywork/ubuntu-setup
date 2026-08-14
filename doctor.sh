@@ -253,6 +253,34 @@ if [ -f "$DMS_SETTINGS" ]; then
     fi
 fi
 
+# Laptop binds. install-config.sh replaces config.kdl wholesale and appends the
+# laptop include afterwards, so a re-run that decides this machine isn't a laptop
+# takes the display and workspace binds away with no error — worth noticing here
+# rather than the next time you reach for a shortcut that's gone.
+NIRI_CONFIG="$HOME/.config/niri/config.kdl"
+if [ -f "$NIRI_CONFIG" ]; then
+    # A machine deliberately installed as --desktop records that, and is not
+    # nagged about the binds it asked not to have.
+    MACHINE_TYPE=""
+    [ -f "$HOME/.config/niri/.machine-type" ] && MACHINE_TYPE="$(head -n1 "$HOME/.config/niri/.machine-type")"
+
+    HAS_BATTERY=false
+    [ "$MACHINE_TYPE" != "desktop" ] && compgen -G "/sys/class/power_supply/BAT*" > /dev/null && HAS_BATTERY=true
+    HAS_INCLUDE=false
+    grep -q '^include "dms/laptop.kdl"$' "$NIRI_CONFIG" && HAS_INCLUDE=true
+
+    if [ "$HAS_BATTERY" = true ] && [ "$HAS_INCLUDE" = false ]; then
+        issue "This machine has a battery but config.kdl doesn't include dms/laptop.kdl"
+        note "  The display and workspace binds in it are missing"
+        note "  Fix with: bash install-config.sh --laptop"
+    elif [ "$HAS_INCLUDE" = true ] && [ ! -f "$HOME/.config/niri/dms/laptop.kdl" ]; then
+        issue "config.kdl includes dms/laptop.kdl but that file is missing — niri won't load the config"
+        note "  Fix with: bash install-config.sh --laptop"
+    elif [ "$HAS_INCLUDE" = true ]; then
+        ok "Laptop niri config included"
+    fi
+fi
+
 # ─── 2. Dangling PATH / env references in dotfiles ───────────────────────────
 # Finds lines like `export FOO_DIR="$HOME/x"` or `. "$HOME/x/env"` and checks
 # the path they point at still exists. Catches the general case of "a tool
