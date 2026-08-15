@@ -24,7 +24,7 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The manifest is the point: this script used to keep its own copy of the
 # package list with a comment asking whoever edited install.sh to remember to
 # edit this one too.
-for lib in lib/common.sh lib/manifest.sh; do
+for lib in lib/common.sh lib/manifest.sh lib/paths.sh; do
     if [ ! -f "$DOTFILES/$lib" ]; then
         echo "Missing $DOTFILES/$lib — run this from a full clone of the repo" >&2
         exit 1
@@ -158,6 +158,73 @@ else
     issue "DMS taskwarrior plugin not installed at ~/.config/DankMaterialShell/plugins/taskwarrior"
     note "  Install with: git clone https://github.com/cyrylas/dms-taskwarrior ~/.config/DankMaterialShell/plugins/taskwarrior"
 fi
+
+# ─── config drift ─────────────────────────────────────────────────────────────
+# Every mapped file from lib/paths.sh, checked against the repo. This is the
+# third consumer of that table: install-config.sh deploys it, update.sh pulls it
+# back, and here we ask whether the two still agree.
+#
+# Only mismatches are reported. A machine in sync says so in one line rather
+# than eighteen, which keeps the interesting output visible.
+MISSING=0
+DRIFTED=0
+CHECKED=0
+MACHINE_TYPE_NOW="desktop"
+[ -f "$HOME/.config/niri/.machine-type" ] && MACHINE_TYPE_NOW="$(head -n1 "$HOME/.config/niri/.machine-type")"
+
+for _row in "${DOTFILES_MAP[@]}"; do
+    map_entry "$_row"
+    _live="$HOME/$HOME_PATH"
+    _repo="$DOTFILES/$REPO_PATH"
+
+    # Laptop-only rows are not expected to exist on a desktop.
+    [ "$KIND" = laptop ] && [ "$MACHINE_TYPE_NOW" != laptop ] && continue
+
+    CHECKED=$((CHECKED + 1))
+    if [ ! -f "$_live" ]; then
+        issue "Not installed: ~/$HOME_PATH"
+        note "  Install with: bash install-config.sh"
+        MISSING=$((MISSING + 1))
+    elif [ "$KIND" != merge ] && ! cmp -s "$_live" "$_repo"; then
+        # merge rows are expected to differ — the live file carries keys our
+        # snapshot has never heard of, which is the whole reason they're merged.
+        note "Differs from the repo: ~/$HOME_PATH"
+        DRIFTED=$((DRIFTED + 1))
+    fi
+done
+
+if [ "$MISSING" -eq 0 ] && [ "$DRIFTED" -eq 0 ]; then
+    ok "All $CHECKED mapped config files present and matching the repo"
+elif [ "$MISSING" -eq 0 ]; then
+    ok "All $CHECKED mapped config files present ($DRIFTED differ — bash update.sh to snapshot, or install-config.sh to overwrite)"
+fi
+
+# config.kdl is not in the table — it is assembled with the laptop include
+# appended — so the count above does not cover it. Check it here rather than
+# leave "all N match" implying the most important file was among them. Same
+# strip update.sh does, so the comparison is like for like.
+if [ -f "$HOME/.config/niri/config.kdl" ]; then
+    NIRI_CMP=$(mktemp)
+    grep -v '^include "dms/laptop.kdl"$' "$HOME/.config/niri/config.kdl" > "$NIRI_CMP" || true
+    if cmp -s "$NIRI_CMP" "$DOTFILES/config/niri/config.kdl"; then
+        ok "niri config.kdl matches the repo"
+    else
+        note "Differs from the repo: ~/.config/niri/config.kdl"
+    fi
+    rm -f "$NIRI_CMP"
+fi
+
+# The executable bit is set by install-config.sh, not carried in git for the
+# destination, so a file restored by hand or from a backup can be present,
+# matching, and still not runnable.
+for _row in "${DOTFILES_MAP[@]}"; do
+    map_entry "$_row"
+    [ "$KIND" = exec ] || continue
+    if [ -f "$HOME/$HOME_PATH" ] && [ ! -x "$HOME/$HOME_PATH" ]; then
+        issue "Not executable: ~/$HOME_PATH"
+        note "  Fix with: chmod +x ~/$HOME_PATH"
+    fi
+done
 
 # The workspace-task system lives in its own repo now. Delegate to its doctor
 # rather than duplicating the checks here — it knows what it installed, and this
