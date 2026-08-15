@@ -218,42 +218,11 @@ if [ "$MACHINE_TYPE" = "laptop" ]; then
 fi
 copy "$NIRI_CONFIG_TMP" "$USER_HOME/.config/niri/config.kdl"
 rm -f "$NIRI_CONFIG_TMP"
-copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/niri/create_named_workspace.sh"
-chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
-copy "$DOTFILES/config/niri/rename_workspace.sh"          "$USER_HOME/.config/niri/rename_workspace.sh"
-chmod +x "$USER_HOME/.config/niri/rename_workspace.sh"
-copy "$DOTFILES/config/niri/open_project_workspace.sh"     "$USER_HOME/.config/niri/open_project_workspace.sh"
-chmod +x "$USER_HOME/.config/niri/open_project_workspace.sh"
-copy "$DOTFILES/config/niri/default_workspace_name.sh"    "$USER_HOME/.config/niri/default_workspace_name.sh"
-chmod +x "$USER_HOME/.config/niri/default_workspace_name.sh"
 copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/niri/toggle-window-rules.sh"
 chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
-copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/niri/tmux-niri-session.sh"
-chmod +x "$USER_HOME/.config/niri/tmux-niri-session.sh"
 copy "$DOTFILES/config/niri/wallpaper-sync.sh"            "$USER_HOME/.config/niri/wallpaper-sync.sh"
 chmod +x "$USER_HOME/.config/niri/wallpaper-sync.sh"
 
-# taskwarrior shortcuts — task-lib.sh is sourced by the other three, not run,
-# so it's the one file here that doesn't need the executable bit.
-copy "$DOTFILES/config/niri/task-lib.sh"                  "$USER_HOME/.config/niri/task-lib.sh"
-copy "$DOTFILES/config/niri/task-add.sh"                  "$USER_HOME/.config/niri/task-add.sh"
-chmod +x "$USER_HOME/.config/niri/task-add.sh"
-copy "$DOTFILES/config/niri/task-list.sh"                 "$USER_HOME/.config/niri/task-list.sh"
-chmod +x "$USER_HOME/.config/niri/task-list.sh"
-copy "$DOTFILES/config/niri/task-active.sh"               "$USER_HOME/.config/niri/task-active.sh"
-chmod +x "$USER_HOME/.config/niri/task-active.sh"
-copy "$DOTFILES/config/niri/task-tag.sh"                  "$USER_HOME/.config/niri/task-tag.sh"
-chmod +x "$USER_HOME/.config/niri/task-tag.sh"
-copy "$DOTFILES/config/niri/task-add-text.sh"             "$USER_HOME/.config/niri/task-add-text.sh"
-chmod +x "$USER_HOME/.config/niri/task-add-text.sh"
-copy "$DOTFILES/config/niri/task-get-text.sh"             "$USER_HOME/.config/niri/task-get-text.sh"
-chmod +x "$USER_HOME/.config/niri/task-get-text.sh"
-copy "$DOTFILES/config/niri/task-edit-text.sh"            "$USER_HOME/.config/niri/task-edit-text.sh"
-chmod +x "$USER_HOME/.config/niri/task-edit-text.sh"
-copy "$DOTFILES/config/niri/task-get-notes.sh"            "$USER_HOME/.config/niri/task-get-notes.sh"
-chmod +x "$USER_HOME/.config/niri/task-get-notes.sh"
-copy "$DOTFILES/config/niri/task-annotate-text.sh"        "$USER_HOME/.config/niri/task-annotate-text.sh"
-chmod +x "$USER_HOME/.config/niri/task-annotate-text.sh"
 copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
 copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
 
@@ -289,6 +258,15 @@ if [ ! -e "$USER_HOME/.config/niri/dms/binds.kdl" ]; then
     info "Seeded empty $USER_HOME/.config/niri/dms/binds.kdl"
 fi
 
+# Same problem, same fix, for the niri-tasks include. That project owns the
+# workspace-task binds and symlinks the real file over this stub when it's
+# installed; without the stub, a machine that only has this repo would have a
+# config niri refuses to load.
+if [ ! -e "$USER_HOME/.config/niri/niri-tasks.kdl" ]; then
+    printf 'binds {\n\n}\n' > "$USER_HOME/.config/niri/niri-tasks.kdl"
+    info "Seeded empty $USER_HOME/.config/niri/niri-tasks.kdl"
+fi
+
 # systemd user units for the wallpaper pair. They're units rather than niri
 # spawn-at-startup lines so that a crash is restarted instead of leaving the
 # desktop bare until the next login, and so `systemctl --user status` can say
@@ -311,13 +289,18 @@ if command -v systemctl &>/dev/null; then
     fi
 fi
 
-# fuzzel — picker theme for open_project_workspace.sh (fuzzel.ini itself is
-# left alone; the picker passes this file with --config=)
-copy "$DOTFILES/config/fuzzel/project-picker.ini" "$USER_HOME/.config/fuzzel/project-picker.ini"
-
 # ghostty
 copy "$DOTFILES/config/ghostty/config.ghostty" "$USER_HOME/.config/ghostty/config.ghostty"
-sed -i "s|^command = .*|command = $USER_HOME/.config/niri/tmux-niri-session.sh|" \
+# `wt tmux-session` opens a tmux session named after the focused workspace, in
+# the matching ~/Projects folder. It belongs to niri-tasks, which is optional —
+# so fall back to plain tmux rather than leaving ghostty pointed at a command
+# that doesn't exist, which would mean no terminal at all.
+if command -v wt >/dev/null; then
+    GHOSTTY_COMMAND="wt tmux-session"
+else
+    GHOSTTY_COMMAND="tmux"
+fi
+sed -i "s|^command = .*|command = $GHOSTTY_COMMAND|" \
     "$USER_HOME/.config/ghostty/config.ghostty"
 
 # DankMaterialShell — merged, not copied, so a re-install doesn't roll the live
@@ -330,25 +313,11 @@ copy "$DOTFILES/config/DankMaterialShell/firefox.css"          "$USER_HOME/.conf
 copy "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
      "$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json"
 
-# Our own DMS plugin: a bar widget showing the active task, plus a daemon
-# holding the task box that Mod+Alt+T and the list's Edit action open over IPC.
-# Third-party plugins are git-cloned by install.sh and left alone on re-runs;
-# this one is versioned here, so it's copied every time like any other dotfile.
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/plugin.json" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/plugin.json"
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml"
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml"
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml"
-
-# The rename from TaskAdd* leaves the old pair behind on any machine installed
-# before it. They're inert — plugin.json names its components, so nothing loads
-# a file it doesn't list — but a folder holding two copies of the modal is a
-# trap for whoever next opens one to edit it.
-rm -f "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml" \
-      "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddModal.qml"
+# The activetask plugin is gone: the active-task readout is now a layer-shell
+# overlay owned by niri-tasks, and the task box is its own window. Remove the
+# plugin directory on machines that still carry it, or DMS keeps loading a
+# widget whose scripts no longer exist.
+rm -rf "$USER_HOME/.config/DankMaterialShell/plugins/activetask"
 
 # VS Code settings (extensions are not installed here — see install.sh)
 copy "$DOTFILES/config/Code/settings.json" "$USER_HOME/.config/Code/User/settings.json"

@@ -286,6 +286,37 @@ CONFIG_ARGS=()
 [ "$DESKTOP" = true ] && CONFIG_ARGS+=(--desktop)
 "$DOTFILES/install-config.sh" "${CONFIG_ARGS[@]}"
 
+# ─── 8b. niri-tasks ───────────────────────────────────────────────────────────
+# Workspace-scoped taskwarrior: Mod+Alt+T/L/P, the task box, and the active-task
+# overlay. Its own repo, its own release cycle — this just makes sure a new
+# machine ends up with it.
+#
+# Runs after install-config.sh so ~/.config/niri exists and the include stub is
+# already seeded; its installer symlinks the real file over that stub.
+#
+# It lives in ~/Projects like any other project rather than somewhere hidden, so
+# `wt project open` finds it and editing it is `cargo install --path` again.
+section "Installing niri-tasks"
+
+NIRI_TASKS_DIR="$USER_HOME/Projects/niri-tasks"
+NIRI_TASKS_REPO="https://github.com/paul/niri-tasks"
+
+if [ -d "$NIRI_TASKS_DIR/.git" ]; then
+    info "Updating niri-tasks"
+    git -C "$NIRI_TASKS_DIR" pull --ff-only \
+        || warn "Could not fast-forward niri-tasks — leaving the working tree alone"
+else
+    info "Cloning niri-tasks"
+    git clone "$NIRI_TASKS_REPO" "$NIRI_TASKS_DIR" \
+        || warn "Could not clone niri-tasks — Mod+Alt+T/L/P will be absent"
+fi
+
+if [ -x "$NIRI_TASKS_DIR/install.sh" ]; then
+    # Needs cargo, which step 5 installed. Not fatal if it fails: the rest of
+    # the machine is fine without it, and the include stub keeps niri loading.
+    bash "$NIRI_TASKS_DIR/install.sh" || warn "niri-tasks install failed — see above"
+fi
+
 # ─── 9. TPM (tmux plugin manager) ─────────────────────────────────────────────
 # .tmux.conf declares plugins via `set -g @plugin ...`, which TPM is what
 # actually fetches and loads. Runs after config copy so .tmux.conf is in

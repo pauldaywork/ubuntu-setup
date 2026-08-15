@@ -139,23 +139,8 @@ if [ -f "$HOME/.config/niri/config.kdl" ]; then
 else
     warn "Not found, skipping: $HOME/.config/niri/config.kdl"
 fi
-pull "$HOME/.config/niri/create_named_workspace.sh" "$DOTFILES/config/niri/create_named_workspace.sh"
-pull "$HOME/.config/niri/rename_workspace.sh"       "$DOTFILES/config/niri/rename_workspace.sh"
-pull "$HOME/.config/niri/open_project_workspace.sh" "$DOTFILES/config/niri/open_project_workspace.sh"
-pull "$HOME/.config/niri/default_workspace_name.sh" "$DOTFILES/config/niri/default_workspace_name.sh"
-pull "$HOME/.config/niri/tmux-niri-session.sh"      "$DOTFILES/config/niri/tmux-niri-session.sh"
 pull "$HOME/.config/niri/wallpaper-sync.sh"         "$DOTFILES/config/niri/wallpaper-sync.sh"
 pull "$HOME/.config/niri/toggle-window-rules.sh"    "$DOTFILES/config/niri/toggle-window-rules.sh"
-pull "$HOME/.config/niri/task-lib.sh"               "$DOTFILES/config/niri/task-lib.sh"
-pull "$HOME/.config/niri/task-tag.sh"               "$DOTFILES/config/niri/task-tag.sh"
-pull "$HOME/.config/niri/task-add-text.sh"          "$DOTFILES/config/niri/task-add-text.sh"
-pull "$HOME/.config/niri/task-get-text.sh"          "$DOTFILES/config/niri/task-get-text.sh"
-pull "$HOME/.config/niri/task-edit-text.sh"         "$DOTFILES/config/niri/task-edit-text.sh"
-pull "$HOME/.config/niri/task-get-notes.sh"         "$DOTFILES/config/niri/task-get-notes.sh"
-pull "$HOME/.config/niri/task-annotate-text.sh"     "$DOTFILES/config/niri/task-annotate-text.sh"
-pull "$HOME/.config/niri/task-add.sh"               "$DOTFILES/config/niri/task-add.sh"
-pull "$HOME/.config/niri/task-list.sh"              "$DOTFILES/config/niri/task-list.sh"
-pull "$HOME/.config/niri/task-active.sh"            "$DOTFILES/config/niri/task-active.sh"
 pull "$HOME/.config/niri/window-rules/normal.kdl"   "$DOTFILES/config/niri/window-rules/normal.kdl"
 pull "$HOME/.config/niri/window-rules/focus.kdl"    "$DOTFILES/config/niri/window-rules/focus.kdl"
 # dms/binds.kdl is deliberately not pulled — see .gitignore.
@@ -163,9 +148,6 @@ pull "$HOME/.config/niri/window-rules/focus.kdl"    "$DOTFILES/config/niri/windo
 # ─── systemd user units ───────────────────────────────────────────────────────
 pull "$HOME/.config/systemd/user/swww-daemon.service"    "$DOTFILES/config/systemd/user/swww-daemon.service"
 pull "$HOME/.config/systemd/user/wallpaper-sync.service" "$DOTFILES/config/systemd/user/wallpaper-sync.service"
-
-# ─── fuzzel ───────────────────────────────────────────────────────────────────
-pull "$HOME/.config/fuzzel/project-picker.ini" "$DOTFILES/config/fuzzel/project-picker.ini"
 
 # ─── ghostty ──────────────────────────────────────────────────────────────────
 pull "$HOME/.config/ghostty/config.ghostty" "$DOTFILES/config/ghostty/config.ghostty"
@@ -176,17 +158,10 @@ pull "$HOME/.config/DankMaterialShell/plugin_settings.json" "$DOTFILES/config/Da
 pull "$HOME/.config/DankMaterialShell/firefox.css"          "$DOTFILES/config/DankMaterialShell/firefox.css"
 pull "$HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
      "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json"
-# Only our own plugin is pulled back. The third-party ones under plugins/ are
-# git clones owned by install.sh, and snapshotting them here would vendor
-# somebody else's repo into this one.
-pull "$HOME/.config/DankMaterialShell/plugins/activetask/plugin.json" \
-     "$DOTFILES/config/DankMaterialShell/plugins/activetask/plugin.json"
-pull "$HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
-     "$DOTFILES/config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml"
-pull "$HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml" \
-     "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml"
-pull "$HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml" \
-     "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml"
+# The activetask plugin is gone — the active-task overlay and the task box both
+# belong to niri-tasks now, which is its own repo and its own working tree, so
+# there is nothing to snapshot back. The third-party plugins under plugins/ are
+# git clones owned by install.sh and were never pulled either.
 
 # ─── VS Code ──────────────────────────────────────────────────────────────────
 pull "$HOME/.config/Code/User/settings.json" "$DOTFILES/config/Code/settings.json"

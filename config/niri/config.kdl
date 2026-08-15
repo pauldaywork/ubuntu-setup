@@ -123,9 +123,6 @@ output "eDP-1" {
 // This line starts waybar, a commonly used bar for Wayland compositors.
 spawn-at-startup "waybar"
 
-// Name workspace 1 "general" on startup if it doesn't already have a name.
-spawn-at-startup "~/.config/niri/default_workspace_name.sh"
-
 // Wallpaper. DMS's built-in wallpaper layer is switched off (see
 // screenPreferences.wallpaper in its settings.json) because it renders GIFs as
 // a single still frame; swww draws the background instead and animates them.
@@ -540,17 +537,8 @@ binds {
     // moving the mouse or pressing any other key.
     Mod+Shift+P { power-off-monitors; }
 
-    // Create a new workspace and name it. Naming matters more here than it
-    // looks: the name is what the task shortcuts below use as their tag, so an
-    // unnamed workspace has no tasks.
-    Mod+Alt+W hotkey-overlay-title="New Named Workspace" { spawn "~/.config/niri/create_named_workspace.sh"; }
-
-    // Rename the current workspace — and with it, which tag its tasks carry.
-    Mod+Shift+Alt+W hotkey-overlay-title="Rename Workspace" { spawn "~/.config/niri/rename_workspace.sh"; }
-
-    // Press Mod + Alt + P to pick a folder from ~/Projects, put it on its own
-    // named workspace, and open a terminal in it
-    Mod+Alt+P hotkey-overlay-title="Open Project Workspace" { spawn "~/.config/niri/open_project_workspace.sh"; }
+    // The workspace-naming, project-picker and task binds live in
+    // niri-tasks.kdl — see the include at the bottom of this file.
 
     // Toggle between window-rules profiles (normal / focus-dimming)
     Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/toggle-window-rules.sh"; }
@@ -561,18 +549,6 @@ binds {
     // through to swww. Needs at least two images in that folder to do anything.
     Mod+Alt+B hotkey-overlay-title="Next Wallpaper" { spawn "dms" "ipc" "call" "wallpaper" "next"; }
 
-    // Taskwarrior, scoped to the current workspace's name as a tag.
-    // Mod+Alt+T writes a new task; Mod+Alt+L lists this workspace's tasks and
-    // offers edit / note / delete / complete / set-active on the one you pick.
-    //
-    // Add goes through DMS rather than spawning a script: the box it opens is
-    // multi-line, which fuzzel can't be, and it lives in the shell process
-    // that's already running, so there's nothing to launch. task-add.sh is
-    // still installed as the one-line fallback if DMS isn't up.
-    Mod+Alt+T hotkey-overlay-title="Add Task" { spawn "dms" "ipc" "call" "taskBox" "open"; }
-    Mod+Alt+L hotkey-overlay-title="Workspace Tasks: edit, note, complete" { spawn "~/.config/niri/task-list.sh"; }
-
-    
     Mod+Space hotkey-overlay-title="Application Launcher" { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
     Super+Shift+M hotkey-overlay-title="Bar: Toggle (Primary)" { spawn "dms" "ipc" "call" "bar" "toggle" "index" "0"; }
     Mod+T hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
@@ -581,6 +557,18 @@ binds {
 }
 
 
+
+// niri-tasks: workspace-scoped taskwarrior. Ships its own binds and its
+// spawn-at-startup, so this file carries none of them.
+//
+// install-config.sh seeds an empty stub when niri-tasks isn't installed — niri
+// refuses to load a config whose include is missing, and the point of the split
+// is that this repo installs fine without it.
+//
+// Multiple binds blocks merge per-key rather than replacing each other, which
+// is what lets this sit alongside the block above (the same reason DMS's
+// dms/binds.kdl stub is harmless).
+include "niri-tasks.kdl"
 
 include "dms/colors.kdl"
 // include "dms/layout.kdl"

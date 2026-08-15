@@ -159,50 +159,44 @@ else
     note "  Install with: git clone https://github.com/cyrylas/dms-taskwarrior ~/.config/DankMaterialShell/plugins/taskwarrior"
 fi
 
-# The workspace task shortcuts and the Active Task widget share task-lib.sh, so
-# a missing file here breaks Mod+Alt+T, Mod+Alt+L and the bar pill together.
-for f in task-lib.sh task-tag.sh task-add-text.sh task-get-text.sh task-edit-text.sh \
-         task-get-notes.sh task-annotate-text.sh task-add.sh task-list.sh task-active.sh; do
-    if [ -f "$HOME/.config/niri/$f" ]; then
-        ok "Workspace task script present: $f"
-    else
-        issue "Missing ~/.config/niri/$f"
-        note "  Install with: bash install-config.sh"
-    fi
-done
+# The workspace-task system lives in its own repo now. Delegate to its doctor
+# rather than duplicating the checks here — it knows what it installed, and this
+# repo works fine without it.
+if command -v wt >/dev/null; then
+    ok "wt installed ($(wt --version 2>/dev/null || echo 'version unknown'))"
 
-# Both surfaces of the activetask plugin: the bar pill and the daemon holding
-# the task box. The daemon files missing is the quieter failure — the bar still
-# works, the shortcut just does nothing.
-ACTIVETASK_DIR="$HOME/.config/DankMaterialShell/plugins/activetask"
-for f in plugin.json ActiveTaskWidget.qml TaskBoxDaemon.qml TaskBoxModal.qml; do
-    if [ -f "$ACTIVETASK_DIR/$f" ]; then
-        ok "DMS activetask plugin file present: $f"
+    # niri refuses to load a config whose include is missing, so this one is
+    # fatal to the whole session rather than just to the task binds.
+    if [ -e "$HOME/.config/niri/niri-tasks.kdl" ]; then
+        ok "niri-tasks include present"
     else
-        issue "Missing $ACTIVETASK_DIR/$f"
-        note "  Install with: bash install-config.sh"
+        issue "Missing ~/.config/niri/niri-tasks.kdl — niri will refuse to load its config"
+        note "  Seed the stub with: bash install-config.sh"
     fi
-done
 
-# The manifest is only parsed at DMS startup (PluginService.resyncAll skips
-# manifests it already knows), so files on disk aren't proof the daemon is live.
-if command -v dms >/dev/null; then
-    if dms ipc call taskBox close >/dev/null 2>&1; then
-        ok "Task box reachable (dms ipc call taskBox)"
+    if systemctl --user is-active --quiet niri-tasks.service; then
+        ok "Active-task overlay running"
     else
-        issue "DMS isn't answering on the taskBox IPC target — Mod+Alt+T and the list's Edit action will do nothing"
-        note "  Restart the shell with: systemctl --user restart dms.service"
+        issue "niri-tasks.service is not running — the active-task overlay will not appear"
+        note "  Start it with: systemctl --user start niri-tasks"
+    fi
+else
+    note "wt not installed — Mod+Alt+T/L/P and the active-task overlay are absent"
+    note "  Install with: https://github.com/paul/niri-tasks"
+
+    # The stub still has to exist, or niri will not load at all.
+    if [ ! -e "$HOME/.config/niri/niri-tasks.kdl" ]; then
+        issue "Missing ~/.config/niri/niri-tasks.kdl — niri will refuse to load its config"
+        note "  Seed the stub with: bash install-config.sh"
     fi
 fi
 
-# Left behind by the TaskAdd* → TaskBox* rename. Harmless, but two copies of
-# the modal in one folder is a trap for whoever edits the wrong one.
-for f in TaskAddDaemon.qml TaskAddModal.qml; do
-    if [ -f "$ACTIVETASK_DIR/$f" ]; then
-        issue "Stale $f in $ACTIVETASK_DIR — superseded by the TaskBox* pair"
-        note "  Remove it with: bash install-config.sh"
-    fi
-done
+# Left behind by the move to niri-tasks. Harmless to DMS, but a plugin whose
+# scripts no longer exist renders an empty widget forever.
+if [ -d "$HOME/.config/DankMaterialShell/plugins/activetask" ]; then
+    issue "Stale DMS plugin at ~/.config/DankMaterialShell/plugins/activetask — superseded by the niri-tasks overlay"
+    note "  Remove it with: bash install-config.sh"
+fi
 
 # Wallpapers. Three things have to agree or the desktop goes black: swww has to
 # be installed and running, DMS's own wallpaper layer has to stay disabled (it

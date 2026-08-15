@@ -713,10 +713,6 @@
           "enabled": true
         },
         {
-          "id": "activetask",
-          "enabled": true
-        },
-        {
           "id": "runningApps",
           "enabled": true,
           "runningAppsCompactMode": true,

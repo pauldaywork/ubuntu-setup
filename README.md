@@ -13,7 +13,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Terminal | Ghostty (deb from the danklinux PPA, not the snap) |
 | Bar / shell | DankMaterialShell (theme, settings, plugins) |
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
-| Task manager | Taskwarrior (+ DMS taskwarrior widget plugin) |
+| Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/paul/niri-tasks)) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
 | Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user units) so animated GIFs animate |
 
@@ -68,7 +68,7 @@ The script will:
 12. Install Claude Code via npm
 13. Copy all config files to their correct locations, install the wallpaper systemd units, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
 14. Install TPM (tmux plugin manager) and fetch tmux plugins
-15. Install DMS plugins (taskwarrior widget)
+15. Install DMS plugins (taskwarrior widget), then clone and build [niri-tasks](https://github.com/paul/niri-tasks)
 16. Install VS Code extensions from `config/Code/extensions.txt`
 17. Prompt for your git name and email
 18. Generate a new SSH key and print the public key so you can add it to GitHub
@@ -120,38 +120,20 @@ backup-os/
 │   └── .tmux.conf
 ├── config/
 │   ├── niri/
-│   │   ├── config.kdl
-│   │   ├── create_named_workspace.sh       # GUI prompt to name a new workspace (zenity)
-│   │   ├── rename_workspace.sh             # GUI prompt to rename the focused workspace (zenity)
-│   │   ├── open_project_workspace.sh       # Picks (or creates) a ~/Projects folder, names a workspace after it, opens a terminal there (Mod+Alt+P)
-│   │   ├── default_workspace_name.sh       # Names workspace 1 "general" on startup if unnamed
-│   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace, in the matching ~/Projects folder
+│   │   ├── config.kdl                      # Includes niri-tasks.kdl; install-config.sh seeds an empty stub for it
 │   │   ├── wallpaper-sync.sh               # Forwards the DMS wallpaper choice to swww, which is what animates GIFs
 │   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
-│   │   ├── task-lib.sh                     # Shared workspace-name → taskwarrior-tag rule; sourced by the eight below
-│   │   ├── task-tag.sh                     # Prints the focused workspace's tag; how the task box asks the same question
-│   │   ├── task-add-text.sh                # Adds one task from a tag + description (word-split, so due:/priority: work)
-│   │   ├── task-get-text.sh                # Prints one task's description by uuid; pre-fills the edit box
-│   │   ├── task-edit-text.sh               # Replaces one task's description by uuid (quoted, so a due: stays text)
-│   │   ├── task-get-notes.sh               # Prints one task's annotations by uuid, one per line; fills the note list
-│   │   ├── task-annotate-text.sh           # Attaches a note to a task by uuid (quoted, for the same reason)
-│   │   ├── task-add.sh                     # One-line fuzzel add box; the fallback for when DMS isn't running
-│   │   ├── task-list.sh                    # Lists this workspace's tasks; edit/delete/complete/set-active (Mod+Alt+L)
-│   │   ├── task-active.sh                  # Prints the workspace's active task; read by the Active Task bar widget
 │   │   ├── window-rules/
 │   │   │   ├── normal.kdl                  # Fully opaque windows
 │   │   │   └── focus.kdl                   # Unfocused windows fade out
 │   │   └── dms/
 │   │       └── laptop.kdl                  # Installed on laptops (auto-detected; --laptop/--desktop override)
-│   ├── fuzzel/
-│   │   └── project-picker.ini              # Minimal picker theme shared by the project and task pickers
 │   ├── ghostty/
 │   │   └── config.ghostty
 │   ├── DankMaterialShell/
 │   │   ├── settings.json
 │   │   ├── plugin_settings.json
 │   │   ├── firefox.css
-│   │   ├── plugins/activetask/             # Our own DMS plugin: the active-task bar widget + the add/edit task box
 │   │   └── themes/peaceAndQuiet/theme.json
 │   ├── systemd/user/
 │   │   ├── swww-daemon.service             # Wallpaper daemon; restarts wallpaper-sync on start
@@ -184,97 +166,25 @@ The symlink and state file are machine-local, not tracked in git — `install.sh
 
 ---
 
-## Project workspaces
+## Workspace tasks and project workspaces
 
-Press **`Mod+Alt+P`** to jump to a project. This runs `config/niri/open_project_workspace.sh`, which:
+`Mod+Alt+P` to open a project on its own named workspace, `Mod+Alt+T` to add a
+task to it, `Mod+Alt+L` to list and act on that workspace's tasks — all of that
+lives in **[niri-tasks](https://github.com/paul/niri-tasks)** now, not here.
 
-1. Lists the folders in `~/Projects` in a fuzzel picker — just the names, no prompt or buttons. Up/Down moves, Enter or a mouse click selects, Esc cancels, and typing filters
-2. Creates the folder if what you typed doesn't match anything (see below)
-3. Focuses that project's workspace if it already exists, otherwise names the empty workspace at the end of the current output after the folder
-4. Spawns a Ghostty window on it — but only for a workspace that's new or empty
+It used to be fifteen shell scripts under `config/niri/` plus a DankMaterialShell
+plugin, enumerated by hand in `install-config.sh`, `update.sh` and `doctor.sh`.
+It is one binary (`wt`) and one repo, cloned to `~/Projects/niri-tasks` by
+`install.sh` step 8b.
 
-Re-picking a project you already have open is a "take me back there", not a request for another terminal, so the shortcut is safe to hit repeatedly. The exception is a workspace you've closed every window on: niri keeps the name, and the picker treats it like a fresh one and gives you a terminal again.
+What this repo still owns:
 
-### Creating a project from the picker
-
-Type a name that matches no existing folder and press Enter: the script creates `~/Projects/<name>`, notifies you, and then opens it exactly as if it had already been there. This works because fuzzel's dmenu mode prints the typed text verbatim when it matches no entry. An empty `~/Projects` is fine too — the picker shows a bare input box and whatever you type becomes the first project.
-
-Whitespace in a typed name becomes a dash, so created folders never contain spaces: `my cool project` makes `~/Projects/my-cool-project`, and runs of spaces or tabs collapse to one dash. The dashed name is then re-checked against the existing folders, so typing `my project` when `my-project` already exists just opens it rather than trying to create a duplicate. Only *typed* names are rewritten — a folder you already have with a space in its name still shows in the list and opens under its real name.
-
-Names containing `/` or starting with `.` are rejected, since those would write outside `~/Projects` or create a folder the picker filters out of its own list.
-
-The one rough edge: fuzzel only hands back raw text when it matches *nothing*, so you can't create a project whose name is contained in an existing one — typing `note` when `notes` exists selects `notes` instead. Use `mkdir` for those, or pick a name that isn't a substring of another.
-
-The picker's look lives in `config/fuzzel/project-picker.ini`, passed to fuzzel with `--config=` so it stays separate from any `fuzzel.ini` you use elsewhere. The script sizes the window to the folder list at runtime (`--lines`/`--width`), so only the ini's font, padding and colours are worth editing.
-
-The terminal lands in the project directory because Ghostty launches `tmux-niri-session.sh`, which starts its tmux session in `~/Projects/<workspace name>` when such a folder exists (falling back to `~/Projects`, then `$HOME`). So any terminal opened on a project workspace — not just the one this shortcut spawns — starts in the right place.
-
-Related workspace shortcuts: **`Mod+Alt+W`** to create and name a workspace by hand, **`Mod+Shift+Alt+W`** to rename the focused one. Naming isn't cosmetic — the name is the tag the task shortcuts below use, so an unnamed workspace has no tasks.
-
-All of these appear in niri's **Important Hotkeys** overlay (`Mod+Shift+/`). A `spawn` bind without a `hotkey-overlay-title` isn't hidden from it — it's listed as the raw command, so `Mod+Alt+W` read as `Spawn ~/.config/niri/create_named_workspace.sh` until it was given a title. Any new `spawn` bind worth pressing wants one.
-
----
-
-## Workspace tasks
-
-Taskwarrior, scoped to whatever workspace you're on. The workspace name is the tag, so the tasks you see are always the tasks for the project in front of you.
-
-| Shortcut | Does |
-| --- | --- |
-| **`Mod+Alt+T`** | Type a task into a multi-line box; it's added tagged with the current workspace. `Ctrl+Enter` adds, `Esc` cancels |
-| **`Mod+Alt+L`** | List this workspace's pending tasks, then edit / note / delete / complete / set-active the one you pick — or pick **＋ Add a task…**, the last row, which hands over to the add box. **Edit** and **Note** open the same multi-line box |
-
-The bottom bar carries an **Active Task** widget showing the started task for the focused workspace, and nothing at all when there isn't one. It updates on niri's event stream, so switching workspace changes it immediately.
-
-### Why the task box isn't fuzzel
-
-Everything else here is a fuzzel picker, but fuzzel has no multi-line mode — its input is one line, and the popup can't grow much past 52 characters before it runs out of a 1080p screen (see the width cap in `task-list.sh`). So a long task was typed half-blind.
-
-Every obvious alternative meant launching something — a terminal running an editor, a GTK dialog — and launching was the slow part. `Mod+Alt+T` instead sends `dms ipc call taskBox open` to DMS, which is already running, and a QML modal opens in that process. Nothing starts.
-
-It's a `daemon` surface on our own `activetask` plugin, which is now a [composite plugin](https://github.com/AvengeMedia/DankMaterialShell/tree/master/quickshell/PLUGINS): one plugin, two surfaces — the bar widget (instantiated per bar, per screen) and the daemon (instantiated exactly once, which is what makes it the right home for an `IpcHandler` and a single shared window). `task-add.sh` is still installed as the one-line fuzzel fallback for a session where DMS isn't up, and `Mod+Alt+L`'s add and edit rows fall back to it the same way.
-
-One window serves all three jobs — `dms ipc call taskBox open`, `… edit <uuid>`, `… annotate <uuid>` — because they differ only in wording and in what runs on submit, and near-identical modals would drift the moment one was touched. The box knows nothing about taskwarrior: it reports a mode and some text, and the daemon picks the script.
-
-Editing is where the extra room pays off most. The descriptions you reach for the edit box to fix are the long ones, which are exactly the ones a single fuzzel row showed you a fraction of.
-
-**Only a uuid ever crosses the IPC boundary.** The description to pre-fill an edit with is fetched by `task-get-text.sh`, inside the daemon, rather than passed in — so nothing depends on how `dms ipc call` quotes an argument containing spaces or punctuation. A uuid is hex and dashes; there's nothing in it for an argument parser to misread.
-
-The box wraps while you type but the description that comes out of it is **one line**. Taskwarrior will store a newline — it does, and `task list` even wraps it over two rows — but everything downstream reads it back on one: the `@tsv` in `task-list.sh` escapes the newline, so the picker would show a literal `\n` mid-task, and the bar widget has the same problem. The extra room is for seeing what you type, not for storing shape, so whitespace collapses on submit.
-
-> **Editing the plugin:** `dms ipc call plugins reload activetask` does *not* pick up a changed `plugin.json` or a changed `.qml` — `PluginService.resyncAll()` only parses a manifest it hasn't seen (`if (!prev)`), and the QML components are cached alongside it. Use `systemctl --user restart dms.service` after touching either.
-
-### The tag rule
-
-Workspace name → tag is lowercase, with everything that isn't a letter, digit or underscore folded to `_`. Taskwarrior tags are a single bare word: a dash reads as an operator inside a filter and a space splits the argument, so neither survives `task +<tag>`. Folding also means `Ubuntu-Setup`, `ubuntu setup` and `ubuntu-setup` all resolve to `ubuntu_setup` rather than to three tags each holding a third of the project's tasks.
-
-An unnamed workspace has no tag, so both shortcuts refuse to run and say so — writing untagged tasks would put them somewhere no list ever looks.
-
-The task list always has at least the **＋ Add a task…** row, so it never comes up empty. An earlier version fired a `notify-send` and exited when a workspace had no tasks yet, which — at a 1s notification timeout — was indistinguishable from the shortcut being broken.
-
-The rule lives once, in `config/niri/task-lib.sh`, which the other task scripts source — including `task-tag.sh`, which exists so the QML modal can ask the same question rather than reimplementing the fold in JavaScript.
-
-### Adding vs editing
-
-`Mod+Alt+T` passes what you type to `task` as separate words, so taskwarrior's own attribute syntax works: `ship the release due:friday priority:H` sets a due date and a priority instead of burying them in the description. (The script runs with globbing off, so a `*` in a task stays a `*`.) An unrecognised colon-word is left alone — `note: check the docs` stays in the description rather than erroring.
-
-Both the modal and the fuzzel fallback hand a tag and a description to `task-add-text.sh`, so that splitting is written once and the two paths can't drift.
-
-Editing a description from `Mod+Alt+L` deliberately does the opposite — `task-edit-text.sh` quotes it, so a `due:` typed mid-rename stays text rather than silently putting a date on a task you were only retitling. An edit that changes nothing is dropped rather than written back over itself.
-
-### Notes on a task
-
-A description is one line, so anything longer goes in a **taskwarrior annotation** — many per task, each stamped with the date it was written, and searched by a bare `task <word>` alongside descriptions. The **Note** action on `Mod+Alt+L` opens the task box with the task's existing notes listed above the input, oldest first; what you type is appended rather than replacing them. Rows in the list carrying notes are marked `¶`, since a row shows a description and an annotation isn't one.
-
-Notes are quoted on the way in, like edits and unlike adds — and this is the case where it matters most. Word-split, `annotate` reads attributes exactly as `add` does, so "note about the due:friday deadline" would quietly set a due date and store "note about the".
-
-The TODO also floated an "open in editor" action shelling out to `task <uuid> edit` for anything longer still. It was dropped: that means launching a terminal, which is the thing this box exists to avoid.
-
-### Active tasks
-
-"Set active" runs `task start`, having first run `task stop` on any other task carrying the tag. One active task per workspace, always — which is what lets the bar widget show a single unambiguous answer. Starting a task by hand in a terminal still works; the widget just takes the first if you somehow end up with two.
-
----
+- `config.kdl` carries `include "niri-tasks.kdl"`, and `install-config.sh` seeds
+  an **empty stub** at that path. niri refuses to load a config whose include is
+  missing, so the stub is what lets this repo install on a machine that does not
+  want niri-tasks. Its installer symlinks the real file over the stub.
+- Ghostty's `command =` is set to `wt tmux-session` when `wt` is on `PATH`, and
+  to plain `tmux` when it is not.
 
 ## Animated wallpapers
 
@@ -400,7 +310,6 @@ git push
 | tmux | `~/.tmux.conf` |
 | Niri config | `~/.config/niri/` |
 | Niri window-rules profiles | `~/.config/niri/window-rules/*.kdl`, `toggle-window-rules.sh` |
-| Fuzzel project picker | `~/.config/fuzzel/project-picker.ini` |
 | Ghostty | `~/.config/ghostty/` |
 | DankMaterialShell | `~/.config/DankMaterialShell/` |
 | VS Code settings | `~/.config/Code/User/settings.json` |
