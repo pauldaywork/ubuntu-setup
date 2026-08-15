@@ -209,7 +209,9 @@ The picker's look lives in `config/fuzzel/project-picker.ini`, passed to fuzzel 
 
 The terminal lands in the project directory because Ghostty launches `tmux-niri-session.sh`, which starts its tmux session in `~/Projects/<workspace name>` when such a folder exists (falling back to `~/Projects`, then `$HOME`). So any terminal opened on a project workspace — not just the one this shortcut spawns — starts in the right place.
 
-Related workspace shortcuts: **`Mod+Alt+W`** to create and name a workspace by hand, **`Mod+Shift+Alt+W`** to rename the focused one.
+Related workspace shortcuts: **`Mod+Alt+W`** to create and name a workspace by hand, **`Mod+Shift+Alt+W`** to rename the focused one. Naming isn't cosmetic — the name is the tag the task shortcuts below use, so an unnamed workspace has no tasks.
+
+All of these appear in niri's **Important Hotkeys** overlay (`Mod+Shift+/`). A `spawn` bind without a `hotkey-overlay-title` isn't hidden from it — it's listed as the raw command, so `Mod+Alt+W` read as `Spawn ~/.config/niri/create_named_workspace.sh` until it was given a title. Any new `spawn` bind worth pressing wants one.
 
 ---
 
