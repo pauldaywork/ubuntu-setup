@@ -7,7 +7,7 @@ THOUGHTS.md
 # DMS auto-generates these per-machine — do not track.
 # binds.kdl is DMS-owned too (its KeybindsService writes the file and adds the
 # matching include to config.kdl). Ours is an empty stub: those binds were
-# folded into config.kdl's own binds block in 6763c3f, and install-config.sh
+# folded into config.kdl's own binds block in 6763c3f, and configure.sh
 # seeds the stub so niri's include still resolves.
 config/niri/dms/alttab.kdl
 config/niri/dms/binds.kdl

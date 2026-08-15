@@ -204,16 +204,60 @@ sed -i "s|^command = .*|command = $GHOSTTY_COMMAND|" \
 sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json\"|" \
     "$USER_HOME/.config/DankMaterialShell/settings.json"
 
-# The activetask plugin is gone: the active-task readout is now a layer-shell
-# overlay owned by niri-tasks, and the task box is its own window. Remove the
-# plugin directory on machines that still carry it, or DMS keeps loading a
-# widget whose scripts no longer exist.
-rm -rf "$USER_HOME/.config/DankMaterialShell/plugins/activetask"
+# ─── Files this repo used to install and no longer does ───────────────────────
+# Deleting a file from the repo does not delete it from a machine that already
+# has it. Nothing here reads these any more, but left in place they are worse
+# than clutter: the DMS plugin keeps rendering a widget whose scripts are gone,
+# and fifteen dead scripts in ~/.config/niri make it impossible to tell at a
+# glance which ones are live.
+#
+# Removal is safe in this order because config.kdl was written above, so by the
+# time these go the binds that used to call them are already gone too — either
+# replaced by niri-tasks.kdl, or by the empty stub when niri-tasks is absent.
+#
+# Keep this list rather than globbing ~/.config/niri/*.sh: wallpaper-sync.sh
+# lives there and is very much still ours.
+STALE_FILES=(
+    # The workspace-task system, now https://github.com/pauldaywork/niri-tasks
+    ".config/niri/task-lib.sh"
+    ".config/niri/task-tag.sh"
+    ".config/niri/task-active.sh"
+    ".config/niri/task-list.sh"
+    ".config/niri/task-add.sh"
+    ".config/niri/task-add-text.sh"
+    ".config/niri/task-get-text.sh"
+    ".config/niri/task-edit-text.sh"
+    ".config/niri/task-get-notes.sh"
+    ".config/niri/task-annotate-text.sh"
+    ".config/niri/create_named_workspace.sh"
+    ".config/niri/rename_workspace.sh"
+    ".config/niri/default_workspace_name.sh"
+    ".config/niri/open_project_workspace.sh"
+    ".config/niri/tmux-niri-session.sh"
+    # Its fuzzel theme too — niri-tasks installs its own as picker.ini.
+    ".config/fuzzel/project-picker.ini"
+    # The window-rules toggle moved in beside the profiles it switches between,
+    # so it installs to window-rules/toggle.sh now.
+    ".config/niri/toggle-window-rules.sh"
+)
 
-# The window-rules toggle moved in beside the profiles it switches between, so
-# it installs to window-rules/toggle.sh now. Remove the copy at the old path, or
-# a machine keeps a stale script that Mod+Alt+R no longer runs.
-rm -f "$USER_HOME/.config/niri/toggle-window-rules.sh"
+STALE_REMOVED=0
+for rel in "${STALE_FILES[@]}"; do
+    if [ -e "$USER_HOME/$rel" ]; then
+        rm -f "$USER_HOME/$rel"
+        STALE_REMOVED=$((STALE_REMOVED + 1))
+    fi
+done
+
+# The activetask plugin: the active-task readout is a layer-shell overlay owned
+# by niri-tasks now, and the task box is its own window. A directory, so it
+# needs -rf rather than the loop above.
+if [ -d "$USER_HOME/.config/DankMaterialShell/plugins/activetask" ]; then
+    rm -rf "$USER_HOME/.config/DankMaterialShell/plugins/activetask"
+    STALE_REMOVED=$((STALE_REMOVED + 1))
+fi
+
+[ "$STALE_REMOVED" -gt 0 ] && info "Removed $STALE_REMOVED file(s) this repo no longer installs"
 
 # VS Code settings (extensions are not installed here — see install.sh)
 

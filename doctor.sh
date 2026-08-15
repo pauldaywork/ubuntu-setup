@@ -258,11 +258,35 @@ else
     fi
 fi
 
-# Left behind by the move to niri-tasks. Harmless to DMS, but a plugin whose
-# scripts no longer exist renders an empty widget forever.
-if [ -d "$HOME/.config/DankMaterialShell/plugins/activetask" ]; then
-    issue "Stale DMS plugin at ~/.config/DankMaterialShell/plugins/activetask — superseded by the niri-tasks overlay"
-    note "  Remove it with: bash configure.sh"
+# Files this repo used to install and no longer does. Deleting them from the
+# repo doesn't delete them from a machine that already has them, and a stale
+# script is worse than clutter — it's indistinguishable from a live one.
+#
+# configure.sh does the removing; this only reports, like everything else here.
+STALE_ON_DISK=()
+for rel in \
+    ".config/niri/task-lib.sh" ".config/niri/task-tag.sh" ".config/niri/task-active.sh" \
+    ".config/niri/task-list.sh" ".config/niri/task-add.sh" ".config/niri/task-add-text.sh" \
+    ".config/niri/task-get-text.sh" ".config/niri/task-edit-text.sh" \
+    ".config/niri/task-get-notes.sh" ".config/niri/task-annotate-text.sh" \
+    ".config/niri/create_named_workspace.sh" ".config/niri/rename_workspace.sh" \
+    ".config/niri/default_workspace_name.sh" ".config/niri/open_project_workspace.sh" \
+    ".config/niri/tmux-niri-session.sh" ".config/niri/toggle-window-rules.sh" \
+    ".config/fuzzel/project-picker.ini"
+do
+    [ -e "$HOME/$rel" ] && STALE_ON_DISK+=("$rel")
+done
+[ -d "$HOME/.config/DankMaterialShell/plugins/activetask" ] && \
+    STALE_ON_DISK+=(".config/DankMaterialShell/plugins/activetask")
+
+if [ "${#STALE_ON_DISK[@]}" -gt 0 ]; then
+    issue "${#STALE_ON_DISK[@]} file(s) left over from the niri-tasks split are still installed"
+    for rel in "${STALE_ON_DISK[@]}"; do
+        note "    ~/$rel"
+    done
+    note "  Remove them with: bash configure.sh"
+else
+    ok "No leftovers from the niri-tasks split"
 fi
 
 # Wallpapers. Three things have to agree or the desktop goes black: swww has to
