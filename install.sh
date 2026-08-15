@@ -299,7 +299,7 @@ CONFIG_ARGS=()
 section "Installing niri-tasks"
 
 NIRI_TASKS_DIR="$USER_HOME/Projects/niri-tasks"
-NIRI_TASKS_REPO="https://github.com/paul/niri-tasks"
+NIRI_TASKS_REPO="https://github.com/pauldaywork/niri-tasks"
 
 if [ -d "$NIRI_TASKS_DIR/.git" ]; then
     info "Updating niri-tasks"

@@ -13,7 +13,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Terminal | Ghostty (deb from the danklinux PPA, not the snap) |
 | Bar / shell | DankMaterialShell (theme, settings, plugins) |
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
-| Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/paul/niri-tasks)) |
+| Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/pauldaywork/niri-tasks)) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
 | Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user units) so animated GIFs animate |
 
@@ -68,7 +68,7 @@ The script will:
 12. Install Claude Code via npm
 13. Copy all config files to their correct locations, install the wallpaper systemd units, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
 14. Install TPM (tmux plugin manager) and fetch tmux plugins
-15. Install DMS plugins (taskwarrior widget), then clone and build [niri-tasks](https://github.com/paul/niri-tasks)
+15. Install DMS plugins (taskwarrior widget), then clone and build [niri-tasks](https://github.com/pauldaywork/niri-tasks)
 16. Install VS Code extensions from `config/Code/extensions.txt`
 17. Prompt for your git name and email
 18. Generate a new SSH key and print the public key so you can add it to GitHub
@@ -111,8 +111,9 @@ backup-os/
 ├── update.sh                               # Run on current machine to snapshot changes
 ├── doctor.sh                               # Diagnose drift on an existing, already-set-up machine
 ├── lib/
-│   ├── common.sh                           # Shared helpers: info/warn/ok/issue, pkg_installed, snap_install
-│   └── manifest.sh                         # What gets installed: apt + snap lists, version pins
+│   ├── common.sh                           # Shared helpers: info/warn/ok/issue, pkg_installed, and copy/pull/merge_json
+│   ├── manifest.sh                         # What gets installed: apt + snap lists, version pins
+│   └── paths.sh                            # The one list of which file goes where; read by install-config, update and doctor
 ├── home/
 │   ├── .bashrc
 │   ├── .profile
@@ -170,7 +171,7 @@ The symlink and state file are machine-local, not tracked in git — `install.sh
 
 `Mod+Alt+P` to open a project on its own named workspace, `Mod+Alt+T` to add a
 task to it, `Mod+Alt+L` to list and act on that workspace's tasks — all of that
-lives in **[niri-tasks](https://github.com/paul/niri-tasks)** now, not here.
+lives in **[niri-tasks](https://github.com/pauldaywork/niri-tasks)** now, not here.
 
 It used to be fifteen shell scripts under `config/niri/` plus a DankMaterialShell
 plugin, enumerated by hand in `install-config.sh`, `update.sh` and `doctor.sh`.

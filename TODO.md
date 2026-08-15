@@ -4,7 +4,7 @@ Nothing outstanding. Add new items here.
 
 ## Follow-ups from the niri-tasks extraction
 
-- [ ] Push `~/Projects/niri-tasks` to GitHub and set `NIRI_TASKS_REPO` in `install.sh` to the real URL — it is a placeholder until then, so a fresh install will warn and skip it.
+- [x] Push `~/Projects/niri-tasks` to GitHub — published at https://github.com/pauldaywork/niri-tasks, and `NIRI_TASKS_REPO` in `install.sh` points at it.
 - [ ] Verify the active-task overlay on a second monitor. It creates one surface per output and handles hotplug, but only a single-output machine was available to test on.
 
 ## Done

@@ -249,7 +249,7 @@ if command -v wt >/dev/null; then
     fi
 else
     note "wt not installed — Mod+Alt+T/L/P and the active-task overlay are absent"
-    note "  Install with: https://github.com/paul/niri-tasks"
+    note "  Install with: https://github.com/pauldaywork/niri-tasks"
 
     # The stub still has to exist, or niri will not load at all.
     if [ ! -e "$HOME/.config/niri/niri-tasks.kdl" ]; then
