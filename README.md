@@ -189,58 +189,45 @@ What this repo still owns:
 
 ## Animated wallpapers
 
-DMS can't animate a wallpaper. It paints the background with a QML `Image` (`Modules/WallpaperBackground.qml` in `/usr/share/quickshell/dms`), which decodes exactly one frame, so a GIF picked in its wallpaper tab shows up as a still. Upstream won't change that in-shell — [DankMaterialShell#793](https://github.com/AvengeMedia/DankMaterialShell/issues/793) was closed with *"we do not intend to add swww as a dependency/optional dependency, within the shell itself"* — and instead offers an escape hatch: **Settings → Wallpaper → Disable Built-in Wallpapers**, which stops DMS creating the wallpaper layer surface at all and leaves the background to an external daemon.
-
-So that toggle is on (it's the empty `screenPreferences.wallpaper` array in `config/DankMaterialShell/settings.json`) and [swww](https://github.com/LGFae/swww) draws the background instead. Three pieces:
+DMS paints the background with a QML `Image`, which decodes one frame — so a GIF
+picked in its wallpaper tab shows up as a still, and [upstream won't change that
+in-shell](https://github.com/AvengeMedia/DankMaterialShell/issues/793). So DMS's
+own wallpaper layer is switched off (the empty `screenPreferences.wallpaper`
+array in its `settings.json`) and [swww](https://github.com/LGFae/swww) draws the
+background instead.
 
 | Piece | Role |
 |---|---|
 | `swww-daemon.service` | Holds the background layer surface and plays the animation |
-| `wallpaper-sync.service` → `config/niri/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each wallpaper change to `swww` |
-| `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background sits still instead of scrolling with the workspaces, and shows through in Overview |
+| `wallpaper-sync.service` → `config/niri/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each change to swww |
+| `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background stays put instead of scrolling with the workspaces |
 
-Both are **systemd user units** (`config/systemd/user/`), pulled in by `graphical-session.target` so they start and stop with niri. They were `spawn-at-startup` lines at first, which fires once and doesn't look back — a crash meant no wallpaper until the next login. As units they get restarted, and `systemctl --user status swww-daemon` will tell you why if one won't stay up.
+**Pick wallpapers exactly as before** — the DMS tab is still the UI, and matugen
+theming still follows them. swww is built from a git tag by `install.sh`;
+`doctor.sh` checks all three pieces plus the DMS toggle, so run it first if the
+background ever goes black.
 
-One wrinkle that needed handling: a daemon that comes back restores *its own* cached image, which is whatever it last drew rather than whatever DMS has selected since. Nothing writes `session.json` when that happens, so the sync script has no event to react to and the two would sit there disagreeing. `swww-daemon.service` therefore carries an `ExecStartPost` that restarts `wallpaper-sync.service`, which repaints from DMS's actual choice on startup. Verified by `kill -9`ing the daemon with a wallpaper change landing during the outage: the change was on screen a few seconds later.
+The reasoning lives next to what it explains, rather than here: why these are
+systemd units and not `spawn-at-startup`, and the `place-within-backdrop` rule,
+are in `config/niri/config.kdl`; the restart deadlock is in
+`swww-daemon.service`; and the transition knobs, the re-apply guard and the
+per-filetype scaling filter are all commented at the top of `wallpaper-sync.sh`.
 
-Everything else about DMS is untouched: the wallpaper picker, cycling, and matugen theming all key off `session.json`, and matugen reads a GIF's first frame happily, so dynamic colours still follow the wallpaper. **Pick wallpapers exactly as before** — the DMS tab is still the UI.
+### Rotation
 
-`wallpaper-sync.sh` re-applies only when the resolved wallpaper actually changes, because DMS rewrites `session.json` for unrelated things (launcher history, night mode); without that guard every launcher search would replay a fade transition. It picks the scaling filter per file: `Nearest` for GIFs, since the collection is pixel art that Lanczos would smear, and swww's default for everything else.
+**`Mod+Alt+B`** steps to the next wallpaper. For automatic rotation, **Settings →
+Wallpaper → Automatic Cycling**, then either **Interval** (5 seconds to 12 hours,
+default 5 minutes) or **Time** (once a day at a set clock time).
 
-swww isn't on crates.io or in apt, so `install.sh` builds it from the `v0.11.2` git tag into `~/.cargo/bin`. `doctor.sh` checks all three pieces plus the DMS toggle — if the background ever goes black, run it first.
+The one thing about cycling that isn't obvious, and is the reason the wallpapers
+live where they do: **the folder it cycles through is the directory of the
+current wallpaper.** It is not a separate setting — keeping them all in
+`~/Documents/Wallpapers` is what makes them a rotation set. It also needs at
+least two images there to do anything, and sorts them alphabetically.
 
-### Rotation: still DMS
-
-**`Mod+Alt+B`** steps to the next wallpaper by hand, any time.
-
-For automatic rotation: **Settings → Wallpaper → Automatic Cycling.** Toggle it on, then pick **Interval** (a dropdown from 5 seconds to 12 hours, default 5 minutes) or **Time** (once a day at a set clock time).
-
-Cycling never touched the rendering layer, so disabling DMS's wallpaper changed nothing about it. The `dms` server keeps the schedule, `WallpaperCyclingService.qml` picks the next file and writes it to `session.json`, and `wallpaper-sync.sh` carries it to swww like any other change. **The folder it cycles through is the directory of the current wallpaper** — it isn't a separate setting — so keeping wallpapers in `~/Documents/Wallpapers` is what makes them a rotation set. It also needs at least two files in there, and it sorts them alphabetically.
-
-`Mod+Alt+B` is bound to `dms ipc call wallpaper next`; `prev` exists too if you ever want a bind for it. Stepping by hand also resets the cycling timer.
-
-### Transition: now swww's
-
-The Transition dropdown in DMS's wallpaper tab drives QML shaders on a surface that no longer exists, so most of its names — disc, stripes, iris bloom, pixelate, portal — have nothing behind them now. swww animates the change instead, and the knobs are at the top of `config/niri/wallpaper-sync.sh`:
-
-```bash
-TRANSITION="${SWWW_TRANSITION:-dms}"
-TRANSITION_DURATION="${SWWW_TRANSITION_DURATION:-0.5}"   # seconds; swww's own default is 3
-TRANSITION_FPS="${SWWW_TRANSITION_FPS:-30}"
-```
-
-`dms` (the default) follows the DMS dropdown as far as it goes: `fade` and `wipe` are the two names both sides share, anything else lands on fade. Set `TRANSITION` to a swww name to pin it instead — `none simple fade left right top bottom wipe wave grow center outer any random`.
-
-To audition one without editing the file, the environment wins:
-
-```bash
-systemctl --user stop wallpaper-sync.service      # not pkill — systemd would just restart it
-SWWW_TRANSITION=grow SWWW_TRANSITION_DURATION=1.5 ~/.config/niri/wallpaper-sync.sh &
-# …change wallpaper a few times, then:
-kill %1; systemctl --user start wallpaper-sync.service
-```
-
-Edit the defaults in the script once you've settled on one — the environment version dies with the shell, and the unit runs the plain script. Anything more exotic (`--transition-angle`, `--transition-pos`, `--transition-bezier`, `--transition-wave`) is a flag in `swww img --help`; add it next to the others in `apply()`.
+Cycling never touched the rendering layer, so switching DMS's wallpaper off
+changed nothing about it: `dms` keeps the schedule and writes the choice to
+`session.json`, and `wallpaper-sync.sh` carries it to swww like any other change.
 
 ---
 
