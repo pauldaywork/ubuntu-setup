@@ -166,6 +166,20 @@ fi
 #
 # Only mismatches are reported. A machine in sync says so in one line rather
 # than eighteen, which keeps the interesting output visible.
+# Files configure.sh rewrites *after* copying, so the live copy is meant to
+# differ from the repo's and comparing them would report drift forever:
+#
+#   ghostty  its `command =` line becomes `wt tmux-session` when wt is on PATH
+#   DMS      settings.json has customThemeFile rewritten (already skipped: merge)
+#
+# Presence is still checked; only the content comparison is skipped.
+is_post_processed() {
+    case "$1" in
+        .config/ghostty/config.ghostty) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 MISSING=0
 DRIFTED=0
 CHECKED=0
@@ -185,7 +199,8 @@ for _row in "${DOTFILES_MAP[@]}"; do
         issue "Not installed: ~/$HOME_PATH"
         note "  Install with: bash configure.sh"
         MISSING=$((MISSING + 1))
-    elif [ "$KIND" != merge ] && ! cmp -s "$_live" "$_repo"; then
+    elif [ "$KIND" != merge ] && ! is_post_processed "$HOME_PATH" \
+         && ! cmp -s "$_live" "$_repo"; then
         # merge rows are expected to differ — the live file carries keys our
         # snapshot has never heard of, which is the whole reason they're merged.
         note "Differs from the repo: ~/$HOME_PATH"
@@ -205,13 +220,23 @@ fi
 # strip update.sh does, so the comparison is like for like.
 if [ -f "$HOME/.config/niri/config.kdl" ]; then
     NIRI_CMP=$(mktemp)
-    grep -v '^include "dms/laptop.kdl"$' "$HOME/.config/niri/config.kdl" > "$NIRI_CMP" || true
-    if cmp -s "$NIRI_CMP" "$DOTFILES/config/niri/config.kdl"; then
+    # Two things make a naive comparison wrong here: configure.sh appends the
+    # laptop include, and the repo file happens to end in blank lines while the
+    # appended one does not. Normalise both sides by dropping the include and
+    # every trailing blank, or this reports drift on every laptop forever.
+    strip_kdl() {
+        grep -v '^include "dms/laptop.kdl"$' "$1" \
+            | sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba'
+    }
+    NIRI_REPO_CMP=$(mktemp)
+    strip_kdl "$HOME/.config/niri/config.kdl" > "$NIRI_CMP" || true
+    strip_kdl "$DOTFILES/config/niri/config.kdl" > "$NIRI_REPO_CMP" || true
+    if cmp -s "$NIRI_CMP" "$NIRI_REPO_CMP"; then
         ok "niri config.kdl matches the repo"
     else
         note "Differs from the repo: ~/.config/niri/config.kdl"
     fi
-    rm -f "$NIRI_CMP"
+    rm -f "$NIRI_CMP" "$NIRI_REPO_CMP"
 fi
 
 # The executable bit is set by configure.sh, not carried in git for the

@@ -78,7 +78,13 @@ if [ -f "$HOME/.config/niri/config.kdl" ]; then
     # Built to a temp file first so the stripped result — not the raw live file —
     # is what confirm_overwrite compares and shows in the diff.
     NIRI_TMP=$(mktemp)
-    grep -v '^include "dms/laptop.kdl"$' "$HOME/.config/niri/config.kdl" > "$NIRI_TMP" || true
+    # configure.sh appends '\ninclude "dms/laptop.kdl"\n', so undoing it means
+    # dropping the include line *and* the one blank line that newline created.
+    # Stripping every trailing blank instead would eat the two this file
+    # legitimately ends with, and commit that churn on the next update.
+    grep -v '^include "dms/laptop.kdl"$' "$HOME/.config/niri/config.kdl" \
+        | awk '{lines[NR]=$0} END {last=NR; if (last>0 && lines[last]=="") last--; for(i=1;i<=last;i++) print lines[i]}' \
+        > "$NIRI_TMP" || true
     if confirm_overwrite "$NIRI_TMP" "$DOTFILES/config/niri/config.kdl"; then
         cp "$NIRI_TMP" "$DOTFILES/config/niri/config.kdl"
         info "Pulled $HOME/.config/niri/config.kdl"
