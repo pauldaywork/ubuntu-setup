@@ -13,7 +13,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 | Terminal | Ghostty (deb from the danklinux PPA, not the snap) |
 | Bar / shell | DankMaterialShell (theme, settings, plugins) |
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
-| Task manager | Taskwarrior (+ DMS taskwarrior widget plugin) |
+| Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/pauldaywork/niri-tasks)) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
 | Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user units) so animated GIFs animate |
 
@@ -68,7 +68,7 @@ The script will:
 12. Install Claude Code via npm
 13. Copy all config files to their correct locations, install the wallpaper systemd units, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
 14. Install TPM (tmux plugin manager) and fetch tmux plugins
-15. Install DMS plugins (taskwarrior widget)
+15. Install DMS plugins (taskwarrior widget), then clone and build [niri-tasks](https://github.com/pauldaywork/niri-tasks)
 16. Install VS Code extensions from `config/Code/extensions.txt`
 17. Prompt for your git name and email
 18. Generate a new SSH key and print the public key so you can add it to GitHub
@@ -105,65 +105,56 @@ After running, re-download any LM Studio models you need (not included in this r
 
 ```
 backup-os/
-├── install.sh                              # Run on a new machine
-├── install-config.sh                       # Config files + wallpapers only (no app installs)
+├── install.sh                              # Run on a new machine: packages, then everything below
+├── configure.sh                            # Just the config files + wallpapers (no app installs)
+├── update.sh                               # Snapshot this machine's live config back into the repo
+├── doctor.sh                               # Diagnose drift on an already-set-up machine
 ├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
-├── update.sh                               # Run on current machine to snapshot changes
-├── doctor.sh                               # Diagnose drift on an existing, already-set-up machine
-├── lib/
-│   ├── common.sh                           # Shared helpers: info/warn/ok/issue, pkg_installed, snap_install
-│   └── manifest.sh                         # What gets installed: apt + snap lists, version pins
-├── home/
+│
+├── lib/                                    # Shared by the four scripts above
+│   ├── common.sh                           # info/warn/ok/issue, pkg_installed, and copy/pull/merge_json
+│   ├── manifest.sh                         # What gets installed: apt + snap lists, version pins
+│   └── paths.sh                            # The one list of which file goes where
+│
+├── home/                                   # Mirrors ~/
 │   ├── .bashrc
 │   ├── .profile
 │   ├── .taskrc
 │   └── .tmux.conf
-├── config/
+│
+├── config/                                 # Mirrors ~/.config/
 │   ├── niri/
-│   │   ├── config.kdl
-│   │   ├── create_named_workspace.sh       # GUI prompt to name a new workspace (zenity)
-│   │   ├── rename_workspace.sh             # GUI prompt to rename the focused workspace (zenity)
-│   │   ├── open_project_workspace.sh       # Picks (or creates) a ~/Projects folder, names a workspace after it, opens a terminal there (Mod+Alt+P)
-│   │   ├── default_workspace_name.sh       # Names workspace 1 "general" on startup if unnamed
-│   │   ├── tmux-niri-session.sh            # Ghostty's launch command; opens a tmux session named after the workspace, in the matching ~/Projects folder
-│   │   ├── wallpaper-sync.sh               # Forwards the DMS wallpaper choice to swww, which is what animates GIFs
-│   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
-│   │   ├── task-lib.sh                     # Shared workspace-name → taskwarrior-tag rule; sourced by the eight below
-│   │   ├── task-tag.sh                     # Prints the focused workspace's tag; how the task box asks the same question
-│   │   ├── task-add-text.sh                # Adds one task from a tag + description (word-split, so due:/priority: work)
-│   │   ├── task-get-text.sh                # Prints one task's description by uuid; pre-fills the edit box
-│   │   ├── task-edit-text.sh               # Replaces one task's description by uuid (quoted, so a due: stays text)
-│   │   ├── task-get-notes.sh               # Prints one task's annotations by uuid, one per line; fills the note list
-│   │   ├── task-annotate-text.sh           # Attaches a note to a task by uuid (quoted, for the same reason)
-│   │   ├── task-add.sh                     # One-line fuzzel add box; the fallback for when DMS isn't running
-│   │   ├── task-list.sh                    # Lists this workspace's tasks; edit/delete/complete/set-active (Mod+Alt+L)
-│   │   ├── task-active.sh                  # Prints the workspace's active task; read by the Active Task bar widget
+│   │   ├── config.kdl                      # Includes niri-tasks.kdl; configure.sh seeds a stub for it
 │   │   ├── window-rules/
+│   │   │   ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
 │   │   │   ├── normal.kdl                  # Fully opaque windows
 │   │   │   └── focus.kdl                   # Unfocused windows fade out
-│   │   └── dms/
-│   │       └── laptop.kdl                  # Installed on laptops (auto-detected; --laptop/--desktop override)
-│   ├── fuzzel/
-│   │   └── project-picker.ini              # Minimal picker theme shared by the project and task pickers
-│   ├── ghostty/
-│   │   └── config.ghostty
-│   ├── DankMaterialShell/
-│   │   ├── settings.json
-│   │   ├── plugin_settings.json
-│   │   ├── firefox.css
-│   │   ├── plugins/activetask/             # Our own DMS plugin: the active-task bar widget + the add/edit task box
-│   │   └── themes/peaceAndQuiet/theme.json
-│   ├── systemd/user/
-│   │   ├── swww-daemon.service             # Wallpaper daemon; restarts wallpaper-sync on start
-│   │   └── wallpaper-sync.service          # Runs wallpaper-sync.sh for the session
-│   └── Code/
-│       ├── settings.json
-│       └── extensions.txt
-└── wallpapers/
-    ├── active                              # Filename of the wallpaper DMS had selected at the last update.sh run
-    ├── 205.png
-    └── *.gif                               # Animated; rendered by swww, not DMS
+│   │   └── dms/laptop.kdl                  # Installed on laptops only (auto-detected)
+│   ├── ghostty/config.ghostty
+│   ├── DankMaterialShell/                  # settings, plugin settings, firefox.css, theme
+│   └── Code/                               # settings.json + extensions.txt
+│
+├── wallpaper/                              # A feature, not a mirror: these land in three places
+│   ├── wallpaper-sync.sh                   # → ~/.config/niri/   Forwards DMS's choice to swww
+│   ├── swww-daemon.service                 # → ~/.config/systemd/user/
+│   ├── wallpaper-sync.service              # → ~/.config/systemd/user/
+│   ├── active                              # Which image DMS had selected at the last update.sh
+│   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
+│
+└── notes/                                  # Working notes; not installed anywhere
 ```
+
+Two rules keep this predictable:
+
+- **`home/` and `config/` mirror their destinations.** `config/ghostty/config.ghostty`
+  installs to `~/.config/ghostty/config.ghostty`. The one exception is VS Code,
+  which lands in `~/.config/Code/User/`.
+- **Anything whose files land in more than one place gets its own directory**
+  instead of being scattered to match. `wallpaper/` is the only one — its script,
+  its two systemd units and its images would otherwise sit in three separate trees.
+
+`lib/paths.sh` is what actually decides where each file goes, so the tree is free
+to be organised for reading rather than for the installer's benefit.
 
 
 
@@ -173,163 +164,78 @@ backup-os/
 
 Niri is set up with two swappable profiles — `normal` (fully opaque windows) and `focus` (unfocused windows fade out, with its own gaps/border/layout tuning) — defined in `config/niri/window-rules/normal.kdl` and `focus.kdl`. Each file is a self-contained `layout { ... }` + `window-rule { ... }` block; `config.kdl` includes whichever one is active via the `~/.config/niri/window-rules-active.kdl` symlink.
 
-Press **`Mod+Alt+R`** to cycle between profiles. This runs `config/niri/toggle-window-rules.sh`, which:
+Press **`Mod+Alt+R`** to cycle between profiles. This runs `config/niri/window-rules/toggle.sh`, which:
 
 1. Repoints the `window-rules-active.kdl` symlink at the next profile
 2. Records the choice in `~/.config/niri/.window-rules-profile`
 3. Forces an immediate reload with `niri msg action load-config-file`
 4. Shows a notification (if `notify-send` is available) naming the new profile
 
-The symlink and state file are machine-local, not tracked in git — `install.sh` seeds them to `focus` only if they don't already exist, so re-running install won't reset a profile you've already picked. To add another profile, drop a new `.kdl` file in `config/niri/window-rules/` and add its name to the `profiles=(...)` array in `toggle-window-rules.sh`.
+The symlink and state file are machine-local, not tracked in git — `install.sh` seeds them to `focus` only if they don't already exist, so re-running install won't reset a profile you've already picked. To add another profile, drop a new `.kdl` file in `config/niri/window-rules/` and add its name to the `profiles=(...)` array in `window-rules/toggle.sh`.
 
 ---
 
-## Project workspaces
+## Workspace tasks and project workspaces
 
-Press **`Mod+Alt+P`** to jump to a project. This runs `config/niri/open_project_workspace.sh`, which:
+`Mod+Alt+P` to open a project on its own named workspace, `Mod+Alt+T` to add a
+task to it, `Mod+Alt+L` to list and act on that workspace's tasks — all of that
+lives in **[niri-tasks](https://github.com/pauldaywork/niri-tasks)** now, not here.
 
-1. Lists the folders in `~/Projects` in a fuzzel picker — just the names, no prompt or buttons. Up/Down moves, Enter or a mouse click selects, Esc cancels, and typing filters
-2. Creates the folder if what you typed doesn't match anything (see below)
-3. Focuses that project's workspace if it already exists, otherwise names the empty workspace at the end of the current output after the folder
-4. Spawns a Ghostty window on it — but only for a workspace that's new or empty
+It used to be fifteen shell scripts under `config/niri/` plus a DankMaterialShell
+plugin, enumerated by hand in `configure.sh`, `update.sh` and `doctor.sh`.
+It is one binary (`wt`) and one repo, cloned to `~/Projects/niri-tasks` by
+`install.sh` step 8b.
 
-Re-picking a project you already have open is a "take me back there", not a request for another terminal, so the shortcut is safe to hit repeatedly. The exception is a workspace you've closed every window on: niri keeps the name, and the picker treats it like a fresh one and gives you a terminal again.
+What this repo still owns:
 
-### Creating a project from the picker
-
-Type a name that matches no existing folder and press Enter: the script creates `~/Projects/<name>`, notifies you, and then opens it exactly as if it had already been there. This works because fuzzel's dmenu mode prints the typed text verbatim when it matches no entry. An empty `~/Projects` is fine too — the picker shows a bare input box and whatever you type becomes the first project.
-
-Whitespace in a typed name becomes a dash, so created folders never contain spaces: `my cool project` makes `~/Projects/my-cool-project`, and runs of spaces or tabs collapse to one dash. The dashed name is then re-checked against the existing folders, so typing `my project` when `my-project` already exists just opens it rather than trying to create a duplicate. Only *typed* names are rewritten — a folder you already have with a space in its name still shows in the list and opens under its real name.
-
-Names containing `/` or starting with `.` are rejected, since those would write outside `~/Projects` or create a folder the picker filters out of its own list.
-
-The one rough edge: fuzzel only hands back raw text when it matches *nothing*, so you can't create a project whose name is contained in an existing one — typing `note` when `notes` exists selects `notes` instead. Use `mkdir` for those, or pick a name that isn't a substring of another.
-
-The picker's look lives in `config/fuzzel/project-picker.ini`, passed to fuzzel with `--config=` so it stays separate from any `fuzzel.ini` you use elsewhere. The script sizes the window to the folder list at runtime (`--lines`/`--width`), so only the ini's font, padding and colours are worth editing.
-
-The terminal lands in the project directory because Ghostty launches `tmux-niri-session.sh`, which starts its tmux session in `~/Projects/<workspace name>` when such a folder exists (falling back to `~/Projects`, then `$HOME`). So any terminal opened on a project workspace — not just the one this shortcut spawns — starts in the right place.
-
-Related workspace shortcuts: **`Mod+Alt+W`** to create and name a workspace by hand, **`Mod+Shift+Alt+W`** to rename the focused one. Naming isn't cosmetic — the name is the tag the task shortcuts below use, so an unnamed workspace has no tasks.
-
-All of these appear in niri's **Important Hotkeys** overlay (`Mod+Shift+/`). A `spawn` bind without a `hotkey-overlay-title` isn't hidden from it — it's listed as the raw command, so `Mod+Alt+W` read as `Spawn ~/.config/niri/create_named_workspace.sh` until it was given a title. Any new `spawn` bind worth pressing wants one.
-
----
-
-## Workspace tasks
-
-Taskwarrior, scoped to whatever workspace you're on. The workspace name is the tag, so the tasks you see are always the tasks for the project in front of you.
-
-| Shortcut | Does |
-| --- | --- |
-| **`Mod+Alt+T`** | Type a task into a multi-line box; it's added tagged with the current workspace. `Ctrl+Enter` adds, `Esc` cancels |
-| **`Mod+Alt+L`** | List this workspace's pending tasks, then edit / note / delete / complete / set-active the one you pick — or pick **＋ Add a task…**, the last row, which hands over to the add box. **Edit** and **Note** open the same multi-line box |
-
-The bottom bar carries an **Active Task** widget showing the started task for the focused workspace, and nothing at all when there isn't one. It updates on niri's event stream, so switching workspace changes it immediately.
-
-### Why the task box isn't fuzzel
-
-Everything else here is a fuzzel picker, but fuzzel has no multi-line mode — its input is one line, and the popup can't grow much past 52 characters before it runs out of a 1080p screen (see the width cap in `task-list.sh`). So a long task was typed half-blind.
-
-Every obvious alternative meant launching something — a terminal running an editor, a GTK dialog — and launching was the slow part. `Mod+Alt+T` instead sends `dms ipc call taskBox open` to DMS, which is already running, and a QML modal opens in that process. Nothing starts.
-
-It's a `daemon` surface on our own `activetask` plugin, which is now a [composite plugin](https://github.com/AvengeMedia/DankMaterialShell/tree/master/quickshell/PLUGINS): one plugin, two surfaces — the bar widget (instantiated per bar, per screen) and the daemon (instantiated exactly once, which is what makes it the right home for an `IpcHandler` and a single shared window). `task-add.sh` is still installed as the one-line fuzzel fallback for a session where DMS isn't up, and `Mod+Alt+L`'s add and edit rows fall back to it the same way.
-
-One window serves all three jobs — `dms ipc call taskBox open`, `… edit <uuid>`, `… annotate <uuid>` — because they differ only in wording and in what runs on submit, and near-identical modals would drift the moment one was touched. The box knows nothing about taskwarrior: it reports a mode and some text, and the daemon picks the script.
-
-Editing is where the extra room pays off most. The descriptions you reach for the edit box to fix are the long ones, which are exactly the ones a single fuzzel row showed you a fraction of.
-
-**Only a uuid ever crosses the IPC boundary.** The description to pre-fill an edit with is fetched by `task-get-text.sh`, inside the daemon, rather than passed in — so nothing depends on how `dms ipc call` quotes an argument containing spaces or punctuation. A uuid is hex and dashes; there's nothing in it for an argument parser to misread.
-
-The box wraps while you type but the description that comes out of it is **one line**. Taskwarrior will store a newline — it does, and `task list` even wraps it over two rows — but everything downstream reads it back on one: the `@tsv` in `task-list.sh` escapes the newline, so the picker would show a literal `\n` mid-task, and the bar widget has the same problem. The extra room is for seeing what you type, not for storing shape, so whitespace collapses on submit.
-
-> **Editing the plugin:** `dms ipc call plugins reload activetask` does *not* pick up a changed `plugin.json` or a changed `.qml` — `PluginService.resyncAll()` only parses a manifest it hasn't seen (`if (!prev)`), and the QML components are cached alongside it. Use `systemctl --user restart dms.service` after touching either.
-
-### The tag rule
-
-Workspace name → tag is lowercase, with everything that isn't a letter, digit or underscore folded to `_`. Taskwarrior tags are a single bare word: a dash reads as an operator inside a filter and a space splits the argument, so neither survives `task +<tag>`. Folding also means `Ubuntu-Setup`, `ubuntu setup` and `ubuntu-setup` all resolve to `ubuntu_setup` rather than to three tags each holding a third of the project's tasks.
-
-An unnamed workspace has no tag, so both shortcuts refuse to run and say so — writing untagged tasks would put them somewhere no list ever looks.
-
-The task list always has at least the **＋ Add a task…** row, so it never comes up empty. An earlier version fired a `notify-send` and exited when a workspace had no tasks yet, which — at a 1s notification timeout — was indistinguishable from the shortcut being broken.
-
-The rule lives once, in `config/niri/task-lib.sh`, which the other task scripts source — including `task-tag.sh`, which exists so the QML modal can ask the same question rather than reimplementing the fold in JavaScript.
-
-### Adding vs editing
-
-`Mod+Alt+T` passes what you type to `task` as separate words, so taskwarrior's own attribute syntax works: `ship the release due:friday priority:H` sets a due date and a priority instead of burying them in the description. (The script runs with globbing off, so a `*` in a task stays a `*`.) An unrecognised colon-word is left alone — `note: check the docs` stays in the description rather than erroring.
-
-Both the modal and the fuzzel fallback hand a tag and a description to `task-add-text.sh`, so that splitting is written once and the two paths can't drift.
-
-Editing a description from `Mod+Alt+L` deliberately does the opposite — `task-edit-text.sh` quotes it, so a `due:` typed mid-rename stays text rather than silently putting a date on a task you were only retitling. An edit that changes nothing is dropped rather than written back over itself.
-
-### Notes on a task
-
-A description is one line, so anything longer goes in a **taskwarrior annotation** — many per task, each stamped with the date it was written, and searched by a bare `task <word>` alongside descriptions. The **Note** action on `Mod+Alt+L` opens the task box with the task's existing notes listed above the input, oldest first; what you type is appended rather than replacing them. Rows in the list carrying notes are marked `¶`, since a row shows a description and an annotation isn't one.
-
-Notes are quoted on the way in, like edits and unlike adds — and this is the case where it matters most. Word-split, `annotate` reads attributes exactly as `add` does, so "note about the due:friday deadline" would quietly set a due date and store "note about the".
-
-The TODO also floated an "open in editor" action shelling out to `task <uuid> edit` for anything longer still. It was dropped: that means launching a terminal, which is the thing this box exists to avoid.
-
-### Active tasks
-
-"Set active" runs `task start`, having first run `task stop` on any other task carrying the tag. One active task per workspace, always — which is what lets the bar widget show a single unambiguous answer. Starting a task by hand in a terminal still works; the widget just takes the first if you somehow end up with two.
-
----
+- `config.kdl` carries `include "niri-tasks.kdl"`, and `configure.sh` seeds
+  an **empty stub** at that path. niri refuses to load a config whose include is
+  missing, so the stub is what lets this repo install on a machine that does not
+  want niri-tasks. Its installer symlinks the real file over the stub.
+- Ghostty's `command =` is set to `wt tmux-session` when `wt` is on `PATH`, and
+  to plain `tmux` when it is not.
 
 ## Animated wallpapers
 
-DMS can't animate a wallpaper. It paints the background with a QML `Image` (`Modules/WallpaperBackground.qml` in `/usr/share/quickshell/dms`), which decodes exactly one frame, so a GIF picked in its wallpaper tab shows up as a still. Upstream won't change that in-shell — [DankMaterialShell#793](https://github.com/AvengeMedia/DankMaterialShell/issues/793) was closed with *"we do not intend to add swww as a dependency/optional dependency, within the shell itself"* — and instead offers an escape hatch: **Settings → Wallpaper → Disable Built-in Wallpapers**, which stops DMS creating the wallpaper layer surface at all and leaves the background to an external daemon.
-
-So that toggle is on (it's the empty `screenPreferences.wallpaper` array in `config/DankMaterialShell/settings.json`) and [swww](https://github.com/LGFae/swww) draws the background instead. Three pieces:
+DMS paints the background with a QML `Image`, which decodes one frame — so a GIF
+picked in its wallpaper tab shows up as a still, and [upstream won't change that
+in-shell](https://github.com/AvengeMedia/DankMaterialShell/issues/793). So DMS's
+own wallpaper layer is switched off (the empty `screenPreferences.wallpaper`
+array in its `settings.json`) and [swww](https://github.com/LGFae/swww) draws the
+background instead.
 
 | Piece | Role |
 |---|---|
 | `swww-daemon.service` | Holds the background layer surface and plays the animation |
-| `wallpaper-sync.service` → `config/niri/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each wallpaper change to `swww` |
-| `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background sits still instead of scrolling with the workspaces, and shows through in Overview |
+| `wallpaper-sync.service` → `wallpaper/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each change to swww |
+| `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background stays put instead of scrolling with the workspaces |
 
-Both are **systemd user units** (`config/systemd/user/`), pulled in by `graphical-session.target` so they start and stop with niri. They were `spawn-at-startup` lines at first, which fires once and doesn't look back — a crash meant no wallpaper until the next login. As units they get restarted, and `systemctl --user status swww-daemon` will tell you why if one won't stay up.
+**Pick wallpapers exactly as before** — the DMS tab is still the UI, and matugen
+theming still follows them. swww is built from a git tag by `install.sh`;
+`doctor.sh` checks all three pieces plus the DMS toggle, so run it first if the
+background ever goes black.
 
-One wrinkle that needed handling: a daemon that comes back restores *its own* cached image, which is whatever it last drew rather than whatever DMS has selected since. Nothing writes `session.json` when that happens, so the sync script has no event to react to and the two would sit there disagreeing. `swww-daemon.service` therefore carries an `ExecStartPost` that restarts `wallpaper-sync.service`, which repaints from DMS's actual choice on startup. Verified by `kill -9`ing the daemon with a wallpaper change landing during the outage: the change was on screen a few seconds later.
+The reasoning lives next to what it explains, rather than here: why these are
+systemd units and not `spawn-at-startup`, and the `place-within-backdrop` rule,
+are in `config/niri/config.kdl`; the restart deadlock is in
+`swww-daemon.service`; and the transition knobs, the re-apply guard and the
+per-filetype scaling filter are all commented at the top of `wallpaper-sync.sh`.
 
-Everything else about DMS is untouched: the wallpaper picker, cycling, and matugen theming all key off `session.json`, and matugen reads a GIF's first frame happily, so dynamic colours still follow the wallpaper. **Pick wallpapers exactly as before** — the DMS tab is still the UI.
+### Rotation
 
-`wallpaper-sync.sh` re-applies only when the resolved wallpaper actually changes, because DMS rewrites `session.json` for unrelated things (launcher history, night mode); without that guard every launcher search would replay a fade transition. It picks the scaling filter per file: `Nearest` for GIFs, since the collection is pixel art that Lanczos would smear, and swww's default for everything else.
+**`Mod+Alt+B`** steps to the next wallpaper. For automatic rotation, **Settings →
+Wallpaper → Automatic Cycling**, then either **Interval** (5 seconds to 12 hours,
+default 5 minutes) or **Time** (once a day at a set clock time).
 
-swww isn't on crates.io or in apt, so `install.sh` builds it from the `v0.11.2` git tag into `~/.cargo/bin`. `doctor.sh` checks all three pieces plus the DMS toggle — if the background ever goes black, run it first.
+The one thing about cycling that isn't obvious, and is the reason the wallpapers
+live where they do: **the folder it cycles through is the directory of the
+current wallpaper.** It is not a separate setting — keeping them all in
+`~/Documents/Wallpapers` is what makes them a rotation set. It also needs at
+least two images there to do anything, and sorts them alphabetically.
 
-### Rotation: still DMS
-
-**`Mod+Alt+B`** steps to the next wallpaper by hand, any time.
-
-For automatic rotation: **Settings → Wallpaper → Automatic Cycling.** Toggle it on, then pick **Interval** (a dropdown from 5 seconds to 12 hours, default 5 minutes) or **Time** (once a day at a set clock time).
-
-Cycling never touched the rendering layer, so disabling DMS's wallpaper changed nothing about it. The `dms` server keeps the schedule, `WallpaperCyclingService.qml` picks the next file and writes it to `session.json`, and `wallpaper-sync.sh` carries it to swww like any other change. **The folder it cycles through is the directory of the current wallpaper** — it isn't a separate setting — so keeping wallpapers in `~/Documents/Wallpapers` is what makes them a rotation set. It also needs at least two files in there, and it sorts them alphabetically.
-
-`Mod+Alt+B` is bound to `dms ipc call wallpaper next`; `prev` exists too if you ever want a bind for it. Stepping by hand also resets the cycling timer.
-
-### Transition: now swww's
-
-The Transition dropdown in DMS's wallpaper tab drives QML shaders on a surface that no longer exists, so most of its names — disc, stripes, iris bloom, pixelate, portal — have nothing behind them now. swww animates the change instead, and the knobs are at the top of `config/niri/wallpaper-sync.sh`:
-
-```bash
-TRANSITION="${SWWW_TRANSITION:-dms}"
-TRANSITION_DURATION="${SWWW_TRANSITION_DURATION:-0.5}"   # seconds; swww's own default is 3
-TRANSITION_FPS="${SWWW_TRANSITION_FPS:-30}"
-```
-
-`dms` (the default) follows the DMS dropdown as far as it goes: `fade` and `wipe` are the two names both sides share, anything else lands on fade. Set `TRANSITION` to a swww name to pin it instead — `none simple fade left right top bottom wipe wave grow center outer any random`.
-
-To audition one without editing the file, the environment wins:
-
-```bash
-systemctl --user stop wallpaper-sync.service      # not pkill — systemd would just restart it
-SWWW_TRANSITION=grow SWWW_TRANSITION_DURATION=1.5 ~/.config/niri/wallpaper-sync.sh &
-# …change wallpaper a few times, then:
-kill %1; systemctl --user start wallpaper-sync.service
-```
-
-Edit the defaults in the script once you've settled on one — the environment version dies with the shell, and the unit runs the plain script. Anything more exotic (`--transition-angle`, `--transition-pos`, `--transition-bezier`, `--transition-wave`) is a flag in `swww img --help`; add it next to the others in `apply()`.
+Cycling never touched the rendering layer, so switching DMS's wallpaper off
+changed nothing about it: `dms` keeps the schedule and writes the choice to
+`session.json`, and `wallpaper-sync.sh` carries it to swww like any other change.
 
 ---
 
@@ -352,9 +258,9 @@ cd ~/Projects/ubuntu-setup
 bash update.sh
 ```
 
-This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpapers/` — image files only, so a stray `.DS_Store` or an unzipped download's `__MACOSX` leftovers don't get committed as wallpapers — and records which one DMS currently has selected in `wallpapers/active`. Nothing is deleted from `wallpapers/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
+This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpaper/images/` — image files only, so a stray `.DS_Store` or an unzipped download's `__MACOSX` leftovers don't get committed as wallpapers — and records which one DMS currently has selected in `wallpaper/active`. Nothing is deleted from `wallpaper/images/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
 
-In the other direction, `install-config.sh` copies a wallpaper across whenever the machine's copy is missing **or differs** from the repo's, backing the old one up first. Wallpapers a machine has that the repo doesn't are left alone — installing isn't pruning, so removing one everywhere means deleting it from `~/Documents/Wallpapers` as well as from the repo.
+In the other direction, `configure.sh` copies a wallpaper across whenever the machine's copy is missing **or differs** from the repo's, backing the old one up first. Wallpapers a machine has that the repo doesn't are left alone — installing isn't pruning, so removing one everywhere means deleting it from `~/Documents/Wallpapers` as well as from the repo.
 
 ### update.sh protects uncommitted repo edits
 
@@ -373,13 +279,13 @@ This exists because it already bit once: the `Mod+Alt+P` spawn-only-if-empty cha
 
 ### Re-running the installer is a no-op
 
-`install-config.sh` compares before it writes: a file that already matches is neither copied nor backed up, and a JSON merge that would change nothing leaves the live file alone. `config.kdl` is assembled first — the repo's copy plus the laptop include where that applies — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
+`configure.sh` compares before it writes: a file that already matches is neither copied nor backed up, and a JSON merge that would change nothing leaves the live file alone. `config.kdl` is assembled first — the repo's copy plus the laptop include where that applies — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
 
 The upshot is that a re-run on an in-sync machine says "Nothing needed replacing — no backup taken" and touches nothing. `~/.config-backups` also keeps only the **5** most recent snapshots now; it grew to nine directories of near-identical files before anything pruned it. Directories in there that aren't named like a timestamp are left alone.
 
 ### DMS settings are merged, not replaced
 
-`install-config.sh` copies most files straight over the live one. The two DankMaterialShell JSON files are the exception: they're merged, because DMS owns and rewrites them. Every DMS release adds keys and bumps `configVersion`, so the copy in this repo is only ever a snapshot of whenever `update.sh` last ran — and copying it flat over a newer live file deletes every key the snapshot has never heard of. Measured on this machine, that was 147 keys, including the display profiles and the entire battery section.
+`configure.sh` copies most files straight over the live one. The two DankMaterialShell JSON files are the exception: they're merged, because DMS owns and rewrites them. Every DMS release adds keys and bumps `configVersion`, so the copy in this repo is only ever a snapshot of whenever `update.sh` last ran — and copying it flat over a newer live file deletes every key the snapshot has never heard of. Measured on this machine, that was 147 keys, including the display profiles and the entire battery section.
 
 The merge takes our value for every key we carry and leaves live-only keys alone. `configVersion` deliberately comes from *our* file, i.e. the older number, so DMS re-runs its migrations over the result on next load and forward-migrates anything our snapshot holds in an old shape. Only top-level keys merge — nested structures like `barConfigs` are replaced wholesale, which is correct, since the bar layout is the thing being installed.
 
@@ -399,15 +305,14 @@ git push
 | `.bashrc`, `.profile` | `~/` |
 | tmux | `~/.tmux.conf` |
 | Niri config | `~/.config/niri/` |
-| Niri window-rules profiles | `~/.config/niri/window-rules/*.kdl`, `toggle-window-rules.sh` |
-| Fuzzel project picker | `~/.config/fuzzel/project-picker.ini` |
+| Niri window-rules profiles | `~/.config/niri/window-rules/*.kdl`, `window-rules/toggle.sh` |
 | Ghostty | `~/.config/ghostty/` |
 | DankMaterialShell | `~/.config/DankMaterialShell/` |
 | VS Code settings | `~/.config/Code/User/settings.json` |
 | VS Code extensions | generated by `code --list-extensions`; the existing list is kept if `code` isn't on `PATH` or returns nothing |
 | Systemd user units | `~/.config/systemd/user/swww-daemon.service`, `wallpaper-sync.service` |
 | Taskwarrior | `~/.taskrc` |
-| Wallpapers | `~/Documents/Wallpapers/` (whole folder); the active one read from the DMS session into `wallpapers/active` |
+| Wallpapers | `~/Documents/Wallpapers/` (whole folder); the active one read from the DMS session into `wallpaper/active` |
 
 ### What is NOT tracked
 
@@ -416,7 +321,7 @@ git push
 - **Browser profiles** — log in manually after install
 - **LM Studio models** — too large; re-download from within the app
 - **Obsidian vault** — sync separately (iCloud, Syncthing, etc.)
-- **DMS auto-generated niri configs** — `colors.kdl`, `layout.kdl`, `outputs.kdl` etc. are regenerated by DMS on first launch and are machine-specific. `binds.kdl` is in this group too: DMS owns the file, and ours is an empty stub because those binds were folded into `config.kdl`'s own `binds` block. `install-config.sh` seeds that stub, since niri refuses to load a config whose `include` target is missing
+- **DMS auto-generated niri configs** — `colors.kdl`, `layout.kdl`, `outputs.kdl` etc. are regenerated by DMS on first launch and are machine-specific. `binds.kdl` is in this group too: DMS owns the file, and ours is an empty stub because those binds were folded into `config.kdl`'s own `binds` block. `configure.sh` seeds that stub, since niri refuses to load a config whose `include` target is missing
 - **Active window-rules profile** — `~/.config/niri/window-rules-active.kdl` (symlink) and `.window-rules-profile` (state file) are machine-local; `install.sh` seeds them to `focus` only on first install
 - **Machine type** — `~/.config/niri/.machine-type` records laptop vs desktop for this machine, which is the point of it; the repo installs the same config on both
 

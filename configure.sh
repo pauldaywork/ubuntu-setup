@@ -15,138 +15,37 @@ for arg in "$@"; do
 done
 
 # ─── shared helpers ───────────────────────────────────────────────────────────
-if [ ! -f "$DOTFILES/lib/common.sh" ]; then
-    echo "Missing $DOTFILES/lib/common.sh — run this from a full clone of the repo" >&2
-    exit 1
-fi
+for _lib in common paths; do
+    if [ ! -f "$DOTFILES/lib/$_lib.sh" ]; then
+        echo "Missing $DOTFILES/lib/$_lib.sh — run this from a full clone of the repo" >&2
+        exit 1
+    fi
+done
 # shellcheck source=/dev/null
 source "$DOTFILES/lib/common.sh"
+source "$DOTFILES/lib/paths.sh"
 
 # ─── Copy dotfiles ────────────────────────────────────────────────────────────
 section "Copying dotfiles"
 
-# Existing files that would be overwritten are moved here (preserving their
-# path relative to $HOME) instead of being left as .bak siblings, so a bad
-# install can't get confused with a stray .bak file and the live config tree
-# stays clean.
-BACKUP_DIR="$USER_HOME/.config-backups/$(date +%Y%m%d-%H%M%S)"
-BACKED_UP_ANYTHING=false
+# Everything that is a straight file, from lib/paths.sh. config.kdl, the
+# wallpapers and the seeded stubs are handled below — they need more than a
+# source and a destination.
+for _row in "${DOTFILES_MAP[@]}"; do
+    map_entry "$_row"
+    _src="$DOTFILES/$REPO_PATH"
+    _dst="$USER_HOME/$HOME_PATH"
 
-backup_existing() {
-    local dst="$1"
-    [ -e "$dst" ] || return 0
-    local rel="${dst#"$USER_HOME"/}"
-    local backup_dst="$BACKUP_DIR/$rel"
-    mkdir -p "$(dirname "$backup_dst")"
-    cp -a "$dst" "$backup_dst"
-    warn "Backed up existing: $dst → $backup_dst"
-    BACKED_UP_ANYTHING=true
-}
-
-copy() {
-    local src="$1" dst="$2"
-    # A file that already matches needs neither writing nor backing up. Without
-    # this, re-running the installer on an in-sync machine still archived a
-    # complete copy of every config it touched — which is how ~/.config-backups
-    # grew to nine directories of near-identical files.
-    if cmp -s "$src" "$dst"; then
-        return 0
-    fi
-    mkdir -p "$(dirname "$dst")"
-    backup_existing "$dst"
-    cp "$src" "$dst"
-    info "Copied $dst"
-}
-
-# For config files the *app* owns and rewrites as it gains features — DMS's
-# settings.json above all. Its live file grows keys and climbs a configVersion
-# with each release, while the copy in this repo is a snapshot from whenever
-# update.sh last ran. Copying ours flat over the top deletes every key our
-# snapshot has never heard of: on this machine that was 147 of them, including
-# the display profiles and the whole battery section.
-#
-# So merge rather than replace. Our value wins for every key we actually carry
-# (that's the point of installing), and anything only the live file has is left
-# where it is.
-#
-# configVersion is deliberately *not* max()'d — it comes from our file, i.e. the
-# older number. That makes DMS re-run its migrations over the merged result on
-# next load, which is what forward-migrates the stale-shaped values our snapshot
-# contributed (ours still carries the pre-v13 `*Pins` keys, which migration 13
-# moves out to cache.json). Re-running those migrations over already-current
-# keys is safe: each one is either guarded on a key that no longer exists or a
-# plain delete.
-#
-# Only top-level keys are merged. Nested structures like barConfigs are replaced
-# wholesale, which is right — the bar layout is exactly the thing being
-# installed — and DMS defaults any per-bar key our snapshot predates.
-merge_json() {
-    local src="$1" dst="$2"
-    mkdir -p "$(dirname "$dst")"
-
-    if [ ! -f "$dst" ]; then
-        cp "$src" "$dst"
-        info "Copied $dst (no existing file to merge with)"
-        return
-    fi
-
-    # Merged into a temp file first, so a merge that changes nothing — the usual
-    # case on a machine already in sync — neither rewrites the live file nor
-    # leaves a backup copy of it behind.
-    #
-    # stderr is dropped so a malformed live file reports as the warning below
-    # rather than as a python traceback in the middle of the install output.
-    local merged_tmp merge_summary
-    merged_tmp=$(mktemp)
-
-    if merge_summary=$(python3 - "$src" "$dst" "$merged_tmp" 2>/dev/null <<'PYEOF'
-import json, sys
-
-src, dst, out = sys.argv[1], sys.argv[2], sys.argv[3]
-
-with open(src) as f:
-    ours = json.load(f)
-with open(dst) as f:
-    live = json.load(f)
-
-merged = dict(live)
-merged.update(ours)
-
-with open(out, "w") as f:
-    json.dump(merged, f, indent=2)
-
-kept = len(set(live) - set(ours))
-print(f"{len(ours)} key(s) applied, {kept} live-only key(s) preserved")
-PYEOF
-    ); then
-        if cmp -s "$merged_tmp" "$dst"; then
-            info "Unchanged $dst — $merge_summary"
-        else
-            backup_existing "$dst"
-            cat "$merged_tmp" > "$dst"
-            info "Merged $dst — $merge_summary"
-        fi
-    else
-        # A live file that isn't valid JSON can't be merged into. Backing it up
-        # first makes replacing it recoverable, which beats leaving the machine
-        # with settings that were never installed.
-        warn "Could not merge $dst (unreadable JSON?) — replacing it instead"
-        backup_existing "$dst"
-        cp "$src" "$dst"
-    fi
-
-    rm -f "$merged_tmp"
-}
-
-# shell
-copy "$DOTFILES/home/.bashrc"  "$USER_HOME/.bashrc"
-copy "$DOTFILES/home/.profile" "$USER_HOME/.profile"
-
-# taskwarrior
-copy "$DOTFILES/home/.taskrc" "$USER_HOME/.taskrc"
-
-# tmux
-copy "$DOTFILES/home/.tmux.conf" "$USER_HOME/.tmux.conf"
+    case "$KIND" in
+        copy)  copy "$_src" "$_dst" ;;
+        exec)  copy "$_src" "$_dst"; chmod +x "$_dst" ;;
+        merge) merge_json "$_src" "$_dst" ;;
+        # Deployed only on laptops, and MACHINE_TYPE is not settled until below,
+        # so that row is applied there instead.
+        laptop) ;;
+        *) warn "lib/paths.sh: unknown kind '$KIND' for $REPO_PATH" ;;
+    esac
+done
 
 # Laptop-specific niri config (display on/off binds, vertical workspace binds).
 #
@@ -199,7 +98,13 @@ echo "$MACHINE_TYPE" > "$MACHINE_TYPE_FILE"
 
 if [ "$MACHINE_TYPE" = "laptop" ]; then
     info "Laptop-specific niri config: on ($MACHINE_REASON)"
-    copy "$DOTFILES/config/niri/dms/laptop.kdl" "$USER_HOME/.config/niri/dms/laptop.kdl"
+    # From the table rather than spelled out again, so update.sh and doctor.sh
+    # cannot end up disagreeing with this about which files those are.
+    for _row in "${DOTFILES_MAP[@]}"; do
+        map_entry "$_row"
+        [ "$KIND" = laptop ] || continue
+        copy "$DOTFILES/$REPO_PATH" "$USER_HOME/$HOME_PATH"
+    done
 else
     info "Laptop-specific niri config: off ($MACHINE_REASON)"
 fi
@@ -218,44 +123,7 @@ if [ "$MACHINE_TYPE" = "laptop" ]; then
 fi
 copy "$NIRI_CONFIG_TMP" "$USER_HOME/.config/niri/config.kdl"
 rm -f "$NIRI_CONFIG_TMP"
-copy "$DOTFILES/config/niri/create_named_workspace.sh"    "$USER_HOME/.config/niri/create_named_workspace.sh"
-chmod +x "$USER_HOME/.config/niri/create_named_workspace.sh"
-copy "$DOTFILES/config/niri/rename_workspace.sh"          "$USER_HOME/.config/niri/rename_workspace.sh"
-chmod +x "$USER_HOME/.config/niri/rename_workspace.sh"
-copy "$DOTFILES/config/niri/open_project_workspace.sh"     "$USER_HOME/.config/niri/open_project_workspace.sh"
-chmod +x "$USER_HOME/.config/niri/open_project_workspace.sh"
-copy "$DOTFILES/config/niri/default_workspace_name.sh"    "$USER_HOME/.config/niri/default_workspace_name.sh"
-chmod +x "$USER_HOME/.config/niri/default_workspace_name.sh"
-copy "$DOTFILES/config/niri/toggle-window-rules.sh"       "$USER_HOME/.config/niri/toggle-window-rules.sh"
-chmod +x "$USER_HOME/.config/niri/toggle-window-rules.sh"
-copy "$DOTFILES/config/niri/tmux-niri-session.sh"         "$USER_HOME/.config/niri/tmux-niri-session.sh"
-chmod +x "$USER_HOME/.config/niri/tmux-niri-session.sh"
-copy "$DOTFILES/config/niri/wallpaper-sync.sh"            "$USER_HOME/.config/niri/wallpaper-sync.sh"
-chmod +x "$USER_HOME/.config/niri/wallpaper-sync.sh"
 
-# taskwarrior shortcuts — task-lib.sh is sourced by the other three, not run,
-# so it's the one file here that doesn't need the executable bit.
-copy "$DOTFILES/config/niri/task-lib.sh"                  "$USER_HOME/.config/niri/task-lib.sh"
-copy "$DOTFILES/config/niri/task-add.sh"                  "$USER_HOME/.config/niri/task-add.sh"
-chmod +x "$USER_HOME/.config/niri/task-add.sh"
-copy "$DOTFILES/config/niri/task-list.sh"                 "$USER_HOME/.config/niri/task-list.sh"
-chmod +x "$USER_HOME/.config/niri/task-list.sh"
-copy "$DOTFILES/config/niri/task-active.sh"               "$USER_HOME/.config/niri/task-active.sh"
-chmod +x "$USER_HOME/.config/niri/task-active.sh"
-copy "$DOTFILES/config/niri/task-tag.sh"                  "$USER_HOME/.config/niri/task-tag.sh"
-chmod +x "$USER_HOME/.config/niri/task-tag.sh"
-copy "$DOTFILES/config/niri/task-add-text.sh"             "$USER_HOME/.config/niri/task-add-text.sh"
-chmod +x "$USER_HOME/.config/niri/task-add-text.sh"
-copy "$DOTFILES/config/niri/task-get-text.sh"             "$USER_HOME/.config/niri/task-get-text.sh"
-chmod +x "$USER_HOME/.config/niri/task-get-text.sh"
-copy "$DOTFILES/config/niri/task-edit-text.sh"            "$USER_HOME/.config/niri/task-edit-text.sh"
-chmod +x "$USER_HOME/.config/niri/task-edit-text.sh"
-copy "$DOTFILES/config/niri/task-get-notes.sh"            "$USER_HOME/.config/niri/task-get-notes.sh"
-chmod +x "$USER_HOME/.config/niri/task-get-notes.sh"
-copy "$DOTFILES/config/niri/task-annotate-text.sh"        "$USER_HOME/.config/niri/task-annotate-text.sh"
-chmod +x "$USER_HOME/.config/niri/task-annotate-text.sh"
-copy "$DOTFILES/config/niri/window-rules/normal.kdl"      "$USER_HOME/.config/niri/window-rules/normal.kdl"
-copy "$DOTFILES/config/niri/window-rules/focus.kdl"       "$USER_HOME/.config/niri/window-rules/focus.kdl"
 
 # Seed the active window-rules profile only if one isn't already chosen,
 # so re-running install doesn't reset an existing choice.
@@ -289,12 +157,19 @@ if [ ! -e "$USER_HOME/.config/niri/dms/binds.kdl" ]; then
     info "Seeded empty $USER_HOME/.config/niri/dms/binds.kdl"
 fi
 
+# Same problem, same fix, for the niri-tasks include. That project owns the
+# workspace-task binds and symlinks the real file over this stub when it's
+# installed; without the stub, a machine that only has this repo would have a
+# config niri refuses to load.
+if [ ! -e "$USER_HOME/.config/niri/niri-tasks.kdl" ]; then
+    printf 'binds {\n\n}\n' > "$USER_HOME/.config/niri/niri-tasks.kdl"
+    info "Seeded empty $USER_HOME/.config/niri/niri-tasks.kdl"
+fi
+
 # systemd user units for the wallpaper pair. They're units rather than niri
 # spawn-at-startup lines so that a crash is restarted instead of leaving the
 # desktop bare until the next login, and so `systemctl --user status` can say
 # what went wrong. graphical-session.target starts and stops them with niri.
-copy "$DOTFILES/config/systemd/user/swww-daemon.service"    "$USER_HOME/.config/systemd/user/swww-daemon.service"
-copy "$DOTFILES/config/systemd/user/wallpaper-sync.service" "$USER_HOME/.config/systemd/user/wallpaper-sync.service"
 
 # `enable` alone is enough: graphical-session.target pulls them in at login.
 # Starting them here would fail on a fresh machine that has no session yet
@@ -311,47 +186,80 @@ if command -v systemctl &>/dev/null; then
     fi
 fi
 
-# fuzzel — picker theme for open_project_workspace.sh (fuzzel.ini itself is
-# left alone; the picker passes this file with --config=)
-copy "$DOTFILES/config/fuzzel/project-picker.ini" "$USER_HOME/.config/fuzzel/project-picker.ini"
-
 # ghostty
-copy "$DOTFILES/config/ghostty/config.ghostty" "$USER_HOME/.config/ghostty/config.ghostty"
-sed -i "s|^command = .*|command = $USER_HOME/.config/niri/tmux-niri-session.sh|" \
+# `wt tmux-session` opens a tmux session named after the focused workspace, in
+# the matching ~/Projects folder. It belongs to niri-tasks, which is optional —
+# so fall back to plain tmux rather than leaving ghostty pointed at a command
+# that doesn't exist, which would mean no terminal at all.
+if command -v wt >/dev/null; then
+    GHOSTTY_COMMAND="wt tmux-session"
+else
+    GHOSTTY_COMMAND="tmux"
+fi
+sed -i "s|^command = .*|command = $GHOSTTY_COMMAND|" \
     "$USER_HOME/.config/ghostty/config.ghostty"
 
 # DankMaterialShell — merged, not copied, so a re-install doesn't roll the live
 # settings back to whenever update.sh last ran. See merge_json above.
-merge_json "$DOTFILES/config/DankMaterialShell/settings.json"        "$USER_HOME/.config/DankMaterialShell/settings.json"
 sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json\"|" \
     "$USER_HOME/.config/DankMaterialShell/settings.json"
-merge_json "$DOTFILES/config/DankMaterialShell/plugin_settings.json" "$USER_HOME/.config/DankMaterialShell/plugin_settings.json"
-copy "$DOTFILES/config/DankMaterialShell/firefox.css"          "$USER_HOME/.config/DankMaterialShell/firefox.css"
-copy "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
-     "$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json"
 
-# Our own DMS plugin: a bar widget showing the active task, plus a daemon
-# holding the task box that Mod+Alt+T and the list's Edit action open over IPC.
-# Third-party plugins are git-cloned by install.sh and left alone on re-runs;
-# this one is versioned here, so it's copied every time like any other dotfile.
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/plugin.json" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/plugin.json"
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml"
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml"
-copy "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml" \
-     "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml"
+# ─── Files this repo used to install and no longer does ───────────────────────
+# Deleting a file from the repo does not delete it from a machine that already
+# has it. Nothing here reads these any more, but left in place they are worse
+# than clutter: the DMS plugin keeps rendering a widget whose scripts are gone,
+# and fifteen dead scripts in ~/.config/niri make it impossible to tell at a
+# glance which ones are live.
+#
+# Removal is safe in this order because config.kdl was written above, so by the
+# time these go the binds that used to call them are already gone too — either
+# replaced by niri-tasks.kdl, or by the empty stub when niri-tasks is absent.
+#
+# Keep this list rather than globbing ~/.config/niri/*.sh: wallpaper-sync.sh
+# lives there and is very much still ours.
+STALE_FILES=(
+    # The workspace-task system, now https://github.com/pauldaywork/niri-tasks
+    ".config/niri/task-lib.sh"
+    ".config/niri/task-tag.sh"
+    ".config/niri/task-active.sh"
+    ".config/niri/task-list.sh"
+    ".config/niri/task-add.sh"
+    ".config/niri/task-add-text.sh"
+    ".config/niri/task-get-text.sh"
+    ".config/niri/task-edit-text.sh"
+    ".config/niri/task-get-notes.sh"
+    ".config/niri/task-annotate-text.sh"
+    ".config/niri/create_named_workspace.sh"
+    ".config/niri/rename_workspace.sh"
+    ".config/niri/default_workspace_name.sh"
+    ".config/niri/open_project_workspace.sh"
+    ".config/niri/tmux-niri-session.sh"
+    # Its fuzzel theme too — niri-tasks installs its own as picker.ini.
+    ".config/fuzzel/project-picker.ini"
+    # The window-rules toggle moved in beside the profiles it switches between,
+    # so it installs to window-rules/toggle.sh now.
+    ".config/niri/toggle-window-rules.sh"
+)
 
-# The rename from TaskAdd* leaves the old pair behind on any machine installed
-# before it. They're inert — plugin.json names its components, so nothing loads
-# a file it doesn't list — but a folder holding two copies of the modal is a
-# trap for whoever next opens one to edit it.
-rm -f "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddDaemon.qml" \
-      "$USER_HOME/.config/DankMaterialShell/plugins/activetask/TaskAddModal.qml"
+STALE_REMOVED=0
+for rel in "${STALE_FILES[@]}"; do
+    if [ -e "$USER_HOME/$rel" ]; then
+        rm -f "$USER_HOME/$rel"
+        STALE_REMOVED=$((STALE_REMOVED + 1))
+    fi
+done
+
+# The activetask plugin: the active-task readout is a layer-shell overlay owned
+# by niri-tasks now, and the task box is its own window. A directory, so it
+# needs -rf rather than the loop above.
+if [ -d "$USER_HOME/.config/DankMaterialShell/plugins/activetask" ]; then
+    rm -rf "$USER_HOME/.config/DankMaterialShell/plugins/activetask"
+    STALE_REMOVED=$((STALE_REMOVED + 1))
+fi
+
+[ "$STALE_REMOVED" -gt 0 ] && info "Removed $STALE_REMOVED file(s) this repo no longer installs"
 
 # VS Code settings (extensions are not installed here — see install.sh)
-copy "$DOTFILES/config/Code/settings.json" "$USER_HOME/.config/Code/User/settings.json"
 
 # ─── Projects folder ──────────────────────────────────────────────────────────
 section "Setting up Projects folder"
@@ -369,7 +277,7 @@ section "Setting up wallpapers"
 
 # The whole folder is installed, not just the active one, so the DMS picker has
 # something to pick from — animated GIFs included, which swww is what actually
-# renders (see config/niri/wallpaper-sync.sh).
+# renders (see wallpaper/wallpaper-sync.sh).
 WALLPAPER_DIR="$USER_HOME/Documents/Wallpapers"
 mkdir -p "$WALLPAPER_DIR"
 
@@ -378,7 +286,7 @@ mkdir -p "$WALLPAPER_DIR"
 # changed — and gets replaced, with the old one backed up like any other config.
 # Wallpapers this machine has that the repo doesn't are left alone; installing is
 # not the same as pruning.
-for wall in "$DOTFILES/wallpapers"/*; do
+for wall in "$DOTFILES/wallpaper/images"/*; do
     [ -f "$wall" ] || continue
     name="$(basename "$wall")"
     # `active` is our own bookkeeping, not a wallpaper.
@@ -387,14 +295,14 @@ for wall in "$DOTFILES/wallpapers"/*; do
 done
 
 # Which one to select on a fresh machine. update.sh rewrites this file from
-# whatever DMS has live, so the repo tracks the choice without install-config.sh
+# whatever DMS has live, so the repo tracks the choice without configure.sh
 # needing a hardcoded filename.
 ACTIVE_WALLPAPER=""
-if [ -s "$DOTFILES/wallpapers/active" ]; then
-    ACTIVE_WALLPAPER="$(head -n1 "$DOTFILES/wallpapers/active")"
+if [ -s "$DOTFILES/wallpaper/active" ]; then
+    ACTIVE_WALLPAPER="$(head -n1 "$DOTFILES/wallpaper/active")"
 fi
 if [ -z "$ACTIVE_WALLPAPER" ] || [ ! -f "$WALLPAPER_DIR/$ACTIVE_WALLPAPER" ]; then
-    warn "wallpapers/active names no installed file — falling back to the first wallpaper"
+    warn "wallpaper/active names no installed file — falling back to the first wallpaper"
     ACTIVE_WALLPAPER="$(cd "$WALLPAPER_DIR" && ls | head -n1)"
 fi
 

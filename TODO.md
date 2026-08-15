@@ -2,6 +2,11 @@
 
 Nothing outstanding. Add new items here.
 
+## Follow-ups from the niri-tasks extraction
+
+- [x] Push `~/Projects/niri-tasks` to GitHub — published at https://github.com/pauldaywork/niri-tasks, and `NIRI_TASKS_REPO` in `install.sh` points at it.
+- [ ] Verify the active-task overlay on a second monitor. It creates one surface per output and handles hotplug, but only a single-output machine was available to test on.
+
 ## Done
 
 - [x] add tasks plugin and make it appear in the second nav bar via install.sh

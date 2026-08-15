@@ -35,8 +35,18 @@ SESSION="$HOME/.local/state/DankMaterialShell/session.json"
 # wipe are the two names both sides share, and everything else lands on fade.
 #
 # The environment wins over both, which is the quick way to audition one without
-# editing this file:
-#   SWWW_TRANSITION=grow SWWW_TRANSITION_DURATION=1.5 ~/.config/niri/wallpaper-sync.sh
+# editing this file. Stop the unit first — pkill won't do, systemd would just
+# restart the plain script over the top of yours:
+#
+#   systemctl --user stop wallpaper-sync.service
+#   SWWW_TRANSITION=grow SWWW_TRANSITION_DURATION=1.5 ~/.config/niri/wallpaper-sync.sh &
+#   # …change wallpaper a few times, then:
+#   kill %1; systemctl --user start wallpaper-sync.service
+#
+# Settle on one and edit the defaults above: the environment version dies with
+# the shell, and the unit runs the plain script. Anything more exotic
+# (--transition-angle, --transition-pos, --transition-bezier, --transition-wave)
+# is a flag in `swww img --help`; add it next to the others in apply().
 TRANSITION="${SWWW_TRANSITION:-dms}"
 TRANSITION_DURATION="${SWWW_TRANSITION_DURATION:-0.5}"   # seconds; swww's own default is 3
 TRANSITION_FPS="${SWWW_TRANSITION_FPS:-30}"

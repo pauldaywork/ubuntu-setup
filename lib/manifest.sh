@@ -35,11 +35,13 @@ APT_PACKAGES=(
     git
     curl
     build-essential
+    # jq is no longer used by anything in this repo — the scripts that needed it
+    # moved to niri-tasks, which talks to niri's socket directly. Kept because
+    # it is a general-purpose tool worth having on a new machine.
     jq
     tmux
     libudev-dev
     util-linux-extra
-    zenity
 
     # inotify-tools is what wallpaper-sync.sh watches the DMS session file with,
     # so it's a runtime dependency of the wallpaper setup, not a build one.
@@ -74,6 +76,11 @@ APT_BUILD_PACKAGES=(
     liblz4-dev
     libwayland-dev
     wayland-protocols
+    # niri-tasks: the task box is a GTK window, and the active-task readout is a
+    # gtk4-layer-shell surface. Build-time only — the runtime libs come in as
+    # dependencies of these.
+    libgtk-4-dev
+    libgtk4-layer-shell-dev
 )
 
 # ─── snap ─────────────────────────────────────────────────────────────────────

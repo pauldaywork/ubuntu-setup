@@ -24,7 +24,7 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The manifest is the point: this script used to keep its own copy of the
 # package list with a comment asking whoever edited install.sh to remember to
 # edit this one too.
-for lib in lib/common.sh lib/manifest.sh; do
+for lib in lib/common.sh lib/manifest.sh lib/paths.sh; do
     if [ ! -f "$DOTFILES/$lib" ]; then
         echo "Missing $DOTFILES/$lib — run this from a full clone of the repo" >&2
         exit 1
@@ -159,50 +159,135 @@ else
     note "  Install with: git clone https://github.com/cyrylas/dms-taskwarrior ~/.config/DankMaterialShell/plugins/taskwarrior"
 fi
 
-# The workspace task shortcuts and the Active Task widget share task-lib.sh, so
-# a missing file here breaks Mod+Alt+T, Mod+Alt+L and the bar pill together.
-for f in task-lib.sh task-tag.sh task-add-text.sh task-get-text.sh task-edit-text.sh \
-         task-get-notes.sh task-annotate-text.sh task-add.sh task-list.sh task-active.sh; do
-    if [ -f "$HOME/.config/niri/$f" ]; then
-        ok "Workspace task script present: $f"
-    else
-        issue "Missing ~/.config/niri/$f"
-        note "  Install with: bash install-config.sh"
+# ─── config drift ─────────────────────────────────────────────────────────────
+# Every mapped file from lib/paths.sh, checked against the repo. This is the
+# third consumer of that table: configure.sh deploys it, update.sh pulls it
+# back, and here we ask whether the two still agree.
+#
+# Only mismatches are reported. A machine in sync says so in one line rather
+# than eighteen, which keeps the interesting output visible.
+MISSING=0
+DRIFTED=0
+CHECKED=0
+MACHINE_TYPE_NOW="desktop"
+[ -f "$HOME/.config/niri/.machine-type" ] && MACHINE_TYPE_NOW="$(head -n1 "$HOME/.config/niri/.machine-type")"
+
+for _row in "${DOTFILES_MAP[@]}"; do
+    map_entry "$_row"
+    _live="$HOME/$HOME_PATH"
+    _repo="$DOTFILES/$REPO_PATH"
+
+    # Laptop-only rows are not expected to exist on a desktop.
+    [ "$KIND" = laptop ] && [ "$MACHINE_TYPE_NOW" != laptop ] && continue
+
+    CHECKED=$((CHECKED + 1))
+    if [ ! -f "$_live" ]; then
+        issue "Not installed: ~/$HOME_PATH"
+        note "  Install with: bash configure.sh"
+        MISSING=$((MISSING + 1))
+    elif [ "$KIND" != merge ] && ! cmp -s "$_live" "$_repo"; then
+        # merge rows are expected to differ — the live file carries keys our
+        # snapshot has never heard of, which is the whole reason they're merged.
+        note "Differs from the repo: ~/$HOME_PATH"
+        DRIFTED=$((DRIFTED + 1))
     fi
 done
 
-# Both surfaces of the activetask plugin: the bar pill and the daemon holding
-# the task box. The daemon files missing is the quieter failure — the bar still
-# works, the shortcut just does nothing.
-ACTIVETASK_DIR="$HOME/.config/DankMaterialShell/plugins/activetask"
-for f in plugin.json ActiveTaskWidget.qml TaskBoxDaemon.qml TaskBoxModal.qml; do
-    if [ -f "$ACTIVETASK_DIR/$f" ]; then
-        ok "DMS activetask plugin file present: $f"
+if [ "$MISSING" -eq 0 ] && [ "$DRIFTED" -eq 0 ]; then
+    ok "All $CHECKED mapped config files present and matching the repo"
+elif [ "$MISSING" -eq 0 ]; then
+    ok "All $CHECKED mapped config files present ($DRIFTED differ — bash update.sh to snapshot, or configure.sh to overwrite)"
+fi
+
+# config.kdl is not in the table — it is assembled with the laptop include
+# appended — so the count above does not cover it. Check it here rather than
+# leave "all N match" implying the most important file was among them. Same
+# strip update.sh does, so the comparison is like for like.
+if [ -f "$HOME/.config/niri/config.kdl" ]; then
+    NIRI_CMP=$(mktemp)
+    grep -v '^include "dms/laptop.kdl"$' "$HOME/.config/niri/config.kdl" > "$NIRI_CMP" || true
+    if cmp -s "$NIRI_CMP" "$DOTFILES/config/niri/config.kdl"; then
+        ok "niri config.kdl matches the repo"
     else
-        issue "Missing $ACTIVETASK_DIR/$f"
-        note "  Install with: bash install-config.sh"
+        note "Differs from the repo: ~/.config/niri/config.kdl"
+    fi
+    rm -f "$NIRI_CMP"
+fi
+
+# The executable bit is set by configure.sh, not carried in git for the
+# destination, so a file restored by hand or from a backup can be present,
+# matching, and still not runnable.
+for _row in "${DOTFILES_MAP[@]}"; do
+    map_entry "$_row"
+    [ "$KIND" = exec ] || continue
+    if [ -f "$HOME/$HOME_PATH" ] && [ ! -x "$HOME/$HOME_PATH" ]; then
+        issue "Not executable: ~/$HOME_PATH"
+        note "  Fix with: chmod +x ~/$HOME_PATH"
     fi
 done
 
-# The manifest is only parsed at DMS startup (PluginService.resyncAll skips
-# manifests it already knows), so files on disk aren't proof the daemon is live.
-if command -v dms >/dev/null; then
-    if dms ipc call taskBox close >/dev/null 2>&1; then
-        ok "Task box reachable (dms ipc call taskBox)"
+# The workspace-task system lives in its own repo now. Delegate to its doctor
+# rather than duplicating the checks here — it knows what it installed, and this
+# repo works fine without it.
+if command -v wt >/dev/null; then
+    ok "wt installed ($(wt --version 2>/dev/null || echo 'version unknown'))"
+
+    # niri refuses to load a config whose include is missing, so this one is
+    # fatal to the whole session rather than just to the task binds.
+    if [ -e "$HOME/.config/niri/niri-tasks.kdl" ]; then
+        ok "niri-tasks include present"
     else
-        issue "DMS isn't answering on the taskBox IPC target — Mod+Alt+T and the list's Edit action will do nothing"
-        note "  Restart the shell with: systemctl --user restart dms.service"
+        issue "Missing ~/.config/niri/niri-tasks.kdl — niri will refuse to load its config"
+        note "  Seed the stub with: bash configure.sh"
+    fi
+
+    if systemctl --user is-active --quiet niri-tasks.service; then
+        ok "Active-task overlay running"
+    else
+        issue "niri-tasks.service is not running — the active-task overlay will not appear"
+        note "  Start it with: systemctl --user start niri-tasks"
+    fi
+else
+    note "wt not installed — Mod+Alt+T/L/P and the active-task overlay are absent"
+    note "  Install with: https://github.com/pauldaywork/niri-tasks"
+
+    # The stub still has to exist, or niri will not load at all.
+    if [ ! -e "$HOME/.config/niri/niri-tasks.kdl" ]; then
+        issue "Missing ~/.config/niri/niri-tasks.kdl — niri will refuse to load its config"
+        note "  Seed the stub with: bash configure.sh"
     fi
 fi
 
-# Left behind by the TaskAdd* → TaskBox* rename. Harmless, but two copies of
-# the modal in one folder is a trap for whoever edits the wrong one.
-for f in TaskAddDaemon.qml TaskAddModal.qml; do
-    if [ -f "$ACTIVETASK_DIR/$f" ]; then
-        issue "Stale $f in $ACTIVETASK_DIR — superseded by the TaskBox* pair"
-        note "  Remove it with: bash install-config.sh"
-    fi
+# Files this repo used to install and no longer does. Deleting them from the
+# repo doesn't delete them from a machine that already has them, and a stale
+# script is worse than clutter — it's indistinguishable from a live one.
+#
+# configure.sh does the removing; this only reports, like everything else here.
+STALE_ON_DISK=()
+for rel in \
+    ".config/niri/task-lib.sh" ".config/niri/task-tag.sh" ".config/niri/task-active.sh" \
+    ".config/niri/task-list.sh" ".config/niri/task-add.sh" ".config/niri/task-add-text.sh" \
+    ".config/niri/task-get-text.sh" ".config/niri/task-edit-text.sh" \
+    ".config/niri/task-get-notes.sh" ".config/niri/task-annotate-text.sh" \
+    ".config/niri/create_named_workspace.sh" ".config/niri/rename_workspace.sh" \
+    ".config/niri/default_workspace_name.sh" ".config/niri/open_project_workspace.sh" \
+    ".config/niri/tmux-niri-session.sh" ".config/niri/toggle-window-rules.sh" \
+    ".config/fuzzel/project-picker.ini"
+do
+    [ -e "$HOME/$rel" ] && STALE_ON_DISK+=("$rel")
 done
+[ -d "$HOME/.config/DankMaterialShell/plugins/activetask" ] && \
+    STALE_ON_DISK+=(".config/DankMaterialShell/plugins/activetask")
+
+if [ "${#STALE_ON_DISK[@]}" -gt 0 ]; then
+    issue "${#STALE_ON_DISK[@]} file(s) left over from the niri-tasks split are still installed"
+    for rel in "${STALE_ON_DISK[@]}"; do
+        note "    ~/$rel"
+    done
+    note "  Remove them with: bash configure.sh"
+else
+    ok "No leftovers from the niri-tasks split"
+fi
 
 # Wallpapers. Three things have to agree or the desktop goes black: swww has to
 # be installed and running, DMS's own wallpaper layer has to stay disabled (it
@@ -221,7 +306,7 @@ fi
 for unit in swww-daemon wallpaper-sync; do
     if [ ! -f "$HOME/.config/systemd/user/$unit.service" ]; then
         issue "$unit.service not installed"
-        note "  Install with: bash install-config.sh"
+        note "  Install with: bash configure.sh"
     elif ! systemctl --user is-enabled --quiet "$unit.service" 2>/dev/null; then
         issue "$unit.service is not enabled — it won't start at next login"
         note "  Enable with: systemctl --user enable --now $unit.service"
@@ -269,11 +354,11 @@ if [ -f "$DMS_SETTINGS" ]; then
         ok "DMS built-in wallpapers disabled (swww owns the background)"
     else
         issue "DMS built-in wallpapers are enabled — they'll cover swww with a still frame"
-        note "  Fix in Settings → Wallpaper → Disable Built-in Wallpapers, or re-run install-config.sh"
+        note "  Fix in Settings → Wallpaper → Disable Built-in Wallpapers, or re-run configure.sh"
     fi
 fi
 
-# Laptop binds. install-config.sh replaces config.kdl wholesale and appends the
+# Laptop binds. configure.sh replaces config.kdl wholesale and appends the
 # laptop include afterwards, so a re-run that decides this machine isn't a laptop
 # takes the display and workspace binds away with no error — worth noticing here
 # rather than the next time you reach for a shortcut that's gone.
@@ -292,10 +377,10 @@ if [ -f "$NIRI_CONFIG" ]; then
     if [ "$HAS_BATTERY" = true ] && [ "$HAS_INCLUDE" = false ]; then
         issue "This machine has a battery but config.kdl doesn't include dms/laptop.kdl"
         note "  The display and workspace binds in it are missing"
-        note "  Fix with: bash install-config.sh --laptop"
+        note "  Fix with: bash configure.sh --laptop"
     elif [ "$HAS_INCLUDE" = true ] && [ ! -f "$HOME/.config/niri/dms/laptop.kdl" ]; then
         issue "config.kdl includes dms/laptop.kdl but that file is missing — niri won't load the config"
-        note "  Fix with: bash install-config.sh --laptop"
+        note "  Fix with: bash configure.sh --laptop"
     elif [ "$HAS_INCLUDE" = true ]; then
         ok "Laptop niri config included"
     fi

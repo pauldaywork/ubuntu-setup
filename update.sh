@@ -17,12 +17,15 @@ for arg in "$@"; do
 done
 
 # ─── shared helpers ───────────────────────────────────────────────────────────
-if [ ! -f "$DOTFILES/lib/common.sh" ]; then
-    echo "Missing $DOTFILES/lib/common.sh — run this from a full clone of the repo" >&2
-    exit 1
-fi
+for _lib in common paths; do
+    if [ ! -f "$DOTFILES/lib/$_lib.sh" ]; then
+        echo "Missing $DOTFILES/lib/$_lib.sh — run this from a full clone of the repo" >&2
+        exit 1
+    fi
+done
 # shellcheck source=/dev/null
 source "$DOTFILES/lib/common.sh"
+source "$DOTFILES/lib/paths.sh"
 
 # ─── Guarding against overwriting work that exists nowhere else ───────────────
 # Copying a live file over the repo's is this script's entire job, so "these two
@@ -46,80 +49,25 @@ else
     IS_GIT_REPO=false
 fi
 
-repo_file_is_uncommitted() {
-    local dst="$1"
-    [ "$IS_GIT_REPO" = true ] || return 1
-    [ -n "$(git -C "$DOTFILES" status --porcelain -- "${dst#"$DOTFILES"/}" 2>/dev/null)" ]
-}
 
-# 0 = go ahead and overwrite, 1 = leave the repo file alone.
-confirm_overwrite() {
-    local src="$1" dst="$2"
+# ─── the mapped dotfiles ──────────────────────────────────────────────────────
+# Everything that is a straight file, from lib/paths.sh — the same rows
+# configure.sh deploys, read in the other direction. config.kdl, the
+# wallpapers and the VS Code extension list need more than a file pair and are
+# handled separately below.
+for _row in "${DOTFILES_MAP[@]}"; do
+    map_entry "$_row"
+    _live="$HOME/$HOME_PATH"
+    _repo="$DOTFILES/$REPO_PATH"
 
-    # Nothing to lose: no repo file yet, or the two already agree.
-    [ -f "$dst" ] || return 0
-    cmp -s "$src" "$dst" && return 0
-
-    # Committed and unmodified — `git checkout` can undo this pull.
-    repo_file_is_uncommitted "$dst" || return 0
-
-    local rel="${dst#"$DOTFILES"/}"
-    echo ""
-    warn "Uncommitted repo changes would be discarded: $rel"
-    echo "    These edits are only in the repo. If they were never installed to the"
-    echo "    live config, pulling now overwrites them with the older live version."
-    echo ""
-    # `|| true` covers both diff's exit 1 for differing files and head's SIGPIPE,
-    # either of which would otherwise trip pipefail.
-    { diff -u --label "repo: $rel (would be lost)" --label "live: $src (would replace it)" \
-        "$dst" "$src" | head -40 | sed 's/^/    /'; } 2>/dev/null || true
-    echo ""
-
-    if [ "$ASSUME_YES" = true ]; then
-        warn "  --yes given — overwriting"
-        return 0
-    fi
-
-    if [ ! -t 0 ]; then
-        warn "  Not running interactively — keeping the repo version."
-        warn "  Re-run in a terminal to decide, or pass --yes to overwrite."
-        SKIPPED_ANY=true
-        return 1
-    fi
-
-    local reply=""
-    read -rp "    Overwrite $rel with the live version? [y/N] " reply || true
-    case "$reply" in
-        [yY]|[yY][eE][sS]) return 0 ;;
-        *)
-            info "Kept the repo version of $rel"
-            SKIPPED_ANY=true
-            return 1
-            ;;
+    case "$KIND" in
+        copy|exec|merge) pull "$_live" "$_repo" ;;
+        # Only present on laptops; silent rather than warning on a desktop.
+        laptop)          pull_optional "$_live" "$_repo" ;;
+        *) warn "lib/paths.sh: unknown kind '$KIND' for $REPO_PATH" ;;
     esac
-}
+done
 
-pull() {
-    local src="$1" dst="$2"
-    if [ -f "$src" ]; then
-        confirm_overwrite "$src" "$dst" || return 0
-        mkdir -p "$(dirname "$dst")"
-        cp "$src" "$dst"
-        info "Pulled $src"
-    else
-        warn "Not found, skipping: $src"
-    fi
-}
-
-# ─── shell ────────────────────────────────────────────────────────────────────
-pull "$HOME/.bashrc"  "$DOTFILES/home/.bashrc"
-pull "$HOME/.profile" "$DOTFILES/home/.profile"
-
-# ─── taskwarrior ──────────────────────────────────────────────────────────────
-pull "$HOME/.taskrc" "$DOTFILES/home/.taskrc"
-
-# ─── tmux ─────────────────────────────────────────────────────────────────────
-pull "$HOME/.tmux.conf" "$DOTFILES/home/.tmux.conf"
 
 # ─── niri ─────────────────────────────────────────────────────────────────────
 # config.kdl gets `include "dms/laptop.kdl"` appended by `install.sh --laptop` on
@@ -139,57 +87,16 @@ if [ -f "$HOME/.config/niri/config.kdl" ]; then
 else
     warn "Not found, skipping: $HOME/.config/niri/config.kdl"
 fi
-pull "$HOME/.config/niri/create_named_workspace.sh" "$DOTFILES/config/niri/create_named_workspace.sh"
-pull "$HOME/.config/niri/rename_workspace.sh"       "$DOTFILES/config/niri/rename_workspace.sh"
-pull "$HOME/.config/niri/open_project_workspace.sh" "$DOTFILES/config/niri/open_project_workspace.sh"
-pull "$HOME/.config/niri/default_workspace_name.sh" "$DOTFILES/config/niri/default_workspace_name.sh"
-pull "$HOME/.config/niri/tmux-niri-session.sh"      "$DOTFILES/config/niri/tmux-niri-session.sh"
-pull "$HOME/.config/niri/wallpaper-sync.sh"         "$DOTFILES/config/niri/wallpaper-sync.sh"
-pull "$HOME/.config/niri/toggle-window-rules.sh"    "$DOTFILES/config/niri/toggle-window-rules.sh"
-pull "$HOME/.config/niri/task-lib.sh"               "$DOTFILES/config/niri/task-lib.sh"
-pull "$HOME/.config/niri/task-tag.sh"               "$DOTFILES/config/niri/task-tag.sh"
-pull "$HOME/.config/niri/task-add-text.sh"          "$DOTFILES/config/niri/task-add-text.sh"
-pull "$HOME/.config/niri/task-get-text.sh"          "$DOTFILES/config/niri/task-get-text.sh"
-pull "$HOME/.config/niri/task-edit-text.sh"         "$DOTFILES/config/niri/task-edit-text.sh"
-pull "$HOME/.config/niri/task-get-notes.sh"         "$DOTFILES/config/niri/task-get-notes.sh"
-pull "$HOME/.config/niri/task-annotate-text.sh"     "$DOTFILES/config/niri/task-annotate-text.sh"
-pull "$HOME/.config/niri/task-add.sh"               "$DOTFILES/config/niri/task-add.sh"
-pull "$HOME/.config/niri/task-list.sh"              "$DOTFILES/config/niri/task-list.sh"
-pull "$HOME/.config/niri/task-active.sh"            "$DOTFILES/config/niri/task-active.sh"
-pull "$HOME/.config/niri/window-rules/normal.kdl"   "$DOTFILES/config/niri/window-rules/normal.kdl"
-pull "$HOME/.config/niri/window-rules/focus.kdl"    "$DOTFILES/config/niri/window-rules/focus.kdl"
 # dms/binds.kdl is deliberately not pulled — see .gitignore.
 
-# ─── systemd user units ───────────────────────────────────────────────────────
-pull "$HOME/.config/systemd/user/swww-daemon.service"    "$DOTFILES/config/systemd/user/swww-daemon.service"
-pull "$HOME/.config/systemd/user/wallpaper-sync.service" "$DOTFILES/config/systemd/user/wallpaper-sync.service"
-
-# ─── fuzzel ───────────────────────────────────────────────────────────────────
-pull "$HOME/.config/fuzzel/project-picker.ini" "$DOTFILES/config/fuzzel/project-picker.ini"
-
-# ─── ghostty ──────────────────────────────────────────────────────────────────
-pull "$HOME/.config/ghostty/config.ghostty" "$DOTFILES/config/ghostty/config.ghostty"
 
 # ─── DankMaterialShell ────────────────────────────────────────────────────────
-pull "$HOME/.config/DankMaterialShell/settings.json"        "$DOTFILES/config/DankMaterialShell/settings.json"
-pull "$HOME/.config/DankMaterialShell/plugin_settings.json" "$DOTFILES/config/DankMaterialShell/plugin_settings.json"
-pull "$HOME/.config/DankMaterialShell/firefox.css"          "$DOTFILES/config/DankMaterialShell/firefox.css"
-pull "$HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json" \
-     "$DOTFILES/config/DankMaterialShell/themes/peaceAndQuiet/theme.json"
-# Only our own plugin is pulled back. The third-party ones under plugins/ are
-# git clones owned by install.sh, and snapshotting them here would vendor
-# somebody else's repo into this one.
-pull "$HOME/.config/DankMaterialShell/plugins/activetask/plugin.json" \
-     "$DOTFILES/config/DankMaterialShell/plugins/activetask/plugin.json"
-pull "$HOME/.config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml" \
-     "$DOTFILES/config/DankMaterialShell/plugins/activetask/ActiveTaskWidget.qml"
-pull "$HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml" \
-     "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxDaemon.qml"
-pull "$HOME/.config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml" \
-     "$DOTFILES/config/DankMaterialShell/plugins/activetask/TaskBoxModal.qml"
+# The activetask plugin is gone — the active-task overlay and the task box both
+# belong to niri-tasks now, which is its own repo and its own working tree, so
+# there is nothing to snapshot back. The third-party plugins under plugins/ are
+# git clones owned by install.sh and were never pulled either.
 
 # ─── VS Code ──────────────────────────────────────────────────────────────────
-pull "$HOME/.config/Code/User/settings.json" "$DOTFILES/config/Code/settings.json"
 info "Pulling VS Code extensions list"
 # Built in a temp file first. Redirecting straight into the repo truncates the
 # list before `code` has run, so on any machine where code isn't on PATH — a tty
@@ -218,7 +125,7 @@ fi
 # needs something to pick from, so ~/Documents/Wallpapers is mirrored in whole.
 # Nothing is deleted here — a wallpaper removed from the live folder stays in
 # the repo until it's deleted there deliberately.
-mkdir -p "$DOTFILES/wallpapers"
+mkdir -p "$DOTFILES/wallpaper/images"
 
 WALLPAPER_DIR="$HOME/Documents/Wallpapers"
 if [ -d "$WALLPAPER_DIR" ]; then
@@ -234,7 +141,7 @@ if [ -d "$WALLPAPER_DIR" ]; then
             *.jpg|*.jpeg|*.png|*.bmp|*.gif|*.webp|*.jxl|*.avif|*.heif|*.exr) ;;
             *) continue ;;
         esac
-        WALL_DST="$DOTFILES/wallpapers/$WALL_NAME"
+        WALL_DST="$DOTFILES/wallpaper/images/$WALL_NAME"
         if [ ! -f "$WALL_DST" ] || ! cmp -s "$wall" "$WALL_DST"; then
             info "Pulling wallpaper: $WALL_NAME"
             cp "$wall" "$WALL_DST"
@@ -244,7 +151,7 @@ if [ -d "$WALLPAPER_DIR" ]; then
     [ "$PULLED" -eq 0 ] && info "Wallpapers unchanged"
 fi
 
-# Which one is selected right now. install-config.sh reads this file rather than
+# Which one is selected right now. configure.sh reads this file rather than
 # carrying a hardcoded filename.
 DMS_SESSION="$HOME/.local/state/DankMaterialShell/session.json"
 if [ -f "$DMS_SESSION" ]; then
@@ -253,13 +160,13 @@ if [ -f "$DMS_SESSION" ]; then
         WALL_FILE=$(basename "$ACTIVE_WALL")
         # A wallpaper picked from outside ~/Documents/Wallpapers won't have been
         # copied by the mirror above, so pull it in before recording it.
-        if [ ! -f "$DOTFILES/wallpapers/$WALL_FILE" ]; then
+        if [ ! -f "$DOTFILES/wallpaper/images/$WALL_FILE" ]; then
             info "Pulling active wallpaper from outside $WALLPAPER_DIR: $WALL_FILE"
-            cp "$ACTIVE_WALL" "$DOTFILES/wallpapers/$WALL_FILE"
+            cp "$ACTIVE_WALL" "$DOTFILES/wallpaper/images/$WALL_FILE"
         fi
-        if [ "$(cat "$DOTFILES/wallpapers/active" 2>/dev/null)" != "$WALL_FILE" ]; then
+        if [ "$(cat "$DOTFILES/wallpaper/active" 2>/dev/null)" != "$WALL_FILE" ]; then
             info "Active wallpaper: $WALL_FILE"
-            echo "$WALL_FILE" > "$DOTFILES/wallpapers/active"
+            echo "$WALL_FILE" > "$DOTFILES/wallpaper/active"
         else
             info "Active wallpaper unchanged: $WALL_FILE"
         fi
@@ -275,7 +182,7 @@ if [ "$SKIPPED_ANY" = true ]; then
     warn "Some repo files were left alone to protect uncommitted changes."
     echo "  Those edits aren't on this machine yet. To get everything agreeing again:"
     echo ""
-    echo "    bash install-config.sh   # install the repo's version to the live config"
+    echo "    bash configure.sh   # install the repo's version to the live config"
     echo "    bash update.sh           # then this pull becomes a no-op"
     echo ""
     echo "  Or commit them first, so a later pull can be undone with git checkout."

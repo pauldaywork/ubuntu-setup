@@ -5,7 +5,7 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER_HOME="$HOME"
 
 # ─── flags ─────────────────────────────────────────────────────────────────────
-# --laptop / --desktop are overrides, not requirements: install-config.sh detects
+# --laptop / --desktop are overrides, not requirements: configure.sh detects
 # laptop hardware on its own and remembers the answer. Passed straight through.
 LAPTOP=false
 DESKTOP=false
@@ -223,7 +223,7 @@ fi
 # DMS renders wallpapers with a QML Image, which shows one still frame of a GIF,
 # and upstream won't animate it in-shell (DankMaterialShell#793). So the shell's
 # own wallpaper layer is disabled in its settings.json and swww draws the
-# background instead — see config/niri/wallpaper-sync.sh for the whole picture.
+# background instead — see wallpaper/wallpaper-sync.sh for the whole picture.
 #
 # Not on crates.io and not packaged for Ubuntu, so it's installed from the git
 # tag. Both binaries are needed: swww-daemon holds the layer surface, swww is
@@ -284,7 +284,38 @@ fi
 CONFIG_ARGS=()
 [ "$LAPTOP" = true ]  && CONFIG_ARGS+=(--laptop)
 [ "$DESKTOP" = true ] && CONFIG_ARGS+=(--desktop)
-"$DOTFILES/install-config.sh" "${CONFIG_ARGS[@]}"
+"$DOTFILES/configure.sh" "${CONFIG_ARGS[@]}"
+
+# ─── 8b. niri-tasks ───────────────────────────────────────────────────────────
+# Workspace-scoped taskwarrior: Mod+Alt+T/L/P, the task box, and the active-task
+# overlay. Its own repo, its own release cycle — this just makes sure a new
+# machine ends up with it.
+#
+# Runs after configure.sh so ~/.config/niri exists and the include stub is
+# already seeded; its installer symlinks the real file over that stub.
+#
+# It lives in ~/Projects like any other project rather than somewhere hidden, so
+# `wt project open` finds it and editing it is `cargo install --path` again.
+section "Installing niri-tasks"
+
+NIRI_TASKS_DIR="$USER_HOME/Projects/niri-tasks"
+NIRI_TASKS_REPO="https://github.com/pauldaywork/niri-tasks"
+
+if [ -d "$NIRI_TASKS_DIR/.git" ]; then
+    info "Updating niri-tasks"
+    git -C "$NIRI_TASKS_DIR" pull --ff-only \
+        || warn "Could not fast-forward niri-tasks — leaving the working tree alone"
+else
+    info "Cloning niri-tasks"
+    git clone "$NIRI_TASKS_REPO" "$NIRI_TASKS_DIR" \
+        || warn "Could not clone niri-tasks — Mod+Alt+T/L/P will be absent"
+fi
+
+if [ -x "$NIRI_TASKS_DIR/install.sh" ]; then
+    # Needs cargo, which step 5 installed. Not fatal if it fails: the rest of
+    # the machine is fine without it, and the include stub keeps niri loading.
+    bash "$NIRI_TASKS_DIR/install.sh" || warn "niri-tasks install failed — see above"
+fi
 
 # ─── 9. TPM (tmux plugin manager) ─────────────────────────────────────────────
 # .tmux.conf declares plugins via `set -g @plugin ...`, which TPM is what
