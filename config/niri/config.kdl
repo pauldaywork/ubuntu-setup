@@ -574,7 +574,7 @@ binds {
 
     
     Mod+Space hotkey-overlay-title="Application Launcher" { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
-    Super+Shift+M hotkey-overlay-title="Bar: Toggle (Primary)" { spawn "dms" "ipc" "call" "bar" "toggle" "index" "0"; }
+    Mod+Alt+M hotkey-overlay-title="Bar: Toggle (Primary)" { spawn "dms" "ipc" "call" "bar" "toggle" "index" "0"; }
     Mod+T hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
     Super+B { spawn "firefox"; }
     Super+Return hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
