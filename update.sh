@@ -52,7 +52,7 @@ fi
 
 # ─── the mapped dotfiles ──────────────────────────────────────────────────────
 # Everything that is a straight file, from lib/paths.sh — the same rows
-# install-config.sh deploys, read in the other direction. config.kdl, the
+# configure.sh deploys, read in the other direction. config.kdl, the
 # wallpapers and the VS Code extension list need more than a file pair and are
 # handled separately below.
 for _row in "${DOTFILES_MAP[@]}"; do
@@ -125,7 +125,7 @@ fi
 # needs something to pick from, so ~/Documents/Wallpapers is mirrored in whole.
 # Nothing is deleted here — a wallpaper removed from the live folder stays in
 # the repo until it's deleted there deliberately.
-mkdir -p "$DOTFILES/wallpapers"
+mkdir -p "$DOTFILES/wallpaper/images"
 
 WALLPAPER_DIR="$HOME/Documents/Wallpapers"
 if [ -d "$WALLPAPER_DIR" ]; then
@@ -141,7 +141,7 @@ if [ -d "$WALLPAPER_DIR" ]; then
             *.jpg|*.jpeg|*.png|*.bmp|*.gif|*.webp|*.jxl|*.avif|*.heif|*.exr) ;;
             *) continue ;;
         esac
-        WALL_DST="$DOTFILES/wallpapers/$WALL_NAME"
+        WALL_DST="$DOTFILES/wallpaper/images/$WALL_NAME"
         if [ ! -f "$WALL_DST" ] || ! cmp -s "$wall" "$WALL_DST"; then
             info "Pulling wallpaper: $WALL_NAME"
             cp "$wall" "$WALL_DST"
@@ -151,7 +151,7 @@ if [ -d "$WALLPAPER_DIR" ]; then
     [ "$PULLED" -eq 0 ] && info "Wallpapers unchanged"
 fi
 
-# Which one is selected right now. install-config.sh reads this file rather than
+# Which one is selected right now. configure.sh reads this file rather than
 # carrying a hardcoded filename.
 DMS_SESSION="$HOME/.local/state/DankMaterialShell/session.json"
 if [ -f "$DMS_SESSION" ]; then
@@ -160,13 +160,13 @@ if [ -f "$DMS_SESSION" ]; then
         WALL_FILE=$(basename "$ACTIVE_WALL")
         # A wallpaper picked from outside ~/Documents/Wallpapers won't have been
         # copied by the mirror above, so pull it in before recording it.
-        if [ ! -f "$DOTFILES/wallpapers/$WALL_FILE" ]; then
+        if [ ! -f "$DOTFILES/wallpaper/images/$WALL_FILE" ]; then
             info "Pulling active wallpaper from outside $WALLPAPER_DIR: $WALL_FILE"
-            cp "$ACTIVE_WALL" "$DOTFILES/wallpapers/$WALL_FILE"
+            cp "$ACTIVE_WALL" "$DOTFILES/wallpaper/images/$WALL_FILE"
         fi
-        if [ "$(cat "$DOTFILES/wallpapers/active" 2>/dev/null)" != "$WALL_FILE" ]; then
+        if [ "$(cat "$DOTFILES/wallpaper/active" 2>/dev/null)" != "$WALL_FILE" ]; then
             info "Active wallpaper: $WALL_FILE"
-            echo "$WALL_FILE" > "$DOTFILES/wallpapers/active"
+            echo "$WALL_FILE" > "$DOTFILES/wallpaper/active"
         else
             info "Active wallpaper unchanged: $WALL_FILE"
         fi
@@ -182,7 +182,7 @@ if [ "$SKIPPED_ANY" = true ]; then
     warn "Some repo files were left alone to protect uncommitted changes."
     echo "  Those edits aren't on this machine yet. To get everything agreeing again:"
     echo ""
-    echo "    bash install-config.sh   # install the repo's version to the live config"
+    echo "    bash configure.sh   # install the repo's version to the live config"
     echo "    bash update.sh           # then this pull becomes a no-op"
     echo ""
     echo "  Or commit them first, so a later pull can be undone with git checkout."

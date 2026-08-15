@@ -105,48 +105,56 @@ After running, re-download any LM Studio models you need (not included in this r
 
 ```
 backup-os/
-├── install.sh                              # Run on a new machine
-├── install-config.sh                       # Config files + wallpapers only (no app installs)
+├── install.sh                              # Run on a new machine: packages, then everything below
+├── configure.sh                            # Just the config files + wallpapers (no app installs)
+├── update.sh                               # Snapshot this machine's live config back into the repo
+├── doctor.sh                               # Diagnose drift on an already-set-up machine
 ├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
-├── update.sh                               # Run on current machine to snapshot changes
-├── doctor.sh                               # Diagnose drift on an existing, already-set-up machine
-├── lib/
-│   ├── common.sh                           # Shared helpers: info/warn/ok/issue, pkg_installed, and copy/pull/merge_json
+│
+├── lib/                                    # Shared by the four scripts above
+│   ├── common.sh                           # info/warn/ok/issue, pkg_installed, and copy/pull/merge_json
 │   ├── manifest.sh                         # What gets installed: apt + snap lists, version pins
-│   └── paths.sh                            # The one list of which file goes where; read by install-config, update and doctor
-├── home/
+│   └── paths.sh                            # The one list of which file goes where
+│
+├── home/                                   # Mirrors ~/
 │   ├── .bashrc
 │   ├── .profile
 │   ├── .taskrc
 │   └── .tmux.conf
-├── config/
+│
+├── config/                                 # Mirrors ~/.config/
 │   ├── niri/
-│   │   ├── config.kdl                      # Includes niri-tasks.kdl; install-config.sh seeds an empty stub for it
-│   │   ├── wallpaper-sync.sh               # Forwards the DMS wallpaper choice to swww, which is what animates GIFs
-│   │   ├── toggle-window-rules.sh          # Cycles window-rules/layout profile (Mod+Alt+R)
+│   │   ├── config.kdl                      # Includes niri-tasks.kdl; configure.sh seeds a stub for it
 │   │   ├── window-rules/
+│   │   │   ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
 │   │   │   ├── normal.kdl                  # Fully opaque windows
 │   │   │   └── focus.kdl                   # Unfocused windows fade out
-│   │   └── dms/
-│   │       └── laptop.kdl                  # Installed on laptops (auto-detected; --laptop/--desktop override)
-│   ├── ghostty/
-│   │   └── config.ghostty
-│   ├── DankMaterialShell/
-│   │   ├── settings.json
-│   │   ├── plugin_settings.json
-│   │   ├── firefox.css
-│   │   └── themes/peaceAndQuiet/theme.json
-│   ├── systemd/user/
-│   │   ├── swww-daemon.service             # Wallpaper daemon; restarts wallpaper-sync on start
-│   │   └── wallpaper-sync.service          # Runs wallpaper-sync.sh for the session
-│   └── Code/
-│       ├── settings.json
-│       └── extensions.txt
-└── wallpapers/
-    ├── active                              # Filename of the wallpaper DMS had selected at the last update.sh run
-    ├── 205.png
-    └── *.gif                               # Animated; rendered by swww, not DMS
+│   │   └── dms/laptop.kdl                  # Installed on laptops only (auto-detected)
+│   ├── ghostty/config.ghostty
+│   ├── DankMaterialShell/                  # settings, plugin settings, firefox.css, theme
+│   └── Code/                               # settings.json + extensions.txt
+│
+├── wallpaper/                              # A feature, not a mirror: these land in three places
+│   ├── wallpaper-sync.sh                   # → ~/.config/niri/   Forwards DMS's choice to swww
+│   ├── swww-daemon.service                 # → ~/.config/systemd/user/
+│   ├── wallpaper-sync.service              # → ~/.config/systemd/user/
+│   ├── active                              # Which image DMS had selected at the last update.sh
+│   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
+│
+└── notes/                                  # Working notes; not installed anywhere
 ```
+
+Two rules keep this predictable:
+
+- **`home/` and `config/` mirror their destinations.** `config/ghostty/config.ghostty`
+  installs to `~/.config/ghostty/config.ghostty`. The one exception is VS Code,
+  which lands in `~/.config/Code/User/`.
+- **Anything whose files land in more than one place gets its own directory**
+  instead of being scattered to match. `wallpaper/` is the only one — its script,
+  its two systemd units and its images would otherwise sit in three separate trees.
+
+`lib/paths.sh` is what actually decides where each file goes, so the tree is free
+to be organised for reading rather than for the installer's benefit.
 
 
 
@@ -156,14 +164,14 @@ backup-os/
 
 Niri is set up with two swappable profiles — `normal` (fully opaque windows) and `focus` (unfocused windows fade out, with its own gaps/border/layout tuning) — defined in `config/niri/window-rules/normal.kdl` and `focus.kdl`. Each file is a self-contained `layout { ... }` + `window-rule { ... }` block; `config.kdl` includes whichever one is active via the `~/.config/niri/window-rules-active.kdl` symlink.
 
-Press **`Mod+Alt+R`** to cycle between profiles. This runs `config/niri/toggle-window-rules.sh`, which:
+Press **`Mod+Alt+R`** to cycle between profiles. This runs `config/niri/window-rules/toggle.sh`, which:
 
 1. Repoints the `window-rules-active.kdl` symlink at the next profile
 2. Records the choice in `~/.config/niri/.window-rules-profile`
 3. Forces an immediate reload with `niri msg action load-config-file`
 4. Shows a notification (if `notify-send` is available) naming the new profile
 
-The symlink and state file are machine-local, not tracked in git — `install.sh` seeds them to `focus` only if they don't already exist, so re-running install won't reset a profile you've already picked. To add another profile, drop a new `.kdl` file in `config/niri/window-rules/` and add its name to the `profiles=(...)` array in `toggle-window-rules.sh`.
+The symlink and state file are machine-local, not tracked in git — `install.sh` seeds them to `focus` only if they don't already exist, so re-running install won't reset a profile you've already picked. To add another profile, drop a new `.kdl` file in `config/niri/window-rules/` and add its name to the `profiles=(...)` array in `window-rules/toggle.sh`.
 
 ---
 
@@ -174,13 +182,13 @@ task to it, `Mod+Alt+L` to list and act on that workspace's tasks — all of tha
 lives in **[niri-tasks](https://github.com/pauldaywork/niri-tasks)** now, not here.
 
 It used to be fifteen shell scripts under `config/niri/` plus a DankMaterialShell
-plugin, enumerated by hand in `install-config.sh`, `update.sh` and `doctor.sh`.
+plugin, enumerated by hand in `configure.sh`, `update.sh` and `doctor.sh`.
 It is one binary (`wt`) and one repo, cloned to `~/Projects/niri-tasks` by
 `install.sh` step 8b.
 
 What this repo still owns:
 
-- `config.kdl` carries `include "niri-tasks.kdl"`, and `install-config.sh` seeds
+- `config.kdl` carries `include "niri-tasks.kdl"`, and `configure.sh` seeds
   an **empty stub** at that path. niri refuses to load a config whose include is
   missing, so the stub is what lets this repo install on a machine that does not
   want niri-tasks. Its installer symlinks the real file over the stub.
@@ -199,7 +207,7 @@ background instead.
 | Piece | Role |
 |---|---|
 | `swww-daemon.service` | Holds the background layer surface and plays the animation |
-| `wallpaper-sync.service` → `config/niri/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each change to swww |
+| `wallpaper-sync.service` → `wallpaper/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each change to swww |
 | `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background stays put instead of scrolling with the workspaces |
 
 **Pick wallpapers exactly as before** — the DMS tab is still the UI, and matugen
@@ -250,9 +258,9 @@ cd ~/Projects/ubuntu-setup
 bash update.sh
 ```
 
-This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpapers/` — image files only, so a stray `.DS_Store` or an unzipped download's `__MACOSX` leftovers don't get committed as wallpapers — and records which one DMS currently has selected in `wallpapers/active`. Nothing is deleted from `wallpapers/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
+This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpaper/images/` — image files only, so a stray `.DS_Store` or an unzipped download's `__MACOSX` leftovers don't get committed as wallpapers — and records which one DMS currently has selected in `wallpaper/active`. Nothing is deleted from `wallpaper/images/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
 
-In the other direction, `install-config.sh` copies a wallpaper across whenever the machine's copy is missing **or differs** from the repo's, backing the old one up first. Wallpapers a machine has that the repo doesn't are left alone — installing isn't pruning, so removing one everywhere means deleting it from `~/Documents/Wallpapers` as well as from the repo.
+In the other direction, `configure.sh` copies a wallpaper across whenever the machine's copy is missing **or differs** from the repo's, backing the old one up first. Wallpapers a machine has that the repo doesn't are left alone — installing isn't pruning, so removing one everywhere means deleting it from `~/Documents/Wallpapers` as well as from the repo.
 
 ### update.sh protects uncommitted repo edits
 
@@ -271,13 +279,13 @@ This exists because it already bit once: the `Mod+Alt+P` spawn-only-if-empty cha
 
 ### Re-running the installer is a no-op
 
-`install-config.sh` compares before it writes: a file that already matches is neither copied nor backed up, and a JSON merge that would change nothing leaves the live file alone. `config.kdl` is assembled first — the repo's copy plus the laptop include where that applies — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
+`configure.sh` compares before it writes: a file that already matches is neither copied nor backed up, and a JSON merge that would change nothing leaves the live file alone. `config.kdl` is assembled first — the repo's copy plus the laptop include where that applies — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
 
 The upshot is that a re-run on an in-sync machine says "Nothing needed replacing — no backup taken" and touches nothing. `~/.config-backups` also keeps only the **5** most recent snapshots now; it grew to nine directories of near-identical files before anything pruned it. Directories in there that aren't named like a timestamp are left alone.
 
 ### DMS settings are merged, not replaced
 
-`install-config.sh` copies most files straight over the live one. The two DankMaterialShell JSON files are the exception: they're merged, because DMS owns and rewrites them. Every DMS release adds keys and bumps `configVersion`, so the copy in this repo is only ever a snapshot of whenever `update.sh` last ran — and copying it flat over a newer live file deletes every key the snapshot has never heard of. Measured on this machine, that was 147 keys, including the display profiles and the entire battery section.
+`configure.sh` copies most files straight over the live one. The two DankMaterialShell JSON files are the exception: they're merged, because DMS owns and rewrites them. Every DMS release adds keys and bumps `configVersion`, so the copy in this repo is only ever a snapshot of whenever `update.sh` last ran — and copying it flat over a newer live file deletes every key the snapshot has never heard of. Measured on this machine, that was 147 keys, including the display profiles and the entire battery section.
 
 The merge takes our value for every key we carry and leaves live-only keys alone. `configVersion` deliberately comes from *our* file, i.e. the older number, so DMS re-runs its migrations over the result on next load and forward-migrates anything our snapshot holds in an old shape. Only top-level keys merge — nested structures like `barConfigs` are replaced wholesale, which is correct, since the bar layout is the thing being installed.
 
@@ -297,14 +305,14 @@ git push
 | `.bashrc`, `.profile` | `~/` |
 | tmux | `~/.tmux.conf` |
 | Niri config | `~/.config/niri/` |
-| Niri window-rules profiles | `~/.config/niri/window-rules/*.kdl`, `toggle-window-rules.sh` |
+| Niri window-rules profiles | `~/.config/niri/window-rules/*.kdl`, `window-rules/toggle.sh` |
 | Ghostty | `~/.config/ghostty/` |
 | DankMaterialShell | `~/.config/DankMaterialShell/` |
 | VS Code settings | `~/.config/Code/User/settings.json` |
 | VS Code extensions | generated by `code --list-extensions`; the existing list is kept if `code` isn't on `PATH` or returns nothing |
 | Systemd user units | `~/.config/systemd/user/swww-daemon.service`, `wallpaper-sync.service` |
 | Taskwarrior | `~/.taskrc` |
-| Wallpapers | `~/Documents/Wallpapers/` (whole folder); the active one read from the DMS session into `wallpapers/active` |
+| Wallpapers | `~/Documents/Wallpapers/` (whole folder); the active one read from the DMS session into `wallpaper/active` |
 
 ### What is NOT tracked
 
@@ -313,7 +321,7 @@ git push
 - **Browser profiles** — log in manually after install
 - **LM Studio models** — too large; re-download from within the app
 - **Obsidian vault** — sync separately (iCloud, Syncthing, etc.)
-- **DMS auto-generated niri configs** — `colors.kdl`, `layout.kdl`, `outputs.kdl` etc. are regenerated by DMS on first launch and are machine-specific. `binds.kdl` is in this group too: DMS owns the file, and ours is an empty stub because those binds were folded into `config.kdl`'s own `binds` block. `install-config.sh` seeds that stub, since niri refuses to load a config whose `include` target is missing
+- **DMS auto-generated niri configs** — `colors.kdl`, `layout.kdl`, `outputs.kdl` etc. are regenerated by DMS on first launch and are machine-specific. `binds.kdl` is in this group too: DMS owns the file, and ours is an empty stub because those binds were folded into `config.kdl`'s own `binds` block. `configure.sh` seeds that stub, since niri refuses to load a config whose `include` target is missing
 - **Active window-rules profile** — `~/.config/niri/window-rules-active.kdl` (symlink) and `.window-rules-profile` (state file) are machine-local; `install.sh` seeds them to `focus` only on first install
 - **Machine type** — `~/.config/niri/.machine-type` records laptop vs desktop for this machine, which is the point of it; the repo installs the same config on both
 

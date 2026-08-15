@@ -5,7 +5,7 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER_HOME="$HOME"
 
 # ─── flags ─────────────────────────────────────────────────────────────────────
-# --laptop / --desktop are overrides, not requirements: install-config.sh detects
+# --laptop / --desktop are overrides, not requirements: configure.sh detects
 # laptop hardware on its own and remembers the answer. Passed straight through.
 LAPTOP=false
 DESKTOP=false
@@ -223,7 +223,7 @@ fi
 # DMS renders wallpapers with a QML Image, which shows one still frame of a GIF,
 # and upstream won't animate it in-shell (DankMaterialShell#793). So the shell's
 # own wallpaper layer is disabled in its settings.json and swww draws the
-# background instead — see config/niri/wallpaper-sync.sh for the whole picture.
+# background instead — see wallpaper/wallpaper-sync.sh for the whole picture.
 #
 # Not on crates.io and not packaged for Ubuntu, so it's installed from the git
 # tag. Both binaries are needed: swww-daemon holds the layer surface, swww is
@@ -284,14 +284,14 @@ fi
 CONFIG_ARGS=()
 [ "$LAPTOP" = true ]  && CONFIG_ARGS+=(--laptop)
 [ "$DESKTOP" = true ] && CONFIG_ARGS+=(--desktop)
-"$DOTFILES/install-config.sh" "${CONFIG_ARGS[@]}"
+"$DOTFILES/configure.sh" "${CONFIG_ARGS[@]}"
 
 # ─── 8b. niri-tasks ───────────────────────────────────────────────────────────
 # Workspace-scoped taskwarrior: Mod+Alt+T/L/P, the task box, and the active-task
 # overlay. Its own repo, its own release cycle — this just makes sure a new
 # machine ends up with it.
 #
-# Runs after install-config.sh so ~/.config/niri exists and the include stub is
+# Runs after configure.sh so ~/.config/niri exists and the include stub is
 # already seeded; its installer symlinks the real file over that stub.
 #
 # It lives in ~/Projects like any other project rather than somewhere hidden, so

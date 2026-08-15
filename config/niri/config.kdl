@@ -128,9 +128,9 @@ spawn-at-startup "waybar"
 // a single still frame; swww draws the background instead and animates them.
 //
 // swww-daemon and wallpaper-sync.sh are not spawned here — they're systemd user
-// units (config/systemd/user/), pulled in by graphical-session.target, so that
-// either one crashing is restarted rather than leaving the desktop bare until
-// the next login. spawn-at-startup fires once and doesn't look back.
+// units (see the repo's wallpaper/ directory), pulled in by graphical-session.target,
+// so that either one crashing is restarted rather than leaving the desktop
+// bare until the next login. spawn-at-startup fires once and doesn't look back.
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
@@ -222,7 +222,7 @@ window-rule {
 }
 
 // Swappable window-rules profile ("normal" or "focus") — toggled at runtime
-// with Mod+Alt+R via toggle-window-rules.sh, which symlinks this target.
+// with Mod+Alt+R via window-rules/toggle.sh, which symlinks this target.
 include "window-rules-active.kdl"
 
 // fuzzel names its layer surface "launcher", so this is what gives the project
@@ -541,7 +541,7 @@ binds {
     // niri-tasks.kdl — see the include at the bottom of this file.
 
     // Toggle between window-rules profiles (normal / focus-dimming)
-    Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/toggle-window-rules.sh"; }
+    Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/window-rules/toggle.sh"; }
 
     // Step to the next wallpaper, alphabetically, within the folder the current
     // one lives in — the same action the picker's next button runs, so it also
@@ -561,7 +561,7 @@ binds {
 // niri-tasks: workspace-scoped taskwarrior. Ships its own binds and its
 // spawn-at-startup, so this file carries none of them.
 //
-// install-config.sh seeds an empty stub when niri-tasks isn't installed — niri
+// configure.sh seeds an empty stub when niri-tasks isn't installed — niri
 // refuses to load a config whose include is missing, and the point of the split
 // is that this repo installs fine without it.
 //

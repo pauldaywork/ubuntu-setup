@@ -1,4 +1,4 @@
-# Shared helpers for install.sh, install-config.sh, update.sh, doctor.sh and
+# Shared helpers for install.sh, configure.sh, update.sh, doctor.sh and
 # extra.sh. Sourced, never executed.
 #
 # These were five near-identical copies before, which is fine until one of them
@@ -56,12 +56,12 @@ snap_install_entry() {
 }
 
 # ─── moving config files about ────────────────────────────────────────────────
-# copy/backup_existing/merge_json used to live in install-config.sh and
+# copy/backup_existing/merge_json used to live in configure.sh and
 # pull/confirm_overwrite in update.sh — inverse operations on the same files,
 # with no shared line between them. They are here so the two directions can be
 # read side by side, and so lib/paths.sh has somewhere to hand its rows to.
 
-# install-config.sh sets USER_HOME; update.sh and doctor.sh just use $HOME.
+# configure.sh sets USER_HOME; update.sh and doctor.sh just use $HOME.
 : "${USER_HOME:=$HOME}"
 
 # Existing files that would be overwritten are moved into a timestamped tree

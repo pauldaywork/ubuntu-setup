@@ -161,7 +161,7 @@ fi
 
 # ─── config drift ─────────────────────────────────────────────────────────────
 # Every mapped file from lib/paths.sh, checked against the repo. This is the
-# third consumer of that table: install-config.sh deploys it, update.sh pulls it
+# third consumer of that table: configure.sh deploys it, update.sh pulls it
 # back, and here we ask whether the two still agree.
 #
 # Only mismatches are reported. A machine in sync says so in one line rather
@@ -183,7 +183,7 @@ for _row in "${DOTFILES_MAP[@]}"; do
     CHECKED=$((CHECKED + 1))
     if [ ! -f "$_live" ]; then
         issue "Not installed: ~/$HOME_PATH"
-        note "  Install with: bash install-config.sh"
+        note "  Install with: bash configure.sh"
         MISSING=$((MISSING + 1))
     elif [ "$KIND" != merge ] && ! cmp -s "$_live" "$_repo"; then
         # merge rows are expected to differ — the live file carries keys our
@@ -196,7 +196,7 @@ done
 if [ "$MISSING" -eq 0 ] && [ "$DRIFTED" -eq 0 ]; then
     ok "All $CHECKED mapped config files present and matching the repo"
 elif [ "$MISSING" -eq 0 ]; then
-    ok "All $CHECKED mapped config files present ($DRIFTED differ — bash update.sh to snapshot, or install-config.sh to overwrite)"
+    ok "All $CHECKED mapped config files present ($DRIFTED differ — bash update.sh to snapshot, or configure.sh to overwrite)"
 fi
 
 # config.kdl is not in the table — it is assembled with the laptop include
@@ -214,7 +214,7 @@ if [ -f "$HOME/.config/niri/config.kdl" ]; then
     rm -f "$NIRI_CMP"
 fi
 
-# The executable bit is set by install-config.sh, not carried in git for the
+# The executable bit is set by configure.sh, not carried in git for the
 # destination, so a file restored by hand or from a backup can be present,
 # matching, and still not runnable.
 for _row in "${DOTFILES_MAP[@]}"; do
@@ -238,7 +238,7 @@ if command -v wt >/dev/null; then
         ok "niri-tasks include present"
     else
         issue "Missing ~/.config/niri/niri-tasks.kdl — niri will refuse to load its config"
-        note "  Seed the stub with: bash install-config.sh"
+        note "  Seed the stub with: bash configure.sh"
     fi
 
     if systemctl --user is-active --quiet niri-tasks.service; then
@@ -254,7 +254,7 @@ else
     # The stub still has to exist, or niri will not load at all.
     if [ ! -e "$HOME/.config/niri/niri-tasks.kdl" ]; then
         issue "Missing ~/.config/niri/niri-tasks.kdl — niri will refuse to load its config"
-        note "  Seed the stub with: bash install-config.sh"
+        note "  Seed the stub with: bash configure.sh"
     fi
 fi
 
@@ -262,7 +262,7 @@ fi
 # scripts no longer exist renders an empty widget forever.
 if [ -d "$HOME/.config/DankMaterialShell/plugins/activetask" ]; then
     issue "Stale DMS plugin at ~/.config/DankMaterialShell/plugins/activetask — superseded by the niri-tasks overlay"
-    note "  Remove it with: bash install-config.sh"
+    note "  Remove it with: bash configure.sh"
 fi
 
 # Wallpapers. Three things have to agree or the desktop goes black: swww has to
@@ -282,7 +282,7 @@ fi
 for unit in swww-daemon wallpaper-sync; do
     if [ ! -f "$HOME/.config/systemd/user/$unit.service" ]; then
         issue "$unit.service not installed"
-        note "  Install with: bash install-config.sh"
+        note "  Install with: bash configure.sh"
     elif ! systemctl --user is-enabled --quiet "$unit.service" 2>/dev/null; then
         issue "$unit.service is not enabled — it won't start at next login"
         note "  Enable with: systemctl --user enable --now $unit.service"
@@ -330,11 +330,11 @@ if [ -f "$DMS_SETTINGS" ]; then
         ok "DMS built-in wallpapers disabled (swww owns the background)"
     else
         issue "DMS built-in wallpapers are enabled — they'll cover swww with a still frame"
-        note "  Fix in Settings → Wallpaper → Disable Built-in Wallpapers, or re-run install-config.sh"
+        note "  Fix in Settings → Wallpaper → Disable Built-in Wallpapers, or re-run configure.sh"
     fi
 fi
 
-# Laptop binds. install-config.sh replaces config.kdl wholesale and appends the
+# Laptop binds. configure.sh replaces config.kdl wholesale and appends the
 # laptop include afterwards, so a re-run that decides this machine isn't a laptop
 # takes the display and workspace binds away with no error — worth noticing here
 # rather than the next time you reach for a shortcut that's gone.
@@ -353,10 +353,10 @@ if [ -f "$NIRI_CONFIG" ]; then
     if [ "$HAS_BATTERY" = true ] && [ "$HAS_INCLUDE" = false ]; then
         issue "This machine has a battery but config.kdl doesn't include dms/laptop.kdl"
         note "  The display and workspace binds in it are missing"
-        note "  Fix with: bash install-config.sh --laptop"
+        note "  Fix with: bash configure.sh --laptop"
     elif [ "$HAS_INCLUDE" = true ] && [ ! -f "$HOME/.config/niri/dms/laptop.kdl" ]; then
         issue "config.kdl includes dms/laptop.kdl but that file is missing — niri won't load the config"
-        note "  Fix with: bash install-config.sh --laptop"
+        note "  Fix with: bash configure.sh --laptop"
     elif [ "$HAS_INCLUDE" = true ]; then
         ok "Laptop niri config included"
     fi

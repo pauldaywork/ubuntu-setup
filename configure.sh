@@ -210,6 +210,11 @@ sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/
 # widget whose scripts no longer exist.
 rm -rf "$USER_HOME/.config/DankMaterialShell/plugins/activetask"
 
+# The window-rules toggle moved in beside the profiles it switches between, so
+# it installs to window-rules/toggle.sh now. Remove the copy at the old path, or
+# a machine keeps a stale script that Mod+Alt+R no longer runs.
+rm -f "$USER_HOME/.config/niri/toggle-window-rules.sh"
+
 # VS Code settings (extensions are not installed here — see install.sh)
 
 # ─── Projects folder ──────────────────────────────────────────────────────────
@@ -228,7 +233,7 @@ section "Setting up wallpapers"
 
 # The whole folder is installed, not just the active one, so the DMS picker has
 # something to pick from — animated GIFs included, which swww is what actually
-# renders (see config/niri/wallpaper-sync.sh).
+# renders (see wallpaper/wallpaper-sync.sh).
 WALLPAPER_DIR="$USER_HOME/Documents/Wallpapers"
 mkdir -p "$WALLPAPER_DIR"
 
@@ -237,7 +242,7 @@ mkdir -p "$WALLPAPER_DIR"
 # changed — and gets replaced, with the old one backed up like any other config.
 # Wallpapers this machine has that the repo doesn't are left alone; installing is
 # not the same as pruning.
-for wall in "$DOTFILES/wallpapers"/*; do
+for wall in "$DOTFILES/wallpaper/images"/*; do
     [ -f "$wall" ] || continue
     name="$(basename "$wall")"
     # `active` is our own bookkeeping, not a wallpaper.
@@ -246,14 +251,14 @@ for wall in "$DOTFILES/wallpapers"/*; do
 done
 
 # Which one to select on a fresh machine. update.sh rewrites this file from
-# whatever DMS has live, so the repo tracks the choice without install-config.sh
+# whatever DMS has live, so the repo tracks the choice without configure.sh
 # needing a hardcoded filename.
 ACTIVE_WALLPAPER=""
-if [ -s "$DOTFILES/wallpapers/active" ]; then
-    ACTIVE_WALLPAPER="$(head -n1 "$DOTFILES/wallpapers/active")"
+if [ -s "$DOTFILES/wallpaper/active" ]; then
+    ACTIVE_WALLPAPER="$(head -n1 "$DOTFILES/wallpaper/active")"
 fi
 if [ -z "$ACTIVE_WALLPAPER" ] || [ ! -f "$WALLPAPER_DIR/$ACTIVE_WALLPAPER" ]; then
-    warn "wallpapers/active names no installed file — falling back to the first wallpaper"
+    warn "wallpaper/active names no installed file — falling back to the first wallpaper"
     ACTIVE_WALLPAPER="$(cd "$WALLPAPER_DIR" && ls | head -n1)"
 fi
 
