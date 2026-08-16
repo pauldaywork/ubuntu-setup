@@ -180,8 +180,12 @@ PYEOF
 
 # ─── pulling back (used by capture/) ──────────────────────────────────────────
 # A repo file that matches HEAD is always recoverable with `git checkout`, so it
-# gets pulled silently. Untracked files count as uncommitted: there's no
+# is overwritten silently. Untracked files count as uncommitted: there's no
 # committed version of those to fall back on either.
+#
+# SKIPPED_ANY records whether anything was left alone, so capture_summary can
+# say so — a run that quietly kept the repo version is the run you most need to
+# hear about.
 SKIPPED_ANY=${SKIPPED_ANY:-false}
 ASSUME_YES=${ASSUME_YES:-false}
 
@@ -238,22 +242,3 @@ confirm_overwrite() {
     esac
 }
 
-pull() {
-    local src="$1" dst="$2"
-    if [ -f "$src" ]; then
-        confirm_overwrite "$src" "$dst" || return 0
-        mkdir -p "$(dirname "$dst")"
-        cp "$src" "$dst"
-        info "Pulled $src"
-    else
-        warn "Not found, skipping: $src"
-    fi
-}
-
-# Same, but silent when the live file was never there — for entries that only
-# exist on some machines (see the `laptop` kind in lib/paths.sh).
-pull_optional() {
-    local src="$1" dst="$2"
-    [ -f "$src" ] || return 0
-    pull "$src" "$dst"
-}

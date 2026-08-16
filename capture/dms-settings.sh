@@ -7,14 +7,20 @@
 # through the DMS UI and exist nowhere else, so this is the only route they have
 # into the repo.
 #
-# Two keys are deliberately NOT captured:
+# configVersion IS captured, and that took a correction to get right.
 #
-#   configVersion    configure.sh merges these files with *our* value winning,
-#                    and it wants the older number: that makes DMS re-run its
-#                    migrations over the merged result on next load, which is
-#                    what forward-migrates the stale-shaped values our snapshot
-#                    contributes. Capturing the live (newer) number would stop
-#                    those migrations running and strand them.
+# It was originally held at the repo's older value, mirroring merge_json, which
+# keeps the older number so DMS re-runs its migrations and forward-migrates
+# anything the snapshot holds in an outdated shape. That reasoning is sound for
+# a snapshot that really is old — but a freshly captured one is not: it comes
+# straight off a running DMS and is already current-shaped.
+#
+# Pinning it anyway made configure.sh rewrite settings.json on every single run,
+# flipping the live version back down so DMS migrated it up again, taking a
+# backup each time. The version should describe the snapshot it came from, so a
+# machine on a newer DMS still migrates and a machine on the same one does not.
+#
+# One key is still NOT captured:
 #
 #   displayProfiles  monitor layout, which is per-machine. A laptop's profile
 #                    installed onto a desktop is worse than no profile at all.
@@ -56,11 +62,7 @@ except (OSError, ValueError):
 
 captured = dict(live)
 
-# configVersion: keep whatever the repo already had (see the header).
-if "configVersion" in repo:
-    captured["configVersion"] = repo["configVersion"]
-elif "configVersion" in captured:
-    del captured["configVersion"]
+# configVersion is taken from the live file — see the header.
 
 if with_profiles != "true":
     if "displayProfiles" in repo:

@@ -62,4 +62,10 @@ capture_summary() {
     else
         info "$CAPTURED change(s) captured into the repo. Review with: git -C $DOTFILES diff"
     fi
+
+    # Set by confirm_overwrite when it left an uncommitted repo file alone.
+    if [ "${SKIPPED_ANY:-false}" = true ]; then
+        warn "Some repo files were kept because they had uncommitted changes."
+        warn "Commit or stash them and re-run, or pass --yes to overwrite."
+    fi
 }

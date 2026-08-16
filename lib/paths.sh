@@ -20,8 +20,8 @@
 #   exec      as copy, plus the executable bit on the way out.
 #   merge     the app owns the live file and grows keys in it, so deploying
 #             merges rather than replaces (see merge_json). Pulled back whole.
-#   laptop    only deployed on laptops; pulled back only if the live file is
-#             there, quietly, because on a desktop it never will be.
+#   laptop    only deployed on laptops. Nothing captures it back: it is a file
+#             you edit in the repo, and a desktop has no copy to capture anyway.
 #
 # ─── deliberately NOT in here ─────────────────────────────────────────────────
 #
