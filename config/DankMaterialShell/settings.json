@@ -4,7 +4,7 @@
   "customThemeFile": "/home/paul/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json",
   "registryThemeVariants": {
     "oxocarbon": "pink",
-    "peaceAndQuiet": "cyan"
+    "peaceAndQuiet": "pink"
   },
   "matugenScheme": "scheme-tonal-spot",
   "matugenContrast": 0,
@@ -701,20 +701,14 @@
         "all"
       ],
       "showOnLastDisplay": false,
-      "leftWidgets": [],
-      "centerWidgets": [
+      "leftWidgets": [
         {
           "id": "workspaceSwitcher",
           "enabled": true
-        },
-        {
-          "id": "powerMenuButton",
-          "enabled": true
-        },
-        {
-          "id": "taskwarrior",
-          "enabled": true
-        },
+        }
+      ],
+      "centerWidgets": [],
+      "rightWidgets": [
         {
           "id": "runningApps",
           "enabled": true,
@@ -724,7 +718,6 @@
           "runningAppsCurrentMonitor": false
         }
       ],
-      "rightWidgets": [],
       "spacing": 3,
       "innerPadding": -1,
       "bottomGap": 0,
@@ -872,5 +865,5 @@
   "barInsetPaddingShared": -1,
   "barInsetPaddingSyncAll": false,
   "frameBarInsetPadding": -1,
-  "configVersion": 12
+  "configVersion": 13
 }
