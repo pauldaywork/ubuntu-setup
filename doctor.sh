@@ -161,8 +161,8 @@ fi
 
 # ─── config drift ─────────────────────────────────────────────────────────────
 # Every mapped file from lib/paths.sh, checked against the repo. This is the
-# third consumer of that table: configure.sh deploys it, update.sh pulls it
-# back, and here we ask whether the two still agree.
+# third consumer of that table: configure.sh deploys it, capture/ pulls back the
+# handful a GUI owns, and here we ask whether the two still agree.
 #
 # Only mismatches are reported. A machine in sync says so in one line rather
 # than eighteen, which keeps the interesting output visible.
@@ -211,13 +211,13 @@ done
 if [ "$MISSING" -eq 0 ] && [ "$DRIFTED" -eq 0 ]; then
     ok "All $CHECKED mapped config files present and matching the repo"
 elif [ "$MISSING" -eq 0 ]; then
-    ok "All $CHECKED mapped config files present ($DRIFTED differ — bash update.sh to snapshot, or configure.sh to overwrite)"
+    ok "All $CHECKED mapped config files present ($DRIFTED differ — bash configure.sh to deploy the repo's version over them)"
 fi
 
 # config.kdl is not in the table — it is assembled with the laptop include
 # appended — so the count above does not cover it. Check it here rather than
 # leave "all N match" implying the most important file was among them. Same
-# strip update.sh does, so the comparison is like for like.
+# strip capture/niri.sh does, so the comparison is like for like.
 if [ -f "$HOME/.config/niri/config.kdl" ]; then
     NIRI_CMP=$(mktemp)
     # Two things make a naive comparison wrong here: configure.sh appends the

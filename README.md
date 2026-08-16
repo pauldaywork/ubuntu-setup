@@ -107,11 +107,17 @@ After running, re-download any LM Studio models you need (not included in this r
 backup-os/
 ├── install.sh                              # Run on a new machine: packages, then everything below
 ├── configure.sh                            # Just the config files + wallpapers (no app installs)
-├── update.sh                               # Snapshot this machine's live config back into the repo
 ├── doctor.sh                               # Diagnose drift on an already-set-up machine
 ├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
 │
-├── lib/                                    # Shared by the four scripts above
+├── capture/                                # machine ──> repo, one script per thing
+│   ├── dms-settings.sh                     # DMS GUI settings
+│   ├── packages.sh                         # reports apt/snap not in the manifest
+│   ├── wallpapers.sh                       # new images + which one is selected
+│   ├── vscode-extensions.sh                # regenerates extensions.txt
+│   └── niri.sh                             # the live config.kdl
+│
+├── lib/                                    # Shared by the scripts above
 │   ├── common.sh                           # info/warn/ok/issue, pkg_installed, and copy/pull/merge_json
 │   ├── manifest.sh                         # What gets installed: apt + snap lists, version pins
 │   └── paths.sh                            # The one list of which file goes where
@@ -138,7 +144,7 @@ backup-os/
 │   ├── wallpaper-sync.sh                   # → ~/.config/niri/   Forwards DMS's choice to swww
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
 │   ├── wallpaper-sync.service              # → ~/.config/systemd/user/
-│   ├── active                              # Which image DMS had selected at the last update.sh
+│   ├── active                              # Which image DMS had selected, per capture/wallpapers.sh
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
 │
 └── notes/                                  # Working notes; not installed anywhere
@@ -182,7 +188,7 @@ task to it, `Mod+Alt+L` to list and act on that workspace's tasks — all of tha
 lives in **[niri-tasks](https://github.com/pauldaywork/niri-tasks)** now, not here.
 
 It used to be fifteen shell scripts under `config/niri/` plus a DankMaterialShell
-plugin, enumerated by hand in `configure.sh`, `update.sh` and `doctor.sh`.
+plugin, enumerated by hand in `configure.sh`, `doctor.sh` and what was then `update.sh`.
 It is one binary (`wt`) and one repo, cloned to `~/Projects/niri-tasks` by
 `install.sh` step 8b.
 
@@ -249,33 +255,51 @@ Build-only packages are tagged separately as `APT_BUILD_PACKAGES` (`liblz4-dev`,
 
 ---
 
-## Keeping configs up to date
+## Which direction things move
 
-When you change any config on your current machine and want to save it to the repo, run:
-
-```bash
-cd ~/Projects/ubuntu-setup
-bash update.sh
-```
-
-This copies all config files from their live locations into the repo and regenerates the VS Code extensions list. It also mirrors `~/Documents/Wallpapers` into `wallpaper/images/` — image files only, so a stray `.DS_Store` or an unzipped download's `__MACOSX` leftovers don't get committed as wallpapers — and records which one DMS currently has selected in `wallpaper/active`. Nothing is deleted from `wallpaper/images/` — a wallpaper you remove from the live folder stays in the repo until you delete it there.
-
-In the other direction, `configure.sh` copies a wallpaper across whenever the machine's copy is missing **or differs** from the repo's, backing the old one up first. Wallpapers a machine has that the repo doesn't are left alone — installing isn't pruning, so removing one everywhere means deleting it from `~/Documents/Wallpapers` as well as from the repo.
-
-### update.sh protects uncommitted repo edits
-
-`update.sh` copies live → repo, so "this file differs" is the normal case and warning about it would fire every run. The one case it stops for is a repo file with **uncommitted** changes: those exist in exactly one place, so overwriting one destroys work git can't recover. A file that matches `HEAD` is pulled silently, because `git checkout` can always undo that.
-
-When it finds one, it shows the diff and asks. Enter (the default) keeps the repo version. Untracked files count as uncommitted — there's no committed version of those to fall back on either.
+The repo deploys to the machine. That is the only automatic direction:
 
 ```bash
-bash update.sh          # asks before discarding uncommitted repo edits
-bash update.sh --yes    # overwrites them without asking
+bash configure.sh        # repo ──> machine
 ```
 
-Run non-interactively it never overwrites; it keeps the repo version and tells you at the end.
+Edit configs **in the repo** and deploy them. That is why 14 of the 17 managed
+files are byte-identical to the repo at any moment — nothing edits them out on
+the machine, so nothing has to be captured back.
 
-This exists because it already bit once: the `Mod+Alt+P` spawn-only-if-empty change was edited in the repo but never installed to `~/.config/niri/`, so the next `update.sh` copied the stale live version over the top of it. **The lesson the warning encodes: a repo edit isn't safe until it's either installed live or committed.**
+### capture/ — the few things the machine owns
+
+Some settings can only be changed on the machine: a GUI writes them, a package
+manager records them, a daemon keeps the state. Those get a script each, and you
+run the one you need rather than a single command that sweeps everything.
+
+| Script | Pulls in |
+|---|---|
+| `capture/dms-settings.sh` | DankMaterialShell's GUI settings — bar layout, widget config |
+| `capture/packages.sh` | Reports apt/snap packages installed but not in `lib/manifest.sh` |
+| `capture/wallpapers.sh` | New images from `~/Documents/Wallpapers`, and which one is selected |
+| `capture/vscode-extensions.sh` | Regenerates `config/Code/extensions.txt` |
+| `capture/niri.sh` | The live `config.kdl`, for when DMS's keybind UI has written to it |
+
+All take `--dry-run` to show what they would do, and `--yes` to skip the prompt
+that protects uncommitted repo edits.
+
+```bash
+bash capture/dms-settings.sh --dry-run
+bash capture/packages.sh
+git diff                                # review before committing
+```
+
+There is deliberately **no** capture script for `.bashrc`, the window-rules, the
+theme or ghostty. You would change those in a text editor, so change them in the
+repo. A tool that moves files both ways is how you end up unable to say which
+side is authoritative — which is what the old `update.sh` became.
+
+`capture/packages.sh` reports rather than writes, because it is the one that
+cannot tell what belongs: 132 packages are manually installed here and the
+manifest declares 27, but most of the difference is Ubuntu's own base system.
+`capture/packages-ignore.txt` filters the noise down to a reviewable list, and
+`--add` / `--ignore` triage it one at a time.
 
 ### Re-running the installer is a no-op
 
@@ -285,47 +309,11 @@ The upshot is that a re-run on an in-sync machine says "Nothing needed replacing
 
 ### DMS settings are merged, not replaced
 
-`configure.sh` copies most files straight over the live one. The two DankMaterialShell JSON files are the exception: they're merged, because DMS owns and rewrites them. Every DMS release adds keys and bumps `configVersion`, so the copy in this repo is only ever a snapshot of whenever `update.sh` last ran — and copying it flat over a newer live file deletes every key the snapshot has never heard of. Measured on this machine, that was 147 keys, including the display profiles and the entire battery section.
+`configure.sh` copies most files straight over the live one. The two DankMaterialShell JSON files are the exception: they're merged, because DMS owns and rewrites them. Every DMS release adds keys and bumps `configVersion`, so the copy in this repo is only ever a snapshot of whenever `capture/dms-settings.sh` last ran — and copying it flat over a newer live file deletes every key the snapshot has never heard of.
 
 The merge takes our value for every key we carry and leaves live-only keys alone. `configVersion` deliberately comes from *our* file, i.e. the older number, so DMS re-runs its migrations over the result on next load and forward-migrates anything our snapshot holds in an old shape. Only top-level keys merge — nested structures like `barConfigs` are replaced wholesale, which is correct, since the bar layout is the thing being installed.
 
-Running `update.sh` regularly still matters: it's what stops the snapshot drifting far enough behind that the merge is doing real work.
-
-Then commit:
-
-```bash
-git add -A && git commit -m "Update configs"
-git push
-```
-
-### What update.sh captures
-
-| Config | Source |
-|---|---|
-| `.bashrc`, `.profile` | `~/` |
-| tmux | `~/.tmux.conf` |
-| Niri config | `~/.config/niri/` |
-| Niri window-rules profiles | `~/.config/niri/window-rules/*.kdl`, `window-rules/toggle.sh` |
-| Ghostty | `~/.config/ghostty/` |
-| DankMaterialShell | `~/.config/DankMaterialShell/` |
-| VS Code settings | `~/.config/Code/User/settings.json` |
-| VS Code extensions | generated by `code --list-extensions`; the existing list is kept if `code` isn't on `PATH` or returns nothing |
-| Systemd user units | `~/.config/systemd/user/swww-daemon.service`, `wallpaper-sync.service` |
-| Taskwarrior | `~/.taskrc` |
-| Wallpapers | `~/Documents/Wallpapers/` (whole folder); the active one read from the DMS session into `wallpaper/active` |
-
-### What is NOT tracked
-
-- **SSH private key** — generate a new one per machine (the install script does this)
-- **Claude Code auth** — re-login with `claude` after install
-- **Browser profiles** — log in manually after install
-- **LM Studio models** — too large; re-download from within the app
-- **Obsidian vault** — sync separately (iCloud, Syncthing, etc.)
-- **DMS auto-generated niri configs** — `colors.kdl`, `layout.kdl`, `outputs.kdl` etc. are regenerated by DMS on first launch and are machine-specific. `binds.kdl` is in this group too: DMS owns the file, and ours is an empty stub because those binds were folded into `config.kdl`'s own `binds` block. `configure.sh` seeds that stub, since niri refuses to load a config whose `include` target is missing
-- **Active window-rules profile** — `~/.config/niri/window-rules-active.kdl` (symlink) and `.window-rules-profile` (state file) are machine-local; `install.sh` seeds them to `focus` only on first install
-- **Machine type** — `~/.config/niri/.machine-type` records laptop vs desktop for this machine, which is the point of it; the repo installs the same config on both
-
----
+`capture/dms-settings.sh` holds `configVersion` and `displayProfiles` at the repo's values for exactly that reason: capturing the live `configVersion` would stop those migrations running, and a laptop's monitor layout installed onto a desktop is worse than none. It also lists any key it drops, since taking a live snapshot removes whatever DMS has migrated away from.
 
 ## Diagnosing an existing setup
 

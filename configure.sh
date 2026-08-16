@@ -98,7 +98,7 @@ echo "$MACHINE_TYPE" > "$MACHINE_TYPE_FILE"
 
 if [ "$MACHINE_TYPE" = "laptop" ]; then
     info "Laptop-specific niri config: on ($MACHINE_REASON)"
-    # From the table rather than spelled out again, so update.sh and doctor.sh
+    # From the table rather than spelled out again, so doctor.sh and capture/
     # cannot end up disagreeing with this about which files those are.
     for _row in "${DOTFILES_MAP[@]}"; do
         map_entry "$_row"
@@ -200,7 +200,7 @@ sed -i "s|^command = .*|command = $GHOSTTY_COMMAND|" \
     "$USER_HOME/.config/ghostty/config.ghostty"
 
 # DankMaterialShell — merged, not copied, so a re-install doesn't roll the live
-# settings back to whenever update.sh last ran. See merge_json above.
+# settings back to whenever capture/dms-settings.sh last ran. See merge_json.
 sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json\"|" \
     "$USER_HOME/.config/DankMaterialShell/settings.json"
 
@@ -294,7 +294,7 @@ for wall in "$DOTFILES/wallpaper/images"/*; do
     copy "$wall" "$WALLPAPER_DIR/$name"
 done
 
-# Which one to select on a fresh machine. update.sh rewrites this file from
+# Which one to select on a fresh machine. capture/wallpapers.sh rewrites it from
 # whatever DMS has live, so the repo tracks the choice without configure.sh
 # needing a hardcoded filename.
 ACTIVE_WALLPAPER=""

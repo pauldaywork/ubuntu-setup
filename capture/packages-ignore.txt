@@ -1,0 +1,69 @@
+# Packages that show up as manually installed but are not choices worth
+# recording — Ubuntu's own base system, language packs, drivers, and the
+# transitive things a desktop install marks manual.
+#
+# This file exists because `apt-mark showmanual` lists 132 packages on this
+# machine while lib/manifest.sh declares 27. Without a filter, capture/packages.sh
+# would report a hundred lines of noise every run and you would stop reading it.
+#
+# One glob per line. `capture/packages.sh --ignore <pkg>` appends here.
+# Anything matching is hidden from the "installed but not declared" report.
+
+# Base system, shared libraries and kernel bits
+lib*
+linux-*
+grub-*
+efibootmgr
+systemd*
+init
+dash
+bash
+coreutils
+diffutils
+findutils
+grep
+sed
+tar
+gzip
+util-linux
+mount
+login
+passwd
+adduser
+base-*
+ncurses*
+perl*
+apt
+dpkg
+debconf
+e2fsprogs
+hostname
+sysvinit*
+zlib*
+ca-certificates
+gnupg*
+
+# Desktop environment and its runtime, which come with the Ubuntu install
+gnome-*
+ubuntu-*
+xserver-*
+x11-*
+xdg-*
+gir1.2*
+fonts-*
+python3-*
+
+# Localisation
+language-pack-*
+m17n-*
+ibus-*
+
+# Snap runtime bases, not applications
+core
+core1*
+core2*
+bare
+gtk-common-themes
+*-ffmpeg
+gnome-3-*
+gnome-4*

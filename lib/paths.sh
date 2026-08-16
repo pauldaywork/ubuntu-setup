@@ -1,8 +1,8 @@
 # The one list of what this repo deploys, and where.
 #
-# configure.sh reads it left-to-right (repo → live), update.sh reads it
-# right-to-left (live → repo), and doctor.sh reads it to check the two still
-# agree. Before this file those three each carried their own copy of the list:
+# configure.sh reads it left-to-right (repo → live) and doctor.sh reads it to
+# check the two still agree. The capture/ scripts read it right-to-left, but only
+# for the few files a GUI or package manager owns — see capture/common.sh. Before this file those three each carried their own copy of the list:
 # 19 of the pairs were written out twice and a further 13 paths were spelled
 # again in doctor.sh, so keeping them in step was a manual job.
 #
