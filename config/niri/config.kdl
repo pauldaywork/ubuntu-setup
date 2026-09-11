@@ -137,16 +137,20 @@ output "HDMI-A-1" {
 // which may be more convenient to use.
 // See the binds section below for more spawn examples.
 
-// The bar. This line came in with niri's default config and has never actually
-// done anything here — DMS drew the bar, and waybar is neither in
-// lib/manifest.sh nor configured anywhere in this repo. It is left in place
-// because waybar is what replaces DMS's bar, and this is the line that will
-// start it; until the package and its config land, it fails harmlessly at
-// startup and niri logs it.
+// The bar. This line came in with niri's default config and did nothing for as
+// long as DMS drew the bar. waybar is in lib/manifest.sh now, with its config in
+// config/waybar/, so it finally means something.
 spawn-at-startup "waybar"
 
-// Notifications are still DMS's until the package itself is removed. The
-// replacement daemon is spawned from here once it is in lib/manifest.sh.
+// Notifications. Nothing else implements org.freedesktop.Notifications once DMS
+// is gone, and notify-send is not decoration here — window-rules/toggle.sh calls
+// it on every Mod+Alt+R profile switch.
+//
+// Until the DMS package is actually removed there are two daemons wanting the
+// same DBus name. That resolves itself rather than breaking: whichever starts
+// second fails to acquire it and exits, and mako gets it from the next login
+// after DMS goes.
+spawn-at-startup "mako"
 
 // Wallpaper. swww draws the background so that animated GIFs animate; a plain
 // Wayland wallpaper tool would show the first frame and stop.

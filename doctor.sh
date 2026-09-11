@@ -150,11 +150,39 @@ else
     note "  Install with: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/bin/install_plugins"
 fi
 
-if [ -d "$HOME/.config/DankMaterialShell/plugins/taskwarrior" ]; then
-    ok "DMS taskwarrior plugin installed"
-else
-    issue "DMS taskwarrior plugin not installed at ~/.config/DankMaterialShell/plugins/taskwarrior"
-    note "  Install with: git clone https://github.com/cyrylas/dms-taskwarrior ~/.config/DankMaterialShell/plugins/taskwarrior"
+# The DMS taskwarrior widget was checked here. It was a DMS plugin, so it went
+# with DMS — there is no waybar equivalent packaged, and nothing in this repo
+# replaces it. Task state is still there: `task` on the command line, and
+# niri-tasks' Mod+Alt+T/L/P and its active-task overlay, which were always
+# separate from the widget. What is gone is the at-a-glance count in the bar.
+
+# The desktop pieces that replaced DMS. Neither is a systemd unit — both are
+# niri spawn-at-startup lines — so there is nothing for systemctl to report and
+# a bare pgrep is the honest check.
+#
+# A missing bar is obvious the moment you look at the screen. A missing
+# notification daemon is not: notify-send simply returns, and the first thing
+# you notice is that Mod+Alt+R stopped telling you which profile it switched to.
+if pkg_installed waybar; then
+    if pgrep -x waybar >/dev/null; then
+        ok "waybar running"
+    elif [ -n "${WAYLAND_DISPLAY:-}" ]; then
+        issue "waybar is installed but not running — there is no bar"
+        note "  Start it with: waybar &   (or re-login; niri spawns it at startup)"
+    fi
+fi
+
+if pkg_installed mako-notifier; then
+    if pgrep -x mako >/dev/null; then
+        ok "mako running"
+    elif [ -n "${WAYLAND_DISPLAY:-}" ]; then
+        issue "mako is installed but not running — notifications will go nowhere"
+        note "  Start it with: mako &   (or re-login; niri spawns it at startup)"
+        # The overlap case, and the only one with a non-obvious fix: two daemons
+        # cannot both own org.freedesktop.Notifications, so mako exits at startup
+        # while DMS still holds it.
+        pkg_installed dms && note "  DMS is still installed and owns the notification socket — remove it first"
+    fi
 fi
 
 # ─── config drift ─────────────────────────────────────────────────────────────
