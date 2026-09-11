@@ -1,6 +1,6 @@
 # backup-os
 
-A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell setup. Clone this on a new machine and run `install.sh` to get a working environment.
+A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a new machine and run `install.sh` to get a working environment.
 
 ## What's included
 
@@ -8,14 +8,22 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri + DankMaterialShell se
 |---|---|
 | Shell | `.bashrc`, `.profile` |
 | Terminal multiplexer | tmux (`.tmux.conf` + TPM-managed plugins) |
-| Window manager | Niri config + custom DMS keybindings + swappable window-rules/layout profiles (`Mod+Alt+R`) |
-| Notifications | DankMaterialShell (built-in) |
+| Window manager | Niri config + swappable window-rules/layout profiles (`Mod+Alt+R`) |
+| Bar | waybar (`config.jsonc` + `style.css`), started by niri |
+| Notifications | mako |
+| Launcher | fuzzel (`Mod+Space`) |
 | Terminal | Ghostty (deb from the danklinux PPA, not the snap) |
-| Bar / shell | DankMaterialShell (theme, settings, plugins) |
 | Editor | Sublime Text (installed), VS Code (settings + extensions) |
 | Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/pauldaywork/niri-tasks)) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
-| Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user units) so animated GIFs animate |
+| Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user unit) so animated GIFs animate |
+
+The bar, notifications and launcher were one package until recently:
+[DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell), a
+Quickshell desktop that supplied all three plus a wallpaper picker and
+matugen theming. It was dropped in favour of the smaller pieces above — see
+[Life after DankMaterialShell](#life-after-dankmaterialshell) for what that
+gained and what it cost.
 
 ## Setting up a new machine
 
@@ -54,8 +62,8 @@ This used to hang on remembering the flag: the installer copied the repo's `conf
 
 The script will:
 
-1. Remove a leftover `mako-notifier` install if present (DMS owns notifications now, and the two fight over the notification socket)
-2. Add PPAs for Niri, DankMaterialShell, Sublime Text, and Google Chrome
+1. Remove DankMaterialShell if it's installed — transitional, and a no-op on a machine that never had it (see [Life after DankMaterialShell](#life-after-dankmaterialshell))
+2. Add PPAs for Niri/Ghostty, Sublime Text, and Google Chrome
 3. Install all apt packages, from the list in `lib/manifest.sh`
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
 5. Install the NVIDIA container toolkit, but only if an NVIDIA GPU is actually present (read from sysfs, so it works before any driver is)
@@ -66,17 +74,16 @@ The script will:
 10. Install Bun via the official installer
 11. Install NVM + Node.js v24.18.0
 12. Install Claude Code via npm
-13. Copy all config files to their correct locations, install the wallpaper systemd units, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
+13. Copy all config files to their correct locations, install the swww systemd unit, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
 14. Clone [niri-tasks](https://github.com/pauldaywork/niri-tasks) to `~/Projects/niri-tasks` and build it — this runs straight after the config copy, so its installer can replace the `niri-tasks.kdl` stub that was just seeded
 15. Install TPM (tmux plugin manager) and fetch tmux plugins
-16. Install DMS plugins (the third-party taskwarrior widget)
-17. Install VS Code extensions from `config/Code/extensions.txt`
-18. Prompt for your git name and email
-19. Generate a new SSH key and print the public key so you can add it to GitHub
+16. Install VS Code extensions from `config/Code/extensions.txt`
+17. Prompt for your git name and email
+18. Generate a new SSH key and print the public key so you can add it to GitHub
 
 ### 4. After the script finishes
 
-- **Reboot** to start Niri and DankMaterialShell (also picks up `docker` group membership)
+- **Reboot** to start Niri (also picks up `docker` group membership)
 - **Log into Claude Code**: run `claude` in a terminal
 - **Add your SSH key to GitHub**: the script prints the public key — paste it at https://github.com/settings/ssh/new
 - **Log into** Firefox, Chrome, and Obsidian as normal
@@ -112,14 +119,13 @@ backup-os/
 ├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
 │
 ├── capture/                                # machine ──> repo, one script per thing
-│   ├── dms-settings.sh                     # DMS GUI settings
 │   ├── packages.sh                         # reports apt/snap not in the manifest
 │   ├── wallpapers.sh                       # new images + which one is selected
 │   ├── vscode-extensions.sh                # regenerates extensions.txt
 │   └── niri.sh                             # the live config.kdl
 │
 ├── lib/                                    # Shared by the scripts above
-│   ├── common.sh                           # info/warn/ok/issue, pkg_installed, and copy/pull/merge_json
+│   ├── common.sh                           # info/warn/ok/issue, pkg_installed, and copy/pull
 │   ├── manifest.sh                         # What gets installed: apt + snap lists, version pins
 │   └── paths.sh                            # The one list of which file goes where
 │
@@ -132,20 +138,20 @@ backup-os/
 ├── config/                                 # Mirrors ~/.config/
 │   ├── niri/
 │   │   ├── config.kdl                      # Includes niri-tasks.kdl; configure.sh seeds a stub for it
-│   │   ├── window-rules/
-│   │   │   ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
-│   │   │   ├── normal.kdl                  # Fully opaque windows
-│   │   │   └── focus.kdl                   # Unfocused windows fade out
-│   │   └── dms/laptop.kdl                  # Installed on laptops only (auto-detected)
+│   │   ├── laptop.kdl                      # Installed on laptops only (auto-detected)
+│   │   └── window-rules/
+│   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
+│   │       ├── normal.kdl                  # Fully opaque windows
+│   │       └── focus.kdl                   # Unfocused windows fade out
+│   ├── waybar/                             # config.jsonc + style.css
+│   ├── mako/config
 │   ├── ghostty/config.ghostty
-│   ├── DankMaterialShell/                  # settings, plugin settings, firefox.css, theme
 │   └── Code/                               # settings.json + extensions.txt
 │
 ├── wallpaper/                              # A feature, not a mirror: these land in three places
-│   ├── wallpaper-sync.sh                   # → ~/.config/niri/   Forwards DMS's choice to swww
+│   ├── apply.sh                            # → ~/.config/niri/wallpaper-apply.sh  Paints the selection
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
-│   ├── wallpaper-sync.service              # → ~/.config/systemd/user/
-│   ├── active                              # Which image DMS had selected, per capture/wallpapers.sh
+│   ├── active                              # Which image is selected, per capture/wallpapers.sh
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
 │
 └── notes/                                  # Working notes; not installed anywhere
@@ -158,7 +164,7 @@ Two rules keep this predictable:
   which lands in `~/.config/Code/User/`.
 - **Anything whose files land in more than one place gets its own directory**
   instead of being scattered to match. `wallpaper/` is the only one — its script,
-  its two systemd units and its images would otherwise sit in three separate trees.
+  its systemd unit and its images would otherwise sit in three separate trees.
 
 `lib/paths.sh` is what actually decides where each file goes, so the tree is free
 to be organised for reading rather than for the installer's benefit.
@@ -203,47 +209,127 @@ What this repo still owns:
 - Ghostty's `command =` is set to `wt tmux-session` when `wt` is on `PATH`, and
   to plain `tmux` when it is not.
 
+---
+
+## Life after DankMaterialShell
+
+[DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) was a whole
+Quickshell desktop arriving as one apt package: the bar, notifications, the
+spotlight launcher, a wallpaper picker, matugen theming, and the niri colour and
+monitor config generated from it. It was replaced by smaller pieces — two of
+which, fuzzel and swww, were already installed here for other reasons.
+
+| DMS gave | Now |
+|---|---|
+| Bar | waybar (`config/waybar/`) |
+| Notifications | mako (`config/mako/config`) |
+| Spotlight launcher (`Mod+Space`) | fuzzel — already in the manifest for the project picker |
+| Wallpaper picker + cycling | `~/.config/niri/wallpaper-active`, a file with a path in it |
+| `dms/colors.kdl`, `dms/outputs.kdl`, … | Written out in `config/niri/config.kdl` |
+| Taskwarrior bar widget | *nothing* — see below |
+
+Net, the repo lost about 1,900 lines and gained about 840. But the line count is
+the least of it. What actually changed is that **nothing on this machine writes
+its own config any more.** That removed a whole category of machinery: the
+`merge` path kind and `merge_json`, the `capture/dms-settings.sh` round-trip, the
+`inotify` watch on a state file owned by another process, and every use of
+`python3` in the repo — all of which existed to read or write JSON some other
+application considered its own.
+
+**What this cost, plainly.** Notification *history* is gone; mako has
+`makoctl restore`, which brings back the most recently dismissed notification and
+nothing more. The taskwarrior bar widget is gone and nothing packaged replaces
+it — task state is untouched (`task` on the command line, and niri-tasks'
+`Mod+Alt+T`/`L`/`P` and its active-task overlay, which were always separate from
+the widget), but the at-a-glance count in the bar is not coming back. The
+click-through audio, network and bluetooth popovers are gone; waybar's modules
+shell out to `wpctl` and `nmtui` instead. Wallpapers no longer retint the
+desktop. And the monitor layout is no longer detected per-machine — `config.kdl`
+names the outputs and modes explicitly, so different hardware needs an edit
+(`install.sh` warns about this at the end).
+
+**Migrating an existing machine** is `install.sh`, which removes the `dms`
+package as step 0, or by hand:
+
+```bash
+sudo apt install waybar mako-notifier
+bash configure.sh
+sudo apt remove dms
+```
+
+then log out and back in. `configure.sh` clears DMS's `~/.config` and
+`~/.local/state` trees, but only once the package is actually gone — it is also
+run on its own, and deleting a running application's settings out from under it
+would be rude. That step 0 is transitional: a machine installed from scratch
+today never gets DMS in the first place, so it can be deleted once every machine
+has been through one install.
+
 ## Animated wallpapers
 
-DMS paints the background with a QML `Image`, which decodes one frame — so a GIF
-picked in its wallpaper tab shows up as a still, and [upstream won't change that
-in-shell](https://github.com/AvengeMedia/DankMaterialShell/issues/793). So DMS's
-own wallpaper layer is switched off (the empty `screenPreferences.wallpaper`
-array in its `settings.json`) and [swww](https://github.com/LGFae/swww) draws the
-background instead.
+niri draws no background of its own, so something has to. Most of this collection
+is animated GIFs, and [swww](https://github.com/LGFae/swww) is what animates them
+— `swaybg` and friends decode one frame and stop.
 
 | Piece | Role |
 |---|---|
 | `swww-daemon.service` | Holds the background layer surface and plays the animation |
-| `wallpaper-sync.service` → `wallpaper/wallpaper-sync.sh` | Watches DMS's `session.json` and forwards each change to swww |
+| `wallpaper/apply.sh` | Reads the selection and paints it, from the daemon's `ExecStartPost` |
+| `~/.config/niri/wallpaper-active` | One line: the path of the image to paint |
 | `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background stays put instead of scrolling with the workspaces |
 
-**Pick wallpapers exactly as before** — the DMS tab is still the UI, and matugen
-theming still follows them. swww is built from a git tag by `install.sh`;
-`doctor.sh` checks all three pieces plus the DMS toggle, so run it first if the
-background ever goes black.
+**To change wallpaper**, point `wallpaper-active` at another image in
+`~/Documents/Wallpapers` and restart the daemon:
 
-The reasoning lives next to what it explains, rather than here: why these are
-systemd units and not `spawn-at-startup`, and the `place-within-backdrop` rule,
-are in `config/niri/config.kdl`; the restart deadlock is in
-`swww-daemon.service`; and the transition knobs, the re-apply guard and the
-per-filetype scaling filter are all commented at the top of `wallpaper-sync.sh`.
+```bash
+echo ~/Documents/Wallpapers/205.png > ~/.config/niri/wallpaper-active
+systemctl --user restart swww-daemon.service
+```
 
-### Rotation
+Then `bash capture/wallpapers.sh` to record the choice in the repo, so a fresh
+machine comes up with the same background. `configure.sh` seeds
+`wallpaper-active` from `wallpaper/active` but never overwrites a selection you
+have already made — the installer's job is to make sure there *is* one, not to
+have the last word on which.
 
-**`Mod+Alt+B`** steps to the next wallpaper. For automatic rotation, **Settings →
-Wallpaper → Automatic Cycling**, then either **Interval** (5 seconds to 12 hours,
-default 5 minutes) or **Time** (once a day at a set clock time).
+The whole image folder is installed, not just the selected one, so there is
+always something to point at. swww is built from a git tag by `install.sh`;
+`doctor.sh` checks the daemon, the script, and that what is actually on screen
+matches what `wallpaper-active` names — run it first if the background ever goes
+black or goes stale.
 
-The one thing about cycling that isn't obvious, and is the reason the wallpapers
-live where they do: **the folder it cycles through is the directory of the
-current wallpaper.** It is not a separate setting — keeping them all in
-`~/Documents/Wallpapers` is what makes them a rotation set. It also needs at
-least two images there to do anything, and sorts them alphabetically.
+The reasoning lives next to what it explains: why this is a systemd unit and not
+`spawn-at-startup`, and the `place-within-backdrop` rule, are in
+`config/niri/config.kdl`; why the paint happens in `ExecStartPost` is in
+`swww-daemon.service`; and the transition knobs, the startup retry and the
+per-filetype scaling filter are commented at the top of `wallpaper/apply.sh`.
 
-Cycling never touched the rendering layer, so switching DMS's wallpaper off
-changed nothing about it: `dms` keeps the schedule and writes the choice to
-`session.json`, and `wallpaper-sync.sh` carries it to swww like any other change.
+### What this replaced
+
+Until recently DankMaterialShell owned the wallpaper: it had the picker, it
+stored the choice in `session.json`, and it drove matugen to retint the whole
+desktop from the selected image. But it painted the background with a QML
+`Image`, which decodes one frame, so a GIF showed up as a still — and [upstream
+declined to animate it
+in-shell](https://github.com/AvengeMedia/DankMaterialShell/issues/793), pointing
+at the escape hatch instead. So DMS's wallpaper layer was switched off, swww drew
+the background, and a 164-line `wallpaper-sync.sh` sat on `session.json` with
+inotify forwarding every change across.
+
+Almost none of that script was about wallpapers. It was about tracking another
+application's state: re-deriving the selection each time the file moved (it lived
+in `wallpaperPath`, a per-mode variant, or a per-monitor map depending on two
+other settings), ignoring the rewrites that were really launcher history or night
+mode, and comparing the daemon's pid each pass to catch a restart that had
+restored swww's own stale cache.
+
+With the selection in a file this repo writes, there is nothing to follow. The
+watch loop, its systemd unit and the `inotify-tools` dependency are all gone.
+
+**What went with it:** there is no picker UI, no automatic cycling, and no
+`Mod+Alt+B` to step to the next image. Wallpapers also no longer retint the
+desktop — matugen re-derived the entire palette from the current image, and the
+colours in `config/waybar/style.css` and `config/mako/config` are now fixed
+values, the last ones it produced.
 
 ---
 
@@ -253,7 +339,7 @@ changed nothing about it: `dms` keeps the schedule and writes the choice to
 
 `lib/common.sh` holds what all five scripts print with (`info`, `warn`, `ok`, `issue`, `section`) plus `pkg_installed` and `snap_install`. `pkg_installed` is the one worth not copy-pasting: `dpkg -s` exits 0 for packages in the `rc` state — removed, config files left behind — so it matches on the status field instead.
 
-Build-only packages are tagged separately as `APT_BUILD_PACKAGES` (`liblz4-dev`, `libwayland-dev`, `wayland-protocols`). `install.sh` installs them; `doctor.sh` deliberately doesn't check them. They're only needed to *compile* swww — the binary links `liblz4.so.1` from `liblz4-1`, a different package — so a machine that built swww and later cleaned up its build deps is perfectly healthy, and flagging it would be doctor crying wolf. The thing that actually matters, swww being installed and running, is checked directly.
+Build-only packages are tagged separately as `APT_BUILD_PACKAGES` (`liblz4-dev`, `libwayland-dev`, `wayland-protocols` for swww; `libgtk-4-dev` and `libgtk4-layer-shell-dev` for niri-tasks). `install.sh` installs them; `doctor.sh` deliberately doesn't check them. They're only needed to *compile* swww — the binary links `liblz4.so.1` from `liblz4-1`, a different package — so a machine that built swww and later cleaned up its build deps is perfectly healthy, and flagging it would be doctor crying wolf. The thing that actually matters, swww being installed and running, is checked directly.
 
 ---
 
@@ -265,57 +351,65 @@ The repo deploys to the machine. That is the only automatic direction:
 bash configure.sh        # repo ──> machine
 ```
 
-Edit configs **in the repo** and deploy them. That is why 14 of the 17 managed
+Edit configs **in the repo** and deploy them. That is why 14 of the 15 managed
 files are byte-identical to the repo at any moment — nothing edits them out on
-the machine, so nothing has to be captured back.
+the machine, so nothing has to be captured back. (The fifteenth is ghostty,
+whose `command =` line `configure.sh` rewrites after copying.)
 
 ### capture/ — the few things the machine owns
 
-Some settings can only be changed on the machine: a GUI writes them, a package
-manager records them, a daemon keeps the state. Those get a script each, and you
-run the one you need rather than a single command that sweeps everything.
+Some settings can only be changed on the machine: a package manager records them,
+a daemon keeps the state, or you tried something against the running compositor.
+Those get a script each, and you run the one you need rather than a single command
+that sweeps everything.
 
 | Script | Pulls in |
 |---|---|
-| `capture/dms-settings.sh` | DankMaterialShell's GUI settings — bar layout, widget config |
 | `capture/packages.sh` | Reports apt/snap packages installed but not in `lib/manifest.sh` |
 | `capture/wallpapers.sh` | New images from `~/Documents/Wallpapers`, and which one is selected |
 | `capture/vscode-extensions.sh` | Regenerates `config/Code/extensions.txt` |
-| `capture/niri.sh` | The live `config.kdl`, for when DMS's keybind UI has written to it |
+| `capture/niri.sh` | The live `config.kdl`, for a layout change tried against the running compositor |
 
 All take `--dry-run` to show what they would do, and `--yes` to skip the prompt
 that protects uncommitted repo edits.
 
 ```bash
-bash capture/dms-settings.sh --dry-run
+bash capture/wallpapers.sh --dry-run
 bash capture/packages.sh
 git diff                                # review before committing
 ```
 
-There is deliberately **no** capture script for `.bashrc`, the window-rules, the
-theme or ghostty. You would change those in a text editor, so change them in the
+Note that **none of these touch `lib/paths.sh`**. Every file in that table is
+written by this repo and only by this repo. That was not true while
+DankMaterialShell was here: its `settings.json` was a live file a GUI owned, it
+needed a merge rather than a copy on the way out, and `capture/dms-settings.sh`
+existed to bring it back. Everything `capture/` deals in now is something the
+path table never held.
+
+There is deliberately **no** capture script for `.bashrc`, the window-rules,
+waybar or ghostty. You would change those in a text editor, so change them in the
 repo. A tool that moves files both ways is how you end up unable to say which
 side is authoritative — which is what the old `update.sh` became.
 
 `capture/packages.sh` reports rather than writes, because it is the one that
-cannot tell what belongs: 132 packages are manually installed here and the
+cannot tell what belongs: 143 packages are manually installed here and the
 manifest declares 27, but most of the difference is Ubuntu's own base system.
 `capture/packages-ignore.txt` filters the noise down to a reviewable list, and
 `--add` / `--ignore` triage it one at a time.
 
 ### Re-running the installer is a no-op
 
-`configure.sh` compares before it writes: a file that already matches is neither copied nor backed up, and a JSON merge that would change nothing leaves the live file alone. `config.kdl` is assembled first — the repo's copy plus the laptop include where that applies — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
+`configure.sh` compares before it writes: a file that already matches is neither copied nor backed up. `config.kdl` is assembled first — the repo's copy plus the laptop include where that applies — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
 
 The upshot is that a re-run on an in-sync machine says "Nothing needed replacing — no backup taken" and touches nothing. `~/.config-backups` also keeps only the **5** most recent snapshots now; it grew to nine directories of near-identical files before anything pruned it. Directories in there that aren't named like a timestamp are left alone.
 
-### DMS settings are merged, not replaced
-
-`configure.sh` copies most files straight over the live one. The two DankMaterialShell JSON files are the exception: they're merged, because DMS owns and rewrites them. Every DMS release adds keys and bumps `configVersion`, so the copy in this repo is only ever a snapshot of whenever `capture/dms-settings.sh` last ran — and copying it flat over a newer live file deletes every key the snapshot has never heard of.
-
-The merge takes our value for every key we carry and leaves live-only keys alone. `configVersion` deliberately comes from *our* file, i.e. the older number, so DMS re-runs its migrations over the result on next load and forward-migrates anything our snapshot holds in an old shape. Only top-level keys merge — nested structures like `barConfigs` are replaced wholesale, which is correct, since the bar layout is the thing being installed.
-
-`capture/dms-settings.sh` holds `configVersion` and `displayProfiles` at the repo's values for exactly that reason: capturing the live `configVersion` would stop those migrations running, and a laptop's monitor layout installed onto a desktop is worse than none. It also lists any key it drops, since taking a live snapshot removes whatever DMS has migrated away from.
+Every row in `lib/paths.sh` is a plain copy. There used to be a fourth kind,
+`merge`, for a file the application owned and grew keys in — DankMaterialShell's
+`settings.json` climbed a `configVersion` with each release, and copying the
+repo's snapshot flat over a newer live file deleted every key the snapshot
+predated (147 of them on this machine, including the display profiles and the
+whole battery section). Nothing left writes its own config, so the kind and the
+`merge_json` that implemented it are both gone.
 
 ## Diagnosing an existing setup
 
@@ -335,11 +429,12 @@ What it checks:
 | Packages | Everything in `lib/manifest.sh` — the same list `install.sh` installs from, so the two can't drift. Build-only packages are excluded on purpose |
 | Docker | Group membership, service running, and `docker-ce` conflicting with Ubuntu's `docker.io` |
 | Toolchains | rustup, bun, nvm (and that `NVM_DIR` points where nvm actually is), Node, Claude Code, TPM |
-| Wallpaper | swww installed, both user units enabled and running, DMS's built-in wallpapers still disabled, **and that what's on screen is what DMS has selected** — the one check that catches a missed paint |
+| Desktop | waybar and mako actually running — neither is a systemd unit, so nothing else would notice. A missing bar is obvious; a missing notification daemon is not |
+| Wallpaper | swww installed, its unit enabled and running, `wallpaper-apply.sh` present, **and that what's on screen is what `wallpaper-active` names** — the one check that catches a missed paint |
 | Laptop config | A machine with a battery whose `config.kdl` lacks the laptop include, or an include pointing at a file that isn't there |
 | Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
 | Config drift | Every file in `lib/paths.sh`: installed, matching the repo, and executable where the kind says so. `config.kdl` is compared separately, with the laptop include stripped from both sides. Files `configure.sh` rewrites after copying — ghostty — are checked for presence but not content |
 | niri-tasks | That `wt` is installed, the `niri-tasks.kdl` include exists (niri refuses to load a config whose include is missing), and the active-task overlay service is running |
-| Leftovers | Files this repo used to install and no longer does — the workspace-task scripts, the fuzzel picker theme, the old DMS plugin. Deleting them from the repo doesn't delete them from a machine that already has them |
+| Leftovers | Files this repo used to install and no longer does — the workspace-task scripts, the fuzzel picker theme, the retired wallpaper-sync pair, and DankMaterialShell's config trees once the package itself is gone. Deleting them from the repo doesn't delete them from a machine that already has them |
 
 The wallpaper row is the one worth running after a reboot: every other check can be green while the screen shows a stale image, because swww restores its own cache when it starts.
