@@ -261,9 +261,10 @@ fi
 # ─── Wallpapers ───────────────────────────────────────────────────────────────
 section "Setting up wallpapers"
 
-# The whole folder is installed, not just the active one, so the DMS picker has
-# something to pick from — animated GIFs included, which swww is what actually
-# renders (see wallpaper/wallpaper-sync.sh).
+# The whole folder is installed, not just the active one. With DMS's picker gone
+# there is nothing browsing this directory at runtime, but switching wallpaper is
+# now "point wallpaper-active at a different file in here", and that only works
+# if they are all present. Animated GIFs included — swww is what renders those.
 WALLPAPER_DIR="$USER_HOME/Documents/Wallpapers"
 mkdir -p "$WALLPAPER_DIR"
 
@@ -280,9 +281,8 @@ for wall in "$DOTFILES/wallpaper/images"/*; do
     copy "$wall" "$WALLPAPER_DIR/$name"
 done
 
-# Which one to select on a fresh machine. capture/wallpapers.sh rewrites it from
-# whatever DMS has live, so the repo tracks the choice without configure.sh
-# needing a hardcoded filename.
+# Which one to select on a fresh machine. wallpaper/active names it, so the repo
+# tracks the choice without configure.sh needing a hardcoded filename.
 ACTIVE_WALLPAPER=""
 if [ -s "$DOTFILES/wallpaper/active" ]; then
     ACTIVE_WALLPAPER="$(head -n1 "$DOTFILES/wallpaper/active")"
@@ -294,55 +294,30 @@ fi
 
 WALLPAPER_DST="$WALLPAPER_DIR/$ACTIVE_WALLPAPER"
 
-# Seed the DMS session wallpaper so one is selected on first launch.
+# Record which image swww should paint. This replaces seeding DMS's
+# session.json, and the rule it enforces is carried over unchanged: select a
+# wallpaper if none is selected, but never overrule one already chosen on this
+# machine. Re-running the installer to pick up an unrelated config change used
+# to throw away whichever wallpaper you'd since picked, and the fix then is the
+# fix now — the installer's job is to make sure there *is* one, not to have the
+# last word on which. Same treatment as the window-rules profile seeded above.
 #
-# Only when nothing valid is selected already. This used to overwrite the path
-# unconditionally, which meant re-running the installer to pick up an unrelated
-# config change silently threw away whichever wallpaper you'd since chosen and
-# put the repo's back. A wallpaper you picked on this machine is live state,
-# like the window-rules profile seeded further up — the installer's job is to
-# make sure there *is* one, not to have the last word on which.
-#
-# Paths go in through argv rather than being pasted into the source, so a quote
-# or backslash in a filename can't end the string early.
-DMS_SESSION="$USER_HOME/.local/state/DankMaterialShell/session.json"
-mkdir -p "$(dirname "$DMS_SESSION")"
+# A single line holding a path. Reading it back needs `head -n1` and a test that
+# the file still exists, which is the whole of the format; the fifty lines of
+# Python this replaces were spent keeping DMS's other session state intact while
+# editing one key out of the middle of its JSON, and none of that is owed to a
+# file we write ourselves.
+WALLPAPER_ACTIVE="$USER_HOME/.config/niri/wallpaper-active"
+CURRENT_WALLPAPER=""
+[ -s "$WALLPAPER_ACTIVE" ] && CURRENT_WALLPAPER="$(head -n1 "$WALLPAPER_ACTIVE")"
 
 if [ -z "$ACTIVE_WALLPAPER" ]; then
-    warn "No wallpapers installed — leaving the DMS session wallpaper alone"
+    warn "No wallpapers installed — none selected"
+elif [ -n "$CURRENT_WALLPAPER" ] && [ -f "$CURRENT_WALLPAPER" ]; then
+    info "Wallpaper already selected, leaving it alone: $(basename "$CURRENT_WALLPAPER")"
 else
-    SESSION_RESULT=$(python3 - "$DMS_SESSION" "$WALLPAPER_DST" <<'PYEOF'
-import json, os, sys
-
-session_path, wallpaper = sys.argv[1], sys.argv[2]
-
-try:
-    with open(session_path) as f:
-        session = json.load(f)
-except FileNotFoundError:
-    session = {}
-except (OSError, ValueError):
-    # An unreadable session file is DMS's to repair — it rewrites the whole
-    # thing from its own defaults on next launch. Replacing it here would throw
-    # away every other bit of session state it holds.
-    print("!Could not read the DMS session file — leaving it untouched")
-    raise SystemExit
-
-current = session.get("wallpaperPath", "")
-if current and os.path.isfile(current):
-    print(f"Wallpaper already selected, leaving it alone: {os.path.basename(current)}")
-else:
-    session["wallpaperPath"] = wallpaper
-    with open(session_path, "w") as f:
-        json.dump(session, f, indent=2)
-    print(f"DMS session wallpaper set to {os.path.basename(wallpaper)}")
-PYEOF
-)
-    # A leading "!" marks the warning case; everything else is routine.
-    case "$SESSION_RESULT" in
-        "!"*) warn "${SESSION_RESULT#!}" ;;
-        *)    info "$SESSION_RESULT" ;;
-    esac
+    printf '%s\n' "$WALLPAPER_DST" > "$WALLPAPER_ACTIVE"
+    info "Wallpaper set to $ACTIVE_WALLPAPER"
 fi
 
 # ─── Prune old backups ────────────────────────────────────────────────────────
