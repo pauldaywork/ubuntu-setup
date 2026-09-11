@@ -225,7 +225,7 @@ if [ -f "$HOME/.config/niri/config.kdl" ]; then
     # appended one does not. Normalise both sides by dropping the include and
     # every trailing blank, or this reports drift on every laptop forever.
     strip_kdl() {
-        grep -v '^include "dms/laptop.kdl"$' "$1" \
+        grep -v '^include "laptop.kdl"$' "$1" \
             | sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba'
     }
     NIRI_REPO_CMP=$(mktemp)
@@ -297,7 +297,7 @@ for rel in \
     ".config/niri/create_named_workspace.sh" ".config/niri/rename_workspace.sh" \
     ".config/niri/default_workspace_name.sh" ".config/niri/open_project_workspace.sh" \
     ".config/niri/tmux-niri-session.sh" ".config/niri/toggle-window-rules.sh" \
-    ".config/fuzzel/project-picker.ini"
+    ".config/fuzzel/project-picker.ini" ".config/niri/dms/laptop.kdl"
 do
     [ -e "$HOME/$rel" ] && STALE_ON_DISK+=("$rel")
 done
@@ -305,13 +305,13 @@ done
     STALE_ON_DISK+=(".config/DankMaterialShell/plugins/activetask")
 
 if [ "${#STALE_ON_DISK[@]}" -gt 0 ]; then
-    issue "${#STALE_ON_DISK[@]} file(s) left over from the niri-tasks split are still installed"
+    issue "${#STALE_ON_DISK[@]} file(s) this repo no longer installs are still on disk"
     for rel in "${STALE_ON_DISK[@]}"; do
         note "    ~/$rel"
     done
     note "  Remove them with: bash configure.sh"
 else
-    ok "No leftovers from the niri-tasks split"
+    ok "No leftovers from past moves"
 fi
 
 # Wallpapers. Three things have to agree or the desktop goes black: swww has to
@@ -397,14 +397,14 @@ if [ -f "$NIRI_CONFIG" ]; then
     HAS_BATTERY=false
     [ "$MACHINE_TYPE" != "desktop" ] && compgen -G "/sys/class/power_supply/BAT*" > /dev/null && HAS_BATTERY=true
     HAS_INCLUDE=false
-    grep -q '^include "dms/laptop.kdl"$' "$NIRI_CONFIG" && HAS_INCLUDE=true
+    grep -q '^include "laptop.kdl"$' "$NIRI_CONFIG" && HAS_INCLUDE=true
 
     if [ "$HAS_BATTERY" = true ] && [ "$HAS_INCLUDE" = false ]; then
-        issue "This machine has a battery but config.kdl doesn't include dms/laptop.kdl"
+        issue "This machine has a battery but config.kdl doesn't include laptop.kdl"
         note "  The display and workspace binds in it are missing"
         note "  Fix with: bash configure.sh --laptop"
-    elif [ "$HAS_INCLUDE" = true ] && [ ! -f "$HOME/.config/niri/dms/laptop.kdl" ]; then
-        issue "config.kdl includes dms/laptop.kdl but that file is missing — niri won't load the config"
+    elif [ "$HAS_INCLUDE" = true ] && [ ! -f "$HOME/.config/niri/laptop.kdl" ]; then
+        issue "config.kdl includes laptop.kdl but that file is missing — niri won't load the config"
         note "  Fix with: bash configure.sh --laptop"
     elif [ "$HAS_INCLUDE" = true ]; then
         ok "Laptop niri config included"

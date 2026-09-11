@@ -93,7 +93,7 @@ output "eDP-1" {
     // for the resolution.
     // If the mode is omitted altogether or is invalid, niri will pick one automatically.
     // Run `niri msg outputs` while inside a niri instance to list all outputs and their modes.
-    mode "1920x1080@120.030"
+    mode "1920x1080@144.003"
 
     // You can use integer or fractional scale, for example use 1.5 for 150% scale.
     scale 1
@@ -114,23 +114,47 @@ output "eDP-1" {
     position x=1280 y=0
 }
 
+// The external monitor. This and the mode above used to come from
+// `include "dms/outputs.kdl"`, a symlink into DMS's own monitor-profile store
+// that was written from its display settings tab — and, because the include sat
+// at the bottom of this file, silently overrode the eDP-1 block above it. The
+// refresh rate here disagreed with the one in that block for months without
+// either being wrong enough to notice.
+//
+// Owning it outright means this is now a per-machine value in a shared file. An
+// invalid mode is not fatal — niri picks one automatically and says so in its
+// log — so a machine with a different monitor plugged in degrades rather than
+// failing to start.
+output "HDMI-A-1" {
+    mode "3840x2160@60.000"
+    scale 1
+    position x=0 y=0
+}
+
 
 // Add lines like this to spawn processes at startup.
 // Note that running niri as a session supports xdg-desktop-autostart,
 // which may be more convenient to use.
 // See the binds section below for more spawn examples.
 
-// This line starts waybar, a commonly used bar for Wayland compositors.
+// The bar. This line came in with niri's default config and has never actually
+// done anything here — DMS drew the bar, and waybar is neither in
+// lib/manifest.sh nor configured anywhere in this repo. It is left in place
+// because waybar is what replaces DMS's bar, and this is the line that will
+// start it; until the package and its config land, it fails harmlessly at
+// startup and niri logs it.
 spawn-at-startup "waybar"
 
-// Wallpaper. DMS's built-in wallpaper layer is switched off (see
-// screenPreferences.wallpaper in its settings.json) because it renders GIFs as
-// a single still frame; swww draws the background instead and animates them.
+// Notifications are still DMS's until the package itself is removed. The
+// replacement daemon is spawned from here once it is in lib/manifest.sh.
+
+// Wallpaper. swww draws the background so that animated GIFs animate; a plain
+// Wayland wallpaper tool would show the first frame and stop.
 //
-// swww-daemon and wallpaper-sync.sh are not spawned here — they're systemd user
-// units (see the repo's wallpaper/ directory), pulled in by graphical-session.target,
-// so that either one crashing is restarted rather than leaving the desktop
-// bare until the next login. spawn-at-startup fires once and doesn't look back.
+// swww-daemon is not spawned here — it's a systemd user unit (see the repo's
+// wallpaper/ directory), pulled in by graphical-session.target, so that a crash
+// is restarted rather than leaving the desktop bare until the next login.
+// spawn-at-startup fires once and doesn't look back.
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
@@ -543,14 +567,18 @@ binds {
     // Toggle between window-rules profiles (normal / focus-dimming)
     Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/window-rules/toggle.sh"; }
 
-    // Step to the next wallpaper, alphabetically, within the folder the current
-    // one lives in — the same action the picker's next button runs, so it also
-    // resets the automatic-cycling timer. wallpaper-sync.sh carries the result
-    // through to swww. Needs at least two images in that folder to do anything.
-    Mod+Alt+B hotkey-overlay-title="Next Wallpaper" { spawn "dms" "ipc" "call" "wallpaper" "next"; }
+    // Mod+Alt+B was "next wallpaper", which went through DMS's picker. Nothing
+    // cycles wallpapers now — the active one is whatever wallpaper/active names
+    // — so the bind is gone rather than left pointing at a missing binary. If
+    // you want it back it is a small script over wallpaper/images/, not a shell.
 
-    Mod+Space hotkey-overlay-title="Application Launcher" { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
-    Mod+Alt+M hotkey-overlay-title="Bar: Toggle (Primary)" { spawn "dms" "ipc" "call" "bar" "toggle" "index" "0"; }
+    // fuzzel is already installed (it's in the manifest for the project picker),
+    // so the launcher is a straight swap for DMS's spotlight.
+    Mod+Space hotkey-overlay-title="Application Launcher" { spawn "fuzzel"; }
+
+    // waybar toggles its own visibility on SIGUSR1. DMS took a bar index here
+    // because it could run several; there is one bar now.
+    Mod+Alt+M hotkey-overlay-title="Bar: Toggle" { spawn-sh "killall -SIGUSR1 waybar"; }
     Mod+T hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
     Super+B { spawn "firefox"; }
     Super+Return hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
@@ -566,18 +594,69 @@ binds {
 // is that this repo installs fine without it.
 //
 // Multiple binds blocks merge per-key rather than replacing each other, which
-// is what lets this sit alongside the block above (the same reason DMS's
-// dms/binds.kdl stub is harmless).
+// is what lets this sit alongside the block above.
 include "niri-tasks.kdl"
 
-include "dms/colors.kdl"
-// include "dms/layout.kdl"
-include "dms/alttab.kdl"
-include "dms/binds.kdl"
-include "dms/outputs.kdl"
-include "dms/cursor.kdl"
 
-// include "dms/windowrules.kdl"
+// ─── formerly dms/colors.kdl and dms/alttab.kdl ───────────────────────────────
+// These were generated files: matugen wrote the colours from the wallpaper and
+// DMS wrote the alt-tab styling, both regenerated behind your back and both
+// carrying a "do not edit" banner. With DMS gone they are ours, written out at
+// the values they last held.
+//
+// Position matters. These blocks sit *after* `include "window-rules-active.kdl"`
+// further up, which is the precedence the generated includes had — the profiles
+// in window-rules/ set background-color, border and shadow too, and the keys
+// here win where they overlap. Moving this higher would quietly change which
+// side wins. Note that border is `off` in both profiles and the catch-all
+// window-rule sets its own focus-ring, so in practice insert-hint and the
+// recent-windows colours below are what you actually see.
+layout {
+    background-color "transparent"
+
+    focus-ring {
+        active-color   "#f4f4f4"
+        inactive-color "#3a3a3a"
+        urgent-color   "#c75c5c"
+    }
+
+    border {
+        active-color   "#f4f4f4"
+        inactive-color "#3a3a3a"
+        urgent-color   "#c75c5c"
+    }
+
+    shadow {
+        color "#00000070"
+    }
+
+    tab-indicator {
+        active-color   "#f4f4f4"
+        inactive-color "#3a3a3a"
+        urgent-color   "#c75c5c"
+    }
+
+    insert-hint {
+        color "#f4f4f480"
+    }
+}
+
+// One block where there were two: colors.kdl and alttab.kdl each contributed a
+// `recent-windows` node, which made sense when separate generators owned them
+// and makes none now.
+recent-windows {
+    highlight {
+        active-color   "#d6d6d6"
+        urgent-color   "#c75c5c"
+        corner-radius  9
+    }
+}
+
+// dms/binds.kdl and dms/cursor.kdl were both empty — the first an empty stub
+// configure.sh seeded so the include would resolve, the second a zero-byte file
+// DMS touched and never wrote to. dms/layout.kdl and dms/windowrules.kdl were
+// already commented out. dms/outputs.kdl is now the two output blocks at the
+// top of this file. Nothing is lost by their going.
 
 prefer-no-csd
 

@@ -119,7 +119,7 @@ fi
 NIRI_CONFIG_TMP=$(mktemp)
 cat "$DOTFILES/config/niri/config.kdl" > "$NIRI_CONFIG_TMP"
 if [ "$MACHINE_TYPE" = "laptop" ]; then
-    printf '\ninclude "dms/laptop.kdl"\n' >> "$NIRI_CONFIG_TMP"
+    printf '\ninclude "laptop.kdl"\n' >> "$NIRI_CONFIG_TMP"
 fi
 copy "$NIRI_CONFIG_TMP" "$USER_HOME/.config/niri/config.kdl"
 rm -f "$NIRI_CONFIG_TMP"
@@ -132,32 +132,15 @@ if [ ! -e "$USER_HOME/.config/niri/window-rules-active.kdl" ]; then
     echo "focus" > "$USER_HOME/.config/niri/.window-rules-profile"
 fi
 
-# config.kdl carries an unconditional `include "dms/binds.kdl"`, and niri
-# refuses to load a config whose include is missing — it falls back to its
-# built-in defaults, which looks like "my keybinds vanished". So seed an empty
-# stub when the file is absent. DMS overwrites it freely; our binds live in
-# config.kdl's own binds block.
-#
-# This is not the same situation as the other dms/*.kdl includes. colors.kdl,
-# alttab.kdl, outputs.kdl and cursor.kdl are written automatically on first
-# launch (matugen templates, monitor profiles), and dms.service is a systemd
-# user unit, so DMS starts and generates them even when niri fell back to its
-# defaults — one login later they exist. Don't bother seeding those.
-#
-# binds.kdl is never written unprompted. In DMS's KeybindsService.qml the only
-# writers are saveBind() and fixDmsBindsInclude(), both driven from the
-# keybinds UI, and the repair path returns early when `dmsBindsIncluded` is
-# set — which our include line is what makes true. The line that needs the
-# file is the line that stops DMS from creating it, so without this stub a
-# fresh machine has an invalid niri config on every login until someone
-# happens to save a keybind through the DMS settings tab.
-if [ ! -e "$USER_HOME/.config/niri/dms/binds.kdl" ]; then
-    mkdir -p "$USER_HOME/.config/niri/dms"
-    printf 'binds {\n\n}\n' > "$USER_HOME/.config/niri/dms/binds.kdl"
-    info "Seeded empty $USER_HOME/.config/niri/dms/binds.kdl"
-fi
+# The dms/binds.kdl stub that used to be seeded here is gone with the include
+# that needed it. It existed only because config.kdl carried an unconditional
+# `include "dms/binds.kdl"` and DMS would not create that file until someone
+# saved a keybind through its settings UI — so without the stub, a fresh machine
+# had an invalid niri config on every login. No include, no stub, and nothing
+# recreates ~/.config/niri/dms/ any more.
 
-# Same problem, same fix, for the niri-tasks include. That project owns the
+# niri refuses to load a config whose include is missing — it falls back to its
+# built-in defaults, which looks like "my keybinds vanished". niri-tasks owns the
 # workspace-task binds and symlinks the real file over this stub when it's
 # installed; without the stub, a machine that only has this repo would have a
 # config niri refuses to load.
@@ -239,6 +222,10 @@ STALE_FILES=(
     # The window-rules toggle moved in beside the profiles it switches between,
     # so it installs to window-rules/toggle.sh now.
     ".config/niri/toggle-window-rules.sh"
+    # Dropping DMS moved our laptop binds out of the directory DMS generated
+    # into. config.kdl includes "laptop.kdl" now, so the old copy is dead — and
+    # worse than dead, since it looks exactly like a live config file.
+    ".config/niri/dms/laptop.kdl"
 )
 
 STALE_REMOVED=0

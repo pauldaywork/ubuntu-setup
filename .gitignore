@@ -4,17 +4,9 @@
 # Private scratch notes — local only, deliberately untracked.
 THOUGHTS.md
 
-# DMS auto-generates these per-machine — do not track.
-# binds.kdl is DMS-owned too (its KeybindsService writes the file and adds the
-# matching include to config.kdl). Ours is an empty stub: those binds were
-# folded into config.kdl's own binds block in 6763c3f, and configure.sh
-# seeds the stub so niri's include still resolves.
-config/niri/dms/alttab.kdl
-config/niri/dms/binds.kdl
-config/niri/dms/colors.kdl
-config/niri/dms/cursor.kdl
-config/niri/dms/layout.kdl
-config/niri/dms/outputs.kdl
-config/niri/dms/windowrules.kdl
-config/niri/dms/wpblur.kdl
-config/niri/dms/profiles/
+# The nine config/niri/dms/* exclusions that used to live here are gone with
+# DMS. They existed because DMS regenerated those files per-machine; the two
+# that carried real settings (colors.kdl, alttab.kdl) are now written out in
+# config.kdl, and the rest were empty or unused. config/niri/dms/ no longer
+# exists in this repo — laptop.kdl, the one file in there that was ours, is
+# config/niri/laptop.kdl now.

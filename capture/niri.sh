@@ -22,13 +22,13 @@ if [ ! -f "$LIVE" ]; then
     exit 0
 fi
 
-# configure.sh appends '\ninclude "dms/laptop.kdl"\n' on laptops. That line is
+# configure.sh appends '\ninclude "laptop.kdl"\n' on laptops. That line is
 # machine-specific, so undoing it means dropping the include *and* the one blank
 # line that leading newline created. Stripping every trailing blank instead
 # would eat the two this file legitimately ends with, and commit that churn on
 # every run from a laptop.
 TMP=$(mktemp)
-grep -v '^include "dms/laptop.kdl"$' "$LIVE" \
+grep -v '^include "laptop.kdl"$' "$LIVE" \
   | awk '{lines[NR]=$0} END {last=NR; if (last>0 && lines[last]=="") last--; for(i=1;i<=last;i++) print lines[i]}' \
   > "$TMP" || true
 
@@ -45,8 +45,5 @@ elif confirm_overwrite "$TMP" "$REPO"; then
     captured
 fi
 rm -f "$TMP"
-
-# dms/binds.kdl is deliberately not captured — it is DMS-owned and gitignored,
-# and ours is an empty stub. See .gitignore.
 
 capture_summary
