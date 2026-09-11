@@ -26,11 +26,28 @@ for lib in lib/common.sh lib/manifest.sh; do
     source "$DOTFILES/$lib"
 done
 
-# Step 0 used to remove mako-notifier here, on the grounds that DMS owned
-# notifications and the two fought over the socket. mako is the notification
-# daemon now and is installed from lib/manifest.sh with everything else, so the
-# step is gone rather than inverted — leaving it would have uninstalled mako two
-# steps before apt reinstalled it.
+# ─── 0. Remove DankMaterialShell ──────────────────────────────────────────────
+# This slot used to hold the mirror image of this step: remove mako-notifier,
+# because DMS owned the notification socket and the two fought over it. DMS is
+# the one being superseded now — waybar draws the bar, mako takes the
+# notifications, fuzzel is the launcher, and swww already had the wallpaper.
+#
+# Transitional. A machine installed from scratch today never gets DMS in the
+# first place, so this only does anything on a machine that predates the switch.
+# Once every machine you own has been through one install, delete this step —
+# the mako version of it sat here long after it had any work left to do.
+#
+# Ordered before the PPAs so that a machine still carrying the avengemedia/dms
+# repo has the package gone before `apt update` re-advertises it.
+section "Checking for DankMaterialShell"
+
+if pkg_installed dms; then
+    warn "Removing DankMaterialShell — waybar and mako replace it"
+    warn "  Your bar and notifications will be gone until you log out and back in"
+    sudo apt remove -y dms
+else
+    info "DankMaterialShell not installed"
+fi
 
 # ─── 1. PPAs and external repos ───────────────────────────────────────────────
 section "Adding package repositories"
@@ -339,25 +356,7 @@ tmux source-file "$USER_HOME/.tmux.conf" 2>/dev/null || true
 # actually take effect until something else reloads the config.
 tmux source-file "$USER_HOME/.tmux.conf" 2>/dev/null || true
 
-# ─── 10. DMS plugins ───────────────────────────────────────────────────────────
-section "Installing DMS plugins"
-
-DMS_PLUGIN_DIR="$USER_HOME/.config/DankMaterialShell/plugins"
-mkdir -p "$DMS_PLUGIN_DIR"
-
-install_dms_plugin() {
-    local name="$1" repo="$2"
-    if [ -d "$DMS_PLUGIN_DIR/$name" ]; then
-        info "DMS plugin already installed: $name"
-    else
-        info "Installing DMS plugin: $name"
-        git clone "$repo" "$DMS_PLUGIN_DIR/$name"
-    fi
-}
-
-install_dms_plugin "taskwarrior" "https://github.com/cyrylas/dms-taskwarrior"
-
-# ─── 11. VS Code extensions ───────────────────────────────────────────────────
+# ─── 10. VS Code extensions ───────────────────────────────────────────────────
 section "Installing VS Code extensions"
 
 if [ -s "$DOTFILES/config/Code/extensions.txt" ]; then
@@ -366,7 +365,7 @@ if [ -s "$DOTFILES/config/Code/extensions.txt" ]; then
     done < "$DOTFILES/config/Code/extensions.txt"
 fi
 
-# ─── 12. Git config ───────────────────────────────────────────────────────────
+# ─── 11. Git config ───────────────────────────────────────────────────────────
 section "Git configuration"
 
 if [ -z "$(git config --global user.name 2>/dev/null)" ]; then
@@ -379,7 +378,7 @@ if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
 fi
 git config --global init.defaultBranch main
 
-# ─── 13. SSH key ──────────────────────────────────────────────────────────────
+# ─── 12. SSH key ──────────────────────────────────────────────────────────────
 section "SSH key"
 
 SSH_KEY="$USER_HOME/.ssh/id_ed25519"

@@ -257,12 +257,27 @@ for rel in "${STALE_FILES[@]}"; do
     fi
 done
 
-# The activetask plugin: the active-task readout is a layer-shell overlay owned
-# by niri-tasks now, and the task box is its own window. A directory, so it
-# needs -rf rather than the loop above.
-if [ -d "$USER_HOME/.config/DankMaterialShell/plugins/activetask" ]; then
-    rm -rf "$USER_HOME/.config/DankMaterialShell/plugins/activetask"
+# DankMaterialShell's whole config tree, which subsumes the activetask plugin
+# directory that used to be removed here on its own. A directory, so it needs
+# -rf rather than the loop above.
+#
+# Gated on the package actually being gone. apt leaves ~/.config alone when it
+# removes something, so this is the only thing that will ever clean it up — but
+# running install.sh is what removes the package, and configure.sh is also run
+# on its own, by someone who may still be using DMS and would not thank us for
+# deleting its settings out from under it.
+if [ -d "$USER_HOME/.config/DankMaterialShell" ] && ! pkg_installed dms; then
+    rm -rf "$USER_HOME/.config/DankMaterialShell"
     STALE_REMOVED=$((STALE_REMOVED + 1))
+    info "Removed the leftover ~/.config/DankMaterialShell tree"
+fi
+
+# The other half of DMS's state: session.json (the wallpaper selection, launcher
+# history, night mode, the notepad) under ~/.local/state.
+if [ -d "$USER_HOME/.local/state/DankMaterialShell" ] && ! pkg_installed dms; then
+    rm -rf "$USER_HOME/.local/state/DankMaterialShell"
+    STALE_REMOVED=$((STALE_REMOVED + 1))
+    info "Removed the leftover ~/.local/state/DankMaterialShell tree"
 fi
 
 [ "$STALE_REMOVED" -gt 0 ] && info "Removed $STALE_REMOVED file(s) this repo no longer installs"
