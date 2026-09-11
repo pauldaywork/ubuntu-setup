@@ -19,12 +19,22 @@ SWWW_VERSION="v0.11.2"
 
 # ─── apt ──────────────────────────────────────────────────────────────────────
 APT_PACKAGES=(
-    # window manager + shell — all from the danklinux PPA. ghostty comes from
-    # there too, which is why it isn't a snap: the repo is already configured,
-    # and the deb avoids classic-snap confinement.
+    # window manager. niri and ghostty are from the danklinux PPA, which is why
+    # ghostty isn't a snap: the repo is already configured for niri's sake, and
+    # the deb avoids classic-snap confinement.
     niri
-    dms
     ghostty
+
+    # The bar and the notification daemon, which between them replace what
+    # DankMaterialShell used to do. Both are plain Ubuntu universe packages —
+    # the DMS PPA is gone from install.sh along with `dms` itself.
+    #
+    # mako in particular used to be actively *removed* by install.sh: DMS owned
+    # the notification socket and the two fought over it. Nothing implements
+    # org.freedesktop.Notifications now, so notify-send — which
+    # window-rules/toggle.sh calls on every profile switch — needs it back.
+    waybar
+    mako-notifier
 
     # dmenu-style picker used by open_project_workspace.sh (Mod+Alt+P).
     # Usually pulled in as a niri dependency, but named here so it can't
@@ -45,6 +55,11 @@ APT_PACKAGES=(
 
     # inotify-tools is what wallpaper-sync.sh watches the DMS session file with,
     # so it's a runtime dependency of the wallpaper setup, not a build one.
+    #
+    # It goes when wallpaper-sync.sh does. That script only exists to carry
+    # DMS's wallpaper choice across to swww, so it is on the way out — but it is
+    # still deployed and still running, and dropping its dependency from the
+    # manifest before dropping the script would just make doctor.sh wrong.
     inotify-tools
 
     # apps (from external repos)

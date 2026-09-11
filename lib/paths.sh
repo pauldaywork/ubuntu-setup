@@ -18,10 +18,14 @@
 # kinds:
 #   copy      plain file. Copied out, pulled back.
 #   exec      as copy, plus the executable bit on the way out.
-#   merge     the app owns the live file and grows keys in it, so deploying
-#             merges rather than replaces (see merge_json). Pulled back whole.
 #   laptop    only deployed on laptops. Nothing captures it back: it is a file
 #             you edit in the repo, and a desktop has no copy to capture anyway.
+#
+# There used to be a fourth, `merge`, for a file the app owned and grew keys in
+# — deploying merged rather than replaced so a re-install couldn't delete every
+# key the repo's snapshot predated. Only DankMaterialShell's two settings files
+# ever used it, and it went with them: waybar and mako read what we write and
+# write nothing back. merge_json in lib/common.sh went at the same time.
 #
 # ─── deliberately NOT in here ─────────────────────────────────────────────────
 #
@@ -35,7 +39,7 @@
 #   the seeded stubs         niri-tasks.kdl, window-rules-active
 #                            — created only when absent, never overwritten
 #
-# If you find yourself adding a fifth kind, that is the signal to write the step
+# If you find yourself adding a fourth kind, that is the signal to write the step
 # out longhand instead.
 
 DOTFILES_MAP=(
@@ -64,13 +68,12 @@ DOTFILES_MAP=(
     # ghostty — its `command =` line is rewritten after deploy
     "config/ghostty/config.ghostty|.config/ghostty/config.ghostty|copy"
 
-    # DankMaterialShell — settings.json and plugin_settings.json are merged, not
-    # replaced: DMS grows keys in them with each release and a flat copy would
-    # delete every key our snapshot predates.
-    "config/DankMaterialShell/settings.json|.config/DankMaterialShell/settings.json|merge"
-    "config/DankMaterialShell/plugin_settings.json|.config/DankMaterialShell/plugin_settings.json|merge"
-    "config/DankMaterialShell/firefox.css|.config/DankMaterialShell/firefox.css|copy"
-    "config/DankMaterialShell/themes/peaceAndQuiet/theme.json|.config/DankMaterialShell/themes/peaceAndQuiet/theme.json|copy"
+    # waybar + mako — what replaced DankMaterialShell. Plain copies, which is
+    # the whole difference: nothing writes to these but us, so there is no
+    # settings file growing keys underneath the repo and no merge to do.
+    "config/waybar/config.jsonc|.config/waybar/config.jsonc|copy"
+    "config/waybar/style.css|.config/waybar/style.css|copy"
+    "config/mako/config|.config/mako/config|copy"
 
     # VS Code — note the live path is not the repo path
     "config/Code/settings.json|.config/Code/User/settings.json|copy"

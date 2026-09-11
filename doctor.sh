@@ -92,12 +92,10 @@ else
     note "  Start with: sudo systemctl enable --now docker"
 fi
 
-if pkg_installed mako-notifier; then
-    issue "mako-notifier is installed but no longer used (superseded by DMS notifications)"
-    note "  Remove with: sudo apt remove -y mako-notifier"
-else
-    ok "mako-notifier not installed (as expected)"
-fi
+# mako used to be checked here in the negative — "installed but no longer used,
+# remove it" — because DMS owned notifications and the two fought over the
+# socket. It is in APT_PACKAGES now, so the loop above checks it like any other
+# package and a second opinion here would only contradict it.
 
 for entry in "${SNAP_PACKAGES[@]}"; do
     pkg="${entry%%:*}"
@@ -170,7 +168,6 @@ fi
 # differ from the repo's and comparing them would report drift forever:
 #
 #   ghostty  its `command =` line becomes `wt tmux-session` when wt is on PATH
-#   DMS      settings.json has customThemeFile rewritten (already skipped: merge)
 #
 # Presence is still checked; only the content comparison is skipped.
 is_post_processed() {
@@ -199,10 +196,11 @@ for _row in "${DOTFILES_MAP[@]}"; do
         issue "Not installed: ~/$HOME_PATH"
         note "  Install with: bash configure.sh"
         MISSING=$((MISSING + 1))
-    elif [ "$KIND" != merge ] && ! is_post_processed "$HOME_PATH" \
-         && ! cmp -s "$_live" "$_repo"; then
-        # merge rows are expected to differ — the live file carries keys our
-        # snapshot has never heard of, which is the whole reason they're merged.
+    elif ! is_post_processed "$HOME_PATH" && ! cmp -s "$_live" "$_repo"; then
+        # Every row is a plain copy now, so every row is expected to match
+        # byte-for-byte. The `merge` exemption that used to be here covered
+        # DankMaterialShell's two settings files, whose live copies legitimately
+        # carried keys the repo's snapshot had never heard of.
         note "Differs from the repo: ~/$HOME_PATH"
         DRIFTED=$((DRIFTED + 1))
     fi

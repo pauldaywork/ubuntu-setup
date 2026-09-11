@@ -1,0 +1,112 @@
+/* Bar styling.
+ *
+ * The palette is lifted from the DankMaterialShell theme this setup used, the
+ * "Peace & Quiet" dark variant with the salmon accent, so the bar still looks
+ * like the rest of the desktop after DMS itself is gone. Those values were
+ * previously read live out of theme.json by DMS, and generated into niri by
+ * matugen; here they are written down.
+ *
+ * Note what this costs: matugen used to re-derive the whole palette from the
+ * current wallpaper, so the desktop retinted itself when the wallpaper changed.
+ * Nothing does that now. These are fixed colours. */
+
+@define-color background   #09070d;
+@define-color surface      #130f1a;
+@define-color surfaceHigh  #221f26;
+@define-color text         #f0f0f0;
+@define-color muted        #d9bcb8;
+@define-color primary      #eda792;
+@define-color secondary    #49ccd2;
+@define-color warning      #fab387;
+@define-color error        #f38ba8;
+
+* {
+    /* Same family and size as the terminal, so the bar and a full-screen
+     * ghostty do not disagree about what 10pt looks like. */
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px;
+    border: none;
+    border-radius: 0;
+    min-height: 0;
+}
+
+window#waybar {
+    /* Translucent to match ghostty's background-opacity = 0.5 and the blurred
+     * background-effect the window-rules profiles give every window. */
+    background-color: alpha(@background, 0.72);
+    color: @text;
+    border-radius: 8px;
+}
+
+/* The bar is not exclusive (see config.jsonc), so it floats in the strut band
+ * rather than being clipped to a hard edge. Rounded corners and the margins in
+ * config.jsonc are what make that read as deliberate. */
+
+#workspaces {
+    padding: 0 4px;
+}
+
+#workspaces button {
+    padding: 0 10px;
+    margin: 4px 2px;
+    color: @muted;
+    background-color: transparent;
+    border-radius: 6px;
+}
+
+#workspaces button.focused,
+#workspaces button.active {
+    color: @background;
+    background-color: @primary;
+}
+
+#workspaces button.urgent {
+    color: @background;
+    background-color: @error;
+}
+
+#workspaces button:hover {
+    background-color: @surfaceHigh;
+    color: @text;
+}
+
+#window {
+    color: @muted;
+    padding: 0 10px;
+}
+
+/* An empty workspace has no window to name, and an empty centre module leaves
+ * a stray background block without this. */
+window#waybar.empty #window {
+    background-color: transparent;
+}
+
+#tray,
+#backlight,
+#pulseaudio,
+#network,
+#battery,
+#clock {
+    padding: 0 10px;
+    margin: 4px 2px;
+    background-color: @surface;
+    border-radius: 6px;
+}
+
+#clock {
+    color: @text;
+    background-color: @surfaceHigh;
+}
+
+#battery.warning  { color: @warning; }
+#battery.critical { color: @error; }
+
+#pulseaudio.muted,
+#network.disconnected {
+    color: @muted;
+}
+
+#tray menu {
+    background-color: @surface;
+    color: @text;
+}

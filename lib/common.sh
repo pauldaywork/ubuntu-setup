@@ -56,7 +56,7 @@ snap_install_entry() {
 }
 
 # ─── moving config files about ────────────────────────────────────────────────
-# copy/backup_existing/merge_json used to live in configure.sh and
+# copy/backup_existing used to live in configure.sh and
 # pull/confirm_overwrite in update.sh — inverse operations on the same files,
 # split across two scripts that shared no line between them. update.sh is gone;
 # the pull half is now used by capture/, which writes machine → repo,
@@ -98,85 +98,18 @@ copy() {
     info "Copied $dst"
 }
 
-# For config files the *app* owns and rewrites as it gains features — DMS's
-# settings.json above all. Its live file grows keys and climbs a configVersion
-# with each release, while the copy in this repo is a snapshot from whenever
-# capture/dms-settings.sh last ran. Copying ours flat over the top deletes every key our
-# snapshot has never heard of: on this machine that was 147 of them, including
-# the display profiles and the whole battery section.
+# merge_json lived here, for config files the *app* owned and rewrote as it
+# gained features. DankMaterialShell's settings.json was the only real case: its
+# live file grew keys and climbed a configVersion with each release, while the
+# repo carried a snapshot from whenever capture/dms-settings.sh last ran, so
+# copying ours flat over the top deleted every key our snapshot had never heard
+# of — 147 of them on this machine, including the display profiles and the whole
+# battery section. Merging kept those.
 #
-# So merge rather than replace. Our value wins for every key we actually carry
-# (that's the point of installing), and anything only the live file has is left
-# where it is.
-#
-# configVersion is deliberately *not* max()'d — it comes from our file, i.e. the
-# older number. That makes DMS re-run its migrations over the merged result on
-# next load, which is what forward-migrates the stale-shaped values our snapshot
-# contributed (ours still carries the pre-v13 `*Pins` keys, which migration 13
-# moves out to cache.json). Re-running those migrations over already-current
-# keys is safe: each one is either guarded on a key that no longer exists or a
-# plain delete.
-#
-# Only top-level keys are merged. Nested structures like barConfigs are replaced
-# wholesale, which is right — the bar layout is exactly the thing being
-# installed — and DMS defaults any per-bar key our snapshot predates.
-merge_json() {
-    local src="$1" dst="$2"
-    mkdir -p "$(dirname "$dst")"
-
-    if [ ! -f "$dst" ]; then
-        cp "$src" "$dst"
-        info "Copied $dst (no existing file to merge with)"
-        return
-    fi
-
-    # Merged into a temp file first, so a merge that changes nothing — the usual
-    # case on a machine already in sync — neither rewrites the live file nor
-    # leaves a backup copy of it behind.
-    #
-    # stderr is dropped so a malformed live file reports as the warning below
-    # rather than as a python traceback in the middle of the install output.
-    local merged_tmp merge_summary
-    merged_tmp=$(mktemp)
-
-    if merge_summary=$(python3 - "$src" "$dst" "$merged_tmp" 2>/dev/null <<'PYEOF'
-import json, sys
-
-src, dst, out = sys.argv[1], sys.argv[2], sys.argv[3]
-
-with open(src) as f:
-    ours = json.load(f)
-with open(dst) as f:
-    live = json.load(f)
-
-merged = dict(live)
-merged.update(ours)
-
-with open(out, "w") as f:
-    json.dump(merged, f, indent=2)
-
-kept = len(set(live) - set(ours))
-print(f"{len(ours)} key(s) applied, {kept} live-only key(s) preserved")
-PYEOF
-    ); then
-        if cmp -s "$merged_tmp" "$dst"; then
-            info "Unchanged $dst — $merge_summary"
-        else
-            backup_existing "$dst"
-            cat "$merged_tmp" > "$dst"
-            info "Merged $dst — $merge_summary"
-        fi
-    else
-        # A live file that isn't valid JSON can't be merged into. Backing it up
-        # first makes replacing it recoverable, which beats leaving the machine
-        # with settings that were never installed.
-        warn "Could not merge $dst (unreadable JSON?) — replacing it instead"
-        backup_existing "$dst"
-        cp "$src" "$dst"
-    fi
-
-    rm -f "$merged_tmp"
-}
+# It went with DMS. waybar and mako read what this repo writes and write nothing
+# back, so a plain copy() is both correct and honest about who owns the file. If
+# something that owns its own config shows up again, this is in the git history
+# rather than gone.
 
 # ─── pulling back (used by capture/) ──────────────────────────────────────────
 # A repo file that matches HEAD is always recoverable with `git checkout`, so it

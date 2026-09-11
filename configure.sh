@@ -39,7 +39,6 @@ for _row in "${DOTFILES_MAP[@]}"; do
     case "$KIND" in
         copy)  copy "$_src" "$_dst" ;;
         exec)  copy "$_src" "$_dst"; chmod +x "$_dst" ;;
-        merge) merge_json "$_src" "$_dst" ;;
         # Deployed only on laptops, and MACHINE_TYPE is not settled until below,
         # so that row is applied there instead.
         laptop) ;;
@@ -182,10 +181,10 @@ fi
 sed -i "s|^command = .*|command = $GHOSTTY_COMMAND|" \
     "$USER_HOME/.config/ghostty/config.ghostty"
 
-# DankMaterialShell — merged, not copied, so a re-install doesn't roll the live
-# settings back to whenever capture/dms-settings.sh last ran. See merge_json.
-sed -i "s|\"customThemeFile\": \".*\"|\"customThemeFile\": \"$USER_HOME/.config/DankMaterialShell/themes/peaceAndQuiet/theme.json\"|" \
-    "$USER_HOME/.config/DankMaterialShell/settings.json"
+# The DankMaterialShell theme path rewrite that used to follow is gone with the
+# settings file it edited. waybar and mako need no post-processing: their colours
+# are written literally into config/waybar/style.css and config/mako/config,
+# because there is no longer anything generating a palette to point at.
 
 # ─── Files this repo used to install and no longer does ───────────────────────
 # Deleting a file from the repo does not delete it from a machine that already

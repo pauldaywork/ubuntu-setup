@@ -26,17 +26,11 @@ for lib in lib/common.sh lib/manifest.sh; do
     source "$DOTFILES/$lib"
 done
 
-# ─── 0. Remove mako ───────────────────────────────────────────────────────────
-# DMS now owns notifications, so a leftover mako install fights it for the
-# notification socket. Strip it before anything else runs.
-section "Checking for mako"
-
-if pkg_installed mako-notifier; then
-    info "Removing mako-notifier (superseded by DMS notifications)"
-    sudo apt remove -y mako-notifier
-else
-    info "mako-notifier not installed"
-fi
+# Step 0 used to remove mako-notifier here, on the grounds that DMS owned
+# notifications and the two fought over the socket. mako is the notification
+# daemon now and is installed from lib/manifest.sh with everything else, so the
+# step is gone rather than inverted — leaving it would have uninstalled mako two
+# steps before apt reinstalled it.
 
 # ─── 1. PPAs and external repos ───────────────────────────────────────────────
 section "Adding package repositories"
@@ -51,8 +45,10 @@ add_ppa() {
     fi
 }
 
+# niri and ghostty. The avengemedia/dms PPA that used to be added alongside this
+# one is gone with the `dms` package; waybar and mako-notifier both come from
+# Ubuntu universe and need no repo of their own.
 add_ppa "danklinux (niri)" "avengemedia/danklinux"
-add_ppa "dms (DankMaterialShell bar)" "avengemedia/dms"
 
 sudo mkdir -p /etc/apt/keyrings
 

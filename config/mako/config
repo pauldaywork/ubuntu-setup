@@ -1,0 +1,54 @@
+# Notifications. Replaces DankMaterialShell's notification service.
+#
+# install.sh used to *remove* mako as step 0, because DMS owned the notification
+# socket and the two fought over it. That step is gone and mako is in
+# lib/manifest.sh instead: with DMS uninstalled, nothing else implements the
+# org.freedesktop.Notifications interface and notify-send would silently no-op.
+# window-rules/toggle.sh calls notify-send on every profile switch, so that is
+# immediately visible.
+#
+# What does not come back: DMS kept a notification *history* you could reopen
+# and scroll. mako has `makoctl restore`, which brings back the most recently
+# dismissed notification and nothing more. If the history mattered, that is the
+# thing to go looking for a replacement for.
+
+# Palette matches config/waybar/style.css — the "Peace & Quiet" dark theme with
+# the salmon accent that DMS was themed with. See the note there about matugen:
+# these no longer retint with the wallpaper.
+background-color=#130f1aee
+text-color=#f0f0f0
+border-color=#eda792
+progress-color=over #221f26
+
+font=Noto Sans 10
+border-size=2
+border-radius=8
+padding=12
+margin=8
+default-timeout=6000
+
+# Top right, clear of the bar. The bar is 40px tall with an 8px top margin and
+# sits in a 60px strut band (see config/niri/window-rules/*.kdl), so anything
+# less than ~56 here overlaps it.
+anchor=top-right
+layer=overlay
+width=380
+height=160
+max-visible=5
+
+# Ghostty is translucent and the desktop behind it is often a busy animated GIF,
+# so notifications need to be legible against anything.
+[urgency=low]
+border-color=#d9bcb8
+default-timeout=4000
+
+[urgency=normal]
+border-color=#eda792
+
+# Critical notifications do not time out on their own — that is the whole point
+# of the urgency level, and mako's default of honouring the timeout anyway is
+# the wrong call for things like "battery about to die".
+[urgency=critical]
+border-color=#f38ba8
+text-color=#f38ba8
+default-timeout=0
