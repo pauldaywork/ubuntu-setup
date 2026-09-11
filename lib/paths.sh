@@ -1,10 +1,16 @@
 # The one list of what this repo deploys, and where.
 #
 # configure.sh reads it left-to-right (repo → live) and doctor.sh reads it to
-# check the two still agree. The capture/ scripts read it right-to-left, but only
-# for the few files a GUI or package manager owns — see capture/common.sh. Before this file those three each carried their own copy of the list:
-# 19 of the pairs were written out twice and a further 13 paths were spelled
-# again in doctor.sh, so keeping them in step was a manual job.
+# check the two still agree. Before this file those two each carried their own
+# copy of the list: 19 of the pairs were written out twice and a further 13
+# paths were spelled again in doctor.sh, so keeping them in step was a manual
+# job.
+#
+# The capture/ scripts used to read it right-to-left as well, for the handful of
+# files a GUI owned. That was DankMaterialShell's settings, and with those gone
+# every row here is now written by this repo and only by this repo — capture/
+# deals exclusively in things that aren't in the table at all (config.kdl, the
+# wallpaper images, the VS Code extension list, the package manifest).
 #
 # It had already gone wrong. `config/niri/dms/laptop.kdl` was deployed by
 # configure.sh, was not in .gitignore, and was never pulled back — so on a

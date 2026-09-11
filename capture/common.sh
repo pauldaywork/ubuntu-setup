@@ -6,11 +6,17 @@
 # authoritative, which is what the old update.sh was.
 #
 # The rule for whether something belongs in capture/: the change must only be
-# makeable on the machine — a GUI, a package manager, a daemon writing state.
-# Anything you would change in a text editor should be edited in the repo and
-# deployed with configure.sh instead. That is why there is no capture script for
-# .bashrc, the window-rules or the theme: 14 of the 17 managed files are
-# byte-identical to the repo precisely because nothing edits them out here.
+# makeable on the machine — a package manager, a daemon writing state, a live
+# compositor you tried something against. Anything you would change in a text
+# editor should be edited in the repo and deployed with configure.sh instead.
+# That is why there is no capture script for .bashrc or the window-rules.
+#
+# All 15 files in lib/paths.sh are now written by this repo and only by this
+# repo, so none of them is captured and nothing here reads that table any more.
+# Dropping DankMaterialShell is what did it: its settings.json was the one live
+# file a GUI owned, and capture/dms-settings.sh existed for it alone. What is
+# left in here deals only in things the table never held — the niri config, the
+# wallpaper images and selection, the VS Code extension list, the apt manifest.
 #
 # Sourced with:
 #   DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -18,16 +24,12 @@
 
 set -uo pipefail
 
-for _lib in common paths; do
-    if [ ! -f "$DOTFILES/lib/$_lib.sh" ]; then
-        echo "Missing $DOTFILES/lib/$_lib.sh — run this from a full clone of the repo" >&2
-        exit 1
-    fi
-done
+if [ ! -f "$DOTFILES/lib/common.sh" ]; then
+    echo "Missing $DOTFILES/lib/common.sh — run this from a full clone of the repo" >&2
+    exit 1
+fi
 # shellcheck source=/dev/null
 source "$DOTFILES/lib/common.sh"
-# shellcheck source=/dev/null
-source "$DOTFILES/lib/paths.sh"
 
 # ─── flags ────────────────────────────────────────────────────────────────────
 # --yes overwrites uncommitted repo edits without asking; see confirm_overwrite

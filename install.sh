@@ -216,10 +216,13 @@ else
 fi
 
 # ─── swww (animated wallpaper daemon) ─────────────────────────────────────────
-# DMS renders wallpapers with a QML Image, which shows one still frame of a GIF,
-# and upstream won't animate it in-shell (DankMaterialShell#793). So the shell's
-# own wallpaper layer is disabled in its settings.json and swww draws the
-# background instead — see wallpaper/wallpaper-sync.sh for the whole picture.
+# niri draws no background of its own, so something has to. swww is the choice
+# because most of this collection is animated GIFs and swww is what animates
+# them — swaybg and friends show a single still frame.
+#
+# It originally arrived to work around DMS, which rendered wallpapers with a QML
+# Image that decoded one frame and whose upstream declined to animate it in-shell
+# (DankMaterialShell#793). DMS is gone; the GIFs are the reason now.
 #
 # Not on crates.io and not packaged for Ubuntu, so it's installed from the git
 # tag. Both binaries are needed: swww-daemon holds the layer surface, swww is

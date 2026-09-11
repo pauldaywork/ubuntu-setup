@@ -6,8 +6,14 @@
 # Two separate things, both machine-only:
 #   - images you have added to ~/Documents/Wallpapers, which have no other route
 #     into the repo
-#   - which one DMS currently has selected, recorded in wallpaper/active so a
-#     fresh machine boots the same background
+#   - which one is selected, recorded in wallpaper/active so a fresh machine
+#     boots the same background
+#
+# The second half used to read DMS's session.json, because its picker owned the
+# selection. Changing wallpaper is now "point ~/.config/niri/wallpaper-active at
+# another image and restart swww-daemon", which is still a change made on the
+# machine rather than in the repo — so this still has a job, it just reads a
+# one-line file instead of picking a key out of someone else's JSON.
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$DOTFILES/capture/common.sh"
@@ -28,9 +34,10 @@ if [ -d "$LIVE_DIR" ]; then
     for wall in "$LIVE_DIR"/*; do
         [ -f "$wall" ] || continue
         name="$(basename "$wall")"
-        # Image types only — the same list DMS's picker filters on. Without it,
-        # anything that lands in the folder gets committed: a .DS_Store, a stray
-        # zip, the __MACOSX leftovers out of an unzipped download.
+        # Image types only. Without this, anything that lands in the folder gets
+        # committed: a .DS_Store, a stray zip, the __MACOSX leftovers out of an
+        # unzipped download. The list was originally copied from DMS's picker
+        # filter and is kept as-is — swww reads rather more than it rejects.
         case "${name,,}" in
             *.jpg|*.jpeg|*.png|*.bmp|*.gif|*.webp|*.jxl|*.avif|*.heif|*.exr) ;;
             *) continue ;;
@@ -53,9 +60,9 @@ fi
 
 # ─── which one is selected ────────────────────────────────────────────────────
 # configure.sh reads this rather than carrying a hardcoded filename.
-SESSION="$HOME/.local/state/DankMaterialShell/session.json"
-if [ -f "$SESSION" ]; then
-    SELECTED=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('wallpaperPath',''))" "$SESSION" 2>/dev/null || true)
+SELECTION="$HOME/.config/niri/wallpaper-active"
+if [ -s "$SELECTION" ]; then
+    SELECTED="$(head -n1 "$SELECTION")"
     if [ -n "$SELECTED" ] && [ -f "$SELECTED" ]; then
         name="$(basename "$SELECTED")"
         # A wallpaper picked from outside ~/Documents/Wallpapers won't have been
@@ -80,9 +87,12 @@ if [ -f "$SESSION" ]; then
             info "Recorded active wallpaper: $name"
             captured
         fi
+    else
+        warn "$SELECTION names a file that doesn't exist: $SELECTED"
     fi
 else
-    warn "No DMS session file — cannot tell which wallpaper is selected"
+    warn "No wallpaper selected — $SELECTION is missing or empty"
+    warn "  Select one with: bash configure.sh"
 fi
 
 capture_summary
