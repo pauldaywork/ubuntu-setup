@@ -401,10 +401,16 @@ fi
 section "Setup complete"
 echo ""
 info "Manual steps remaining:"
-echo "  1. Reboot (or log out and back in) to start niri + DMS"
+echo "  1. Reboot (or log out and back in) to start niri"
 echo "  2. Run 'claude' to log into Claude Code"
 echo "  3. Log into Firefox, Chrome, Obsidian as needed"
 echo "  4. Run 'bash extra.sh' if you want Steam, OpenCode, LM Studio, or NVIDIA drivers"
 echo ""
-warn "DMS auto-generates its niri config files (colors.kdl, layout.kdl, outputs.kdl) on first launch"
-warn "Monitor layout (outputs.kdl) will be detected automatically for the new hardware"
+# This used to promise the opposite: DMS generated colors.kdl/layout.kdl and
+# wrote outputs.kdl from detected hardware, so a new machine configured its own
+# monitors. Nothing does that now — the outputs are written out in config.kdl —
+# and a new machine that silently runs at the wrong resolution is a much harder
+# thing to notice than a line of install output saying it might.
+warn "Monitor layout is NOT auto-detected: config/niri/config.kdl names this"
+warn "setup's outputs and modes explicitly. On different hardware, check"
+warn "'niri msg outputs' and edit the output blocks to match."

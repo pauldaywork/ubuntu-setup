@@ -1,11 +1,12 @@
 [Unit]
 Description=swww wallpaper daemon
 Documentation=https://github.com/LGFae/swww
-# DMS's own wallpaper layer is disabled (screenPreferences.wallpaper in its
-# settings.json), so this holds the background surface for the whole session.
-# Modelled on dms.service: tied to the compositor's lifetime, and Requisite
-# means it refuses to start rather than sitting there failing if there is no
-# graphical session to draw on.
+# Nothing else draws a background: niri paints none of its own, and the
+# DankMaterialShell wallpaper layer this used to coexist with is gone. So this
+# unit holds the background surface for the whole session.
+#
+# Tied to the compositor's lifetime, and Requisite means it refuses to start
+# rather than sitting there failing if there is no graphical session to draw on.
 PartOf=graphical-session.target
 After=graphical-session.target
 Requisite=graphical-session.target
@@ -20,15 +21,16 @@ RestartSec=2
 TimeoutStopSec=10
 
 # A daemon that comes back restores its *own* cache, which is whatever it last
-# drew — not necessarily what DMS has selected since. Nothing writes
-# session.json when that happens, so wallpaper-sync has no event to react to and
-# the two would sit there disagreeing. Kicking it here is that missing event;
-# it repaints as it starts up.
+# drew rather than what is currently selected. Painting here, on every start,
+# is what keeps the two from disagreeing — and it is now the only place the
+# wallpaper is painted at all.
 #
-# --no-block because this runs while the daemon is still activating, and
-# wallpaper-sync is ordered After= it: waiting for that job to finish would
-# deadlock the two against each other.
-ExecStartPost=systemctl --user --no-block try-restart wallpaper-sync.service
+# This used to kick wallpaper-sync.service, a second unit running a watch loop
+# over DMS's session.json. With the selection in a file this repo writes, there
+# is nothing to watch and no second unit: wallpaper-apply.sh reads the path and
+# paints it. It handles the race against this daemon's socket itself, so it can
+# be called directly rather than through another systemd job.
+ExecStartPost=%h/.config/niri/wallpaper-apply.sh
 
 [Install]
 WantedBy=graphical-session.target

@@ -295,7 +295,8 @@ for rel in \
     ".config/niri/create_named_workspace.sh" ".config/niri/rename_workspace.sh" \
     ".config/niri/default_workspace_name.sh" ".config/niri/open_project_workspace.sh" \
     ".config/niri/tmux-niri-session.sh" ".config/niri/toggle-window-rules.sh" \
-    ".config/fuzzel/project-picker.ini" ".config/niri/dms/laptop.kdl"
+    ".config/fuzzel/project-picker.ini" ".config/niri/dms/laptop.kdl" \
+    ".config/niri/wallpaper-sync.sh" ".config/systemd/user/wallpaper-sync.service"
 do
     [ -e "$HOME/$rel" ] && STALE_ON_DISK+=("$rel")
 done
@@ -312,10 +313,11 @@ else
     ok "No leftovers from past moves"
 fi
 
-# Wallpapers. Three things have to agree or the desktop goes black: swww has to
-# be installed and running, DMS's own wallpaper layer has to stay disabled (it
-# would paint a still frame over the top), and wallpaper-sync.sh has to be alive
-# to carry picker changes across.
+# Wallpapers. Two things have to agree or the desktop goes black: swww has to be
+# installed and running, and what it has on screen has to be what
+# wallpaper-active names. There used to be a third — DMS's own wallpaper layer
+# had to stay disabled or it would paint a still frame over the top — and a
+# second unit to keep alive.
 if command -v swww &>/dev/null && command -v swww-daemon &>/dev/null; then
     ok "swww installed ($(swww --version 2>/dev/null))"
 else
@@ -323,61 +325,68 @@ else
     note "  Install with: cargo install --git https://github.com/LGFae/swww --tag $SWWW_VERSION --locked swww swww-daemon"
 fi
 
-# Both run as systemd user units, so ask systemd rather than looking for the
-# processes: it distinguishes "never installed" from "enabled but crashed", and
+# It runs as a systemd user unit, so ask systemd rather than looking for the
+# process: it distinguishes "never installed" from "enabled but crashed", and
 # knows which one to tell you to look at.
-for unit in swww-daemon wallpaper-sync; do
-    if [ ! -f "$HOME/.config/systemd/user/$unit.service" ]; then
-        issue "$unit.service not installed"
-        note "  Install with: bash configure.sh"
-    elif ! systemctl --user is-enabled --quiet "$unit.service" 2>/dev/null; then
-        issue "$unit.service is not enabled — it won't start at next login"
-        note "  Enable with: systemctl --user enable --now $unit.service"
-    elif systemctl --user is-active --quiet "$unit.service" 2>/dev/null; then
-        ok "$unit.service running"
-    else
-        issue "$unit.service is enabled but not running"
-        note "  Look at why with: systemctl --user status $unit.service"
-        note "  Start with: systemctl --user start $unit.service"
-    fi
-done
+unit=swww-daemon
+if [ ! -f "$HOME/.config/systemd/user/$unit.service" ]; then
+    issue "$unit.service not installed"
+    note "  Install with: bash configure.sh"
+elif ! systemctl --user is-enabled --quiet "$unit.service" 2>/dev/null; then
+    issue "$unit.service is not enabled — it won't start at next login"
+    note "  Enable with: systemctl --user enable --now $unit.service"
+elif systemctl --user is-active --quiet "$unit.service" 2>/dev/null; then
+    ok "$unit.service running"
+else
+    issue "$unit.service is enabled but not running"
+    note "  Look at why with: systemctl --user status $unit.service"
+    note "  Start with: systemctl --user start $unit.service"
+fi
 
-# The end-to-end check: what swww has on screen should be what DMS thinks is
-# selected. Those two diverging is the whole failure mode this setup guards
-# against — a paint missed while the daemon was down leaves the screen on swww's
-# cached image forever — and nothing else here would catch it. Skipped when
-# per-monitor wallpapers are on, since then there's no single right answer.
-DMS_SESSION="$HOME/.local/state/DankMaterialShell/session.json"
-if [ -f "$DMS_SESSION" ] && command -v swww &>/dev/null \
+# The painter itself. It is an ExecStartPost rather than its own unit, so
+# systemd will not report it missing — but a swww-daemon that starts with no
+# script to paint from comes up showing whatever it last cached, or nothing.
+if [ ! -x "$HOME/.config/niri/wallpaper-apply.sh" ]; then
+    issue "wallpaper-apply.sh missing or not executable — swww-daemon has nothing to paint"
+    note "  Install with: bash configure.sh"
+fi
+
+# The end-to-end check: what swww has on screen should be what wallpaper-active
+# names. Those two diverging is the whole failure mode this setup guards against
+# — a paint missed while the daemon was down leaves the screen on swww's cached
+# image forever — and nothing else here would catch it.
+#
+# This used to compare against DMS's session.json, and needed Python to pick the
+# right key out of it: the selection moved between wallpaperPath, a per-mode
+# variant and a per-monitor map depending on two other settings, and the
+# per-monitor case had no single right answer to compare against at all. One
+# path in one file has none of those shapes.
+#
+# The DMS check that used to follow — that its built-in wallpaper layer stayed
+# disabled, or it would paint a still frame over swww — has nothing left to
+# check.
+WALLPAPER_ACTIVE="$HOME/.config/niri/wallpaper-active"
+if [ -f "$WALLPAPER_ACTIVE" ] && command -v swww &>/dev/null \
    && systemctl --user is-active --quiet swww-daemon.service 2>/dev/null; then
-    WANTED=$(python3 -c "
-import json, sys
-d = json.load(open('$DMS_SESSION'))
-print('' if d.get('perMonitorWallpaper') else d.get('wallpaperPath', ''))" 2>/dev/null || true)
+    WANTED="$(head -n1 "$WALLPAPER_ACTIVE")"
     ON_SCREEN=$(swww query 2>/dev/null | sed -n 's/.*currently displaying: image: //p' | sort -u)
 
     if [ -z "$WANTED" ]; then
-        :   # per-monitor wallpapers, or nothing selected — nothing to compare
+        issue "$WALLPAPER_ACTIVE is empty — no wallpaper is selected"
+        note "  Select one with: bash configure.sh"
+    elif [ ! -f "$WANTED" ]; then
+        issue "The selected wallpaper no longer exists: $WANTED"
+        note "  Re-select one with: bash configure.sh"
     elif [ -z "$ON_SCREEN" ]; then
         issue "swww isn't displaying an image — the desktop background is blank"
         note "  Repaint with: systemctl --user restart swww-daemon.service"
     elif [ "$ON_SCREEN" = "$WANTED" ]; then
-        ok "Wallpaper on screen matches DMS's selection ($(basename "$WANTED"))"
+        ok "Wallpaper on screen matches the selection ($(basename "$WANTED"))"
     else
-        issue "Wallpaper on screen isn't the one DMS has selected"
-        note "  DMS wants:  $WANTED"
+        issue "Wallpaper on screen isn't the selected one"
+        note "  Selected:   $WANTED"
         note "  On screen:  $ON_SCREEN"
         note "  Repaint with: systemctl --user restart swww-daemon.service"
-    fi
-fi
-
-DMS_SETTINGS="$HOME/.config/DankMaterialShell/settings.json"
-if [ -f "$DMS_SETTINGS" ]; then
-    if python3 -c "import json,sys; d=json.load(open('$DMS_SETTINGS')); sys.exit(0 if d.get('screenPreferences',{}).get('wallpaper') == [] else 1)" 2>/dev/null; then
-        ok "DMS built-in wallpapers disabled (swww owns the background)"
-    else
-        issue "DMS built-in wallpapers are enabled — they'll cover swww with a still frame"
-        note "  Fix in Settings → Wallpaper → Disable Built-in Wallpapers, or re-run configure.sh"
     fi
 fi
 

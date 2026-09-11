@@ -61,9 +61,8 @@ DOTFILES_MAP=(
 
     # wallpaper — one directory in the repo, three destinations on disk, which
     # is exactly why it is a feature directory rather than part of the mirror.
-    "wallpaper/wallpaper-sync.sh|.config/niri/wallpaper-sync.sh|exec"
+    "wallpaper/apply.sh|.config/niri/wallpaper-apply.sh|exec"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
-    "wallpaper/wallpaper-sync.service|.config/systemd/user/wallpaper-sync.service|copy"
 
     # ghostty — its `command =` line is rewritten after deploy
     "config/ghostty/config.ghostty|.config/ghostty/config.ghostty|copy"

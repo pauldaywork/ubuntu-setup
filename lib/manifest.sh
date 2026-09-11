@@ -53,14 +53,9 @@ APT_PACKAGES=(
     libudev-dev
     util-linux-extra
 
-    # inotify-tools is what wallpaper-sync.sh watches the DMS session file with,
-    # so it's a runtime dependency of the wallpaper setup, not a build one.
-    #
-    # It goes when wallpaper-sync.sh does. That script only exists to carry
-    # DMS's wallpaper choice across to swww, so it is on the way out — but it is
-    # still deployed and still running, and dropping its dependency from the
-    # manifest before dropping the script would just make doctor.sh wrong.
-    inotify-tools
+    # inotify-tools was here for wallpaper-sync.sh, which watched DMS's session
+    # file to follow the wallpaper picker. Both are gone: the selection is a
+    # path in a file this repo writes, so nothing watches anything.
 
     # apps (from external repos)
     taskwarrior

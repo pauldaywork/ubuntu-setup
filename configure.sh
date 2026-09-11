@@ -148,23 +148,40 @@ if [ ! -e "$USER_HOME/.config/niri/niri-tasks.kdl" ]; then
     info "Seeded empty $USER_HOME/.config/niri/niri-tasks.kdl"
 fi
 
-# systemd user units for the wallpaper pair. They're units rather than niri
-# spawn-at-startup lines so that a crash is restarted instead of leaving the
+# The systemd user unit for the wallpaper. A unit rather than a niri
+# spawn-at-startup line so that a crash is restarted instead of leaving the
 # desktop bare until the next login, and so `systemctl --user status` can say
-# what went wrong. graphical-session.target starts and stops them with niri.
+# what went wrong. graphical-session.target starts and stops it with niri.
+#
+# One unit, where there used to be two: wallpaper-sync.service ran a watch loop
+# over DMS's session.json, and swww-daemon.service's only job beyond starting
+# the daemon was to kick it. The daemon now paints from its own ExecStartPost.
 
-# `enable` alone is enough: graphical-session.target pulls them in at login.
-# Starting them here would fail on a fresh machine that has no session yet
+# `enable` alone is enough: graphical-session.target pulls it in at login.
+# Starting it here would fail on a fresh machine that has no session yet
 # (Requisite=graphical-session.target), so that's left to the next login —
 # except when there *is* a session, where it saves a re-login.
 if command -v systemctl &>/dev/null; then
+    # Retire wallpaper-sync.service on a machine that already has it. Deleting
+    # the unit file without disabling it first would leave a dangling symlink in
+    # graphical-session.target.wants, which systemd complains about on every
+    # daemon-reload and which `systemctl --user disable` can no longer clean up
+    # once the file it points at is gone. Stop before disable, so it isn't left
+    # running until the next logout with nothing left to restart it.
+    if systemctl --user list-unit-files wallpaper-sync.service &>/dev/null \
+       && [ -e "$USER_HOME/.config/systemd/user/wallpaper-sync.service" ]; then
+        systemctl --user stop wallpaper-sync.service 2>/dev/null || true
+        systemctl --user disable wallpaper-sync.service 2>/dev/null \
+            && info "Retired wallpaper-sync.service (swww-daemon paints directly now)"
+    fi
+
     systemctl --user daemon-reload 2>/dev/null || true
-    systemctl --user enable swww-daemon.service wallpaper-sync.service 2>/dev/null \
-        && info "Enabled swww-daemon + wallpaper-sync user units" \
-        || warn "Could not enable the wallpaper user units (no systemd user session?)"
+    systemctl --user enable swww-daemon.service 2>/dev/null \
+        && info "Enabled the swww-daemon user unit" \
+        || warn "Could not enable the swww-daemon user unit (no systemd user session?)"
     if systemctl --user is-active --quiet graphical-session.target 2>/dev/null; then
-        systemctl --user restart swww-daemon.service wallpaper-sync.service 2>/dev/null \
-            && info "Started the wallpaper units" || true
+        systemctl --user restart swww-daemon.service 2>/dev/null \
+            && info "Started swww-daemon" || true
     fi
 fi
 
@@ -225,6 +242,11 @@ STALE_FILES=(
     # into. config.kdl includes "laptop.kdl" now, so the old copy is dead — and
     # worse than dead, since it looks exactly like a live config file.
     ".config/niri/dms/laptop.kdl"
+    # The wallpaper watch loop and its unit. swww-daemon.service paints from its
+    # own ExecStartPost now. The unit is disabled further up before it is
+    # removed here — order matters, see the note there.
+    ".config/niri/wallpaper-sync.sh"
+    ".config/systemd/user/wallpaper-sync.service"
 )
 
 STALE_REMOVED=0
