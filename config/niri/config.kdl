@@ -272,6 +272,26 @@ layer-rule {
     }
 }
 
+// The bar gets the same treatment, for the same reason: it should read as the
+// same material as the terminal and the pickers, not as a black strip laid over
+// the top of them. Identical effect block to the launcher above — deliberately,
+// since matching is the whole point.
+//
+// The blur is niri's job and the translucency is waybar's: this makes the
+// wallpaper behind the bar blurry, but only shows through to the extent that
+// config/waybar/style.css leaves the background transparent. The two are tuned
+// together — raising the alpha there hides this, and it will look like the rule
+// stopped working.
+layer-rule {
+    match namespace="^waybar$"
+    background-effect {
+        blur true
+        xray true
+        noise 0.05
+        saturation 1.4
+    }
+}
+
 // swww's background surface is a layer surface like any other, so without this
 // it scrolls sideways with the workspaces and disappears behind the Overview
 // backdrop. place-within-backdrop paints it as the desktop background proper:

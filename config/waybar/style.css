@@ -32,8 +32,14 @@
 
 window#waybar {
     /* Translucent to match ghostty's background-opacity = 0.5 and the blurred
-     * background-effect the window-rules profiles give every window. */
-    background-color: alpha(@background, 0.72);
+     * background-effect the window-rules profiles give every window.
+     *
+     * This alpha is half of a pair: config/niri/config.kdl has a layer-rule on
+     * ^waybar$ that blurs the wallpaper behind this surface, and what you
+     * actually see is that blur showing through here. Raise this much above 0.5
+     * and the blur is hidden — the bar goes back to looking like a flat strip
+     * and the layer-rule appears to have stopped working. */
+    background-color: alpha(@background, 0.5);
     color: @text;
     border-radius: 8px;
 }
@@ -66,7 +72,7 @@ window#waybar {
 }
 
 #workspaces button:hover {
-    background-color: @surfaceHigh;
+    background-color: alpha(@surfaceHigh, 0.55);
     color: @text;
 }
 
@@ -81,6 +87,9 @@ window#waybar.empty #window {
     background-color: transparent;
 }
 
+/* Translucent too, or they sit on the blurred bar as a row of solid blocks and
+ * undo it. Kept a little more opaque than the bar itself so they still read as
+ * raised pills rather than dissolving into it. */
 #tray,
 #backlight,
 #pulseaudio,
@@ -89,13 +98,13 @@ window#waybar.empty #window {
 #clock {
     padding: 0 10px;
     margin: 4px 2px;
-    background-color: @surface;
+    background-color: alpha(@surface, 0.45);
     border-radius: 6px;
 }
 
 #clock {
     color: @text;
-    background-color: @surfaceHigh;
+    background-color: alpha(@surfaceHigh, 0.55);
 }
 
 #battery.warning  { color: @warning; }
