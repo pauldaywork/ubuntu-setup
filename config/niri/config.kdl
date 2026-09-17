@@ -283,7 +283,7 @@ layer-rule {
 // together — raising the alpha there hides this, and it will look like the rule
 // stopped working.
 layer-rule {
-    match namespace="^waybar$"
+    match namespace="^waybar-"
     background-effect {
         blur true
         xray true

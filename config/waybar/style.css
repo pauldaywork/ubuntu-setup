@@ -35,7 +35,7 @@ window#waybar {
      * background-effect the window-rules profiles give every window.
      *
      * This alpha is half of a pair: config/niri/config.kdl has a layer-rule on
-     * ^waybar$ that blurs the wallpaper behind this surface, and what you
+     * ^waybar- that blurs the wallpaper behind both bars, and what you
      * actually see is that blur showing through here. Raise this much above 0.5
      * and the blur is hidden — the bar goes back to looking like a flat strip
      * and the layer-rule appears to have stopped working. */
@@ -44,12 +44,32 @@ window#waybar {
     border-radius: 8px;
 }
 
-/* The bar is not exclusive (see config.jsonc), so it floats in the strut band
- * rather than being clipped to a hard edge. Rounded corners and the margins in
- * config.jsonc are what make that read as deliberate. */
+/* The bars are not exclusive (see config.jsonc), so they float in the strut
+ * bands rather than being clipped to a hard edge. Rounded corners and the
+ * margins in config.jsonc are what make that read as deliberate.
+ *
+ * Both bars share the rule above: they are the same surface in two places, and
+ * each config.jsonc entry's "name" is available here as a class —
+ * window#waybar.waybar-top and window#waybar.waybar-dock — for what must differ. */
+
+/* The workspace bar carries nothing but the workspace list, so its own
+ * background would be a full-width slab behind a short centred row. Drop it and
+ * let the buttons sit directly on the wallpaper; the layer-rule still blurs
+ * behind them, which is what makes them legible over a busy image. */
+window#waybar.waybar-dock {
+    background-color: transparent;
+}
 
 #workspaces {
     padding: 0 4px;
+}
+
+/* On the dock the list is the whole bar, so give it the background the window
+ * no longer has — a pill around the row rather than a band across the screen. */
+window#waybar.waybar-dock #workspaces {
+    background-color: alpha(@background, 0.5);
+    border-radius: 8px;
+    padding: 0 6px;
 }
 
 #workspaces button {

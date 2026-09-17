@@ -1,13 +1,26 @@
-// The bar. Replaces DankMaterialShell's, which was a whole Quickshell desktop
+// The bars. Replace DankMaterialShell's, which was a whole Quickshell desktop
 // that happened to draw one.
 //
-// Deliberately close to what DMS showed, so the swap is not also a relearn:
-// workspaces on the left, focused window in the middle, status on the right.
+// Two of them, which is why this file is a JSON array rather than the single
+// object waybar also accepts: a status bar along the top, and a workspace bar
+// along the bottom. Each entry's "name" becomes a CSS class on its window, so
+// style.css can target them as window#waybar.waybar-top and .waybar-dock.
+// It is also the layer-shell namespace, which is why both names carry the
+// waybar- prefix: the layer-rule in config/niri/config.kdl matches on it, and a
+// surface simply called "top" is too generic a thing to be blurring by name.
+//
+// Both land in strut space that config/niri/window-rules/*.kdl already holds
+// open — `struts { top 60; bottom 50; }` in both profiles. The bottom 50 was
+// reserved for a DMS dock and has been empty since; the workspace bar fills it
+// without changing window geometry at all.
+//
 // What is genuinely gone and not replaced here is DMS's notification centre,
 // notepad, night-mode toggle and its click-through audio/network/bluetooth
 // popovers — waybar has no equivalent, and the modules below click out to the
 // same CLI tools the niri binds already use instead.
+[
 {
+    "name": "waybar-top",
     "layer": "top",
     "position": "top",
     "height": 40,
@@ -15,15 +28,14 @@
     // Not exclusive, which is the one non-obvious line in this file.
     //
     // An exclusive bar asks the compositor to reserve its height, and niri
-    // would shrink the window area to suit. But config/niri/window-rules/*.kdl
-    // already reserve that space by hand — `struts { top 60; bottom 50; }` in
-    // both profiles — because DMS's surfaces were not exclusive either. Leaving
-    // this false means the bar sits in the strut band that is already being
-    // held open for it, and the window geometry does not change at all as part
-    // of the DMS removal.
+    // would shrink the window area to suit. But the struts above already
+    // reserve that space by hand, because DMS's surfaces were not exclusive
+    // either. Leaving this false means each bar sits in the band that is
+    // already being held open for it, and the window geometry does not change.
     //
-    // To reclaim that space later: set this true (or drop the line) and lower
-    // `struts.top` in normal.kdl and focus.kdl to match this height.
+    // To reclaim that space later: set this true on both bars (or drop the
+    // line) and lower `struts.top` / `struts.bottom` in normal.kdl and
+    // focus.kdl to match their heights.
     "exclusive": false,
 
     "spacing": 6,
@@ -31,8 +43,9 @@
     "margin-left": 13,
     "margin-right": 13,
 
-    "modules-left": ["niri/workspaces"],
-    "modules-center": ["niri/window"],
+    // Workspaces moved to the bottom bar, so this one is title and status.
+    "modules-left": ["niri/window"],
+    "modules-center": [],
     "modules-right": [
         "tray",
         "backlight",
@@ -41,15 +54,6 @@
         "battery",
         "clock"
     ],
-
-    // niri names workspaces, and niri-tasks leans on that heavily — Mod+Alt+P
-    // opens a project on a workspace named after it. So show the name when
-    // there is one and fall back to the index when there isn't, rather than
-    // numbering everything and throwing the useful half away.
-    "niri/workspaces": {
-        "format": "{value}",
-        "on-click": "activate"
-    },
 
     "niri/window": {
         "format": "{}",
@@ -108,4 +112,41 @@
             "on-scroll": 1
         }
     }
+},
+
+// ─── the workspace bar ────────────────────────────────────────────────────────
+// Lives in the 50px band at the bottom that the struts have been holding open
+// since DMS's dock went. Nothing but workspaces: this is for seeing where you
+// are and clicking somewhere else, and niri-tasks names workspaces after the
+// project open on them (Mod+Alt+P), so the list reads as a list of what you are
+// working on rather than a row of numbers.
+//
+// Centred rather than left-aligned. The top bar is anchored left with the window
+// title, and a second left-anchored row directly under it reads as one thing
+// that lost its alignment; centred, it reads as a dock.
+{
+    "name": "waybar-dock",
+    "layer": "top",
+    "position": "bottom",
+    "height": 34,
+    "exclusive": false,
+
+    "spacing": 6,
+    "margin-bottom": 8,
+    "margin-left": 13,
+    "margin-right": 13,
+
+    "modules-left": [],
+    "modules-center": ["niri/workspaces"],
+    "modules-right": [],
+
+    // niri names workspaces, and niri-tasks leans on that heavily — Mod+Alt+P
+    // opens a project on a workspace named after it. So show the name when
+    // there is one and fall back to the index when there isn't, rather than
+    // numbering everything and throwing the useful half away.
+    "niri/workspaces": {
+        "format": "{value}",
+        "on-click": "activate"
+    }
 }
+]
