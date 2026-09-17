@@ -43,23 +43,17 @@
     "margin-left": 13,
     "margin-right": 13,
 
-    // Workspaces moved to the bottom bar, so this one is title and status.
-    "modules-left": ["niri/window"],
+    // Workspaces moved to the bottom bar and the window title is gone, so this
+    // one is the clock on the left and status on the right.
+    "modules-left": ["clock"],
     "modules-center": [],
     "modules-right": [
         "tray",
         "backlight",
         "pulseaudio",
         "network",
-        "battery",
-        "clock"
+        "battery"
     ],
-
-    "niri/window": {
-        "format": "{}",
-        "max-length": 90,
-        "separate-outputs": true
-    },
 
     "tray": {
         "spacing": 10,
@@ -121,9 +115,9 @@
 // project open on them (Mod+Alt+P), so the list reads as a list of what you are
 // working on rather than a row of numbers.
 //
-// Centred rather than left-aligned. The top bar is anchored left with the window
-// title, and a second left-anchored row directly under it reads as one thing
-// that lost its alignment; centred, it reads as a dock.
+// Left-aligned rather than centred, to line up with the clock at the top left.
+// The two rows then share an edge and read as one column down the side of the
+// screen; centred, the row had nothing else on screen to sit against.
 {
     "name": "waybar-dock",
     "layer": "top",
@@ -136,8 +130,8 @@
     "margin-left": 13,
     "margin-right": 13,
 
-    "modules-left": [],
-    "modules-center": ["niri/workspaces"],
+    "modules-left": ["niri/workspaces"],
+    "modules-center": [],
     "modules-right": [],
 
     // niri names workspaces, and niri-tasks leans on that heavily — Mod+Alt+P

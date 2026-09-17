@@ -8,14 +8,18 @@
  *
  * Note what this costs: matugen used to re-derive the whole palette from the
  * current wallpaper, so the desktop retinted itself when the wallpaper changed.
- * Nothing does that now. These are fixed colours. */
+ * Nothing does that now. These are fixed colours.
+ *
+ * The salmon accent those values came with (muted #d9bcb8, primary #eda792) has
+ * since been dropped for plain white, so the focused-workspace pill reads as a
+ * neutral highlight rather than as a second colour on the bar. */
 
 @define-color background   #09070d;
 @define-color surface      #130f1a;
 @define-color surfaceHigh  #221f26;
 @define-color text         #f0f0f0;
-@define-color muted        #d9bcb8;
-@define-color primary      #eda792;
+@define-color muted        #ffffff;
+@define-color primary      #ffffff;
 @define-color secondary    #49ccd2;
 @define-color warning      #fab387;
 @define-color error        #f38ba8;
@@ -31,15 +35,15 @@
 }
 
 window#waybar {
-    /* Translucent to match ghostty's background-opacity = 0.5 and the blurred
-     * background-effect the window-rules profiles give every window.
+    /* No tint at all: the bar is a window onto the blurred wallpaper.
      *
-     * This alpha is half of a pair: config/niri/config.kdl has a layer-rule on
-     * ^waybar- that blurs the wallpaper behind both bars, and what you actually
-     * see is that blur showing through here. Raise this much above 0.5 and the
-     * blur is hidden — the bar goes back to looking like a flat strip and the
-     * layer-rule appears to have stopped working. */
-    background-color: alpha(@background, 0.5);
+     * config/niri/config.kdl has a layer-rule on ^waybar- that blurs the
+     * wallpaper behind both bars, and a fully transparent surface lets all of
+     * that blur through — the modules below are the only thing carrying a
+     * background. Tint this back up and the blur starts to disappear behind it;
+     * much past alpha(@background, 0.5) the bar reads as a flat strip and the
+     * layer-rule looks like it has stopped working. */
+    background-color: transparent;
     color: @text;
     border-radius: 8px;
 }
@@ -52,11 +56,10 @@ window#waybar {
  * each config.jsonc entry's "name" is available here as a class —
  * window#waybar.waybar-top and window#waybar.waybar-dock — for what must differ. */
 
-/* The workspace bar carries nothing but the workspace list, so its own
- * background would be a full-width slab behind a short centred row. Drop it and
- * let the pill below carry the background instead; the layer-rule blurs behind
- * the whole surface either way, so the pill still sits on a soft wash rather
- * than on whatever detail the wallpaper happens to have there. */
+/* The workspace bar carries nothing but the workspace list, so a background of
+ * its own would be a full-width slab behind a short row. It would inherit the
+ * transparent rule above anyway; this stays explicit so that tinting the top bar
+ * again does not silently put a slab down here too. */
 window#waybar.waybar-dock {
     background-color: transparent;
 }
@@ -65,12 +68,12 @@ window#waybar.waybar-dock {
     padding: 0 4px;
 }
 
-/* On the dock the list is the whole bar, so give it the background the window
- * no longer has — a pill around the row rather than a band across the screen.
- * Same 0.5 as the status bar, because both are now showing the same blurred
- * wallpaper through the same amount of glass. */
+/* Untinted too, so the row sits straight on the blurred wallpaper rather than
+ * on a pill. The radius and padding stay: they cost nothing while this is
+ * transparent, and they are what makes it a pill again the moment a background
+ * comes back. */
 window#waybar.waybar-dock #workspaces {
-    background-color: alpha(@background, 0.5);
+    background-color: transparent;
     border-radius: 8px;
     padding: 0 6px;
 }
