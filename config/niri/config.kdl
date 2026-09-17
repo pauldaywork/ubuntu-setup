@@ -272,22 +272,24 @@ layer-rule {
     }
 }
 
-// The status bar gets the same treatment, for the same reason: it should read as
-// the same material as the terminal and the pickers, not as a black strip laid
-// over the top of them. Identical effect block to the launcher above —
-// deliberately, since matching is the whole point.
+// Both bars get the same treatment, for the same reason: they should read as the
+// same material as the terminal and the pickers, not as strips laid over the top
+// of them. Identical effect block to the launcher above — deliberately, since
+// matching is the whole point.
 //
 // The blur is niri's job and the translucency is waybar's: this makes the
-// wallpaper behind the bar blurry, but only shows through to the extent that
+// wallpaper behind a bar blurry, but only shows through to the extent that
 // config/waybar/style.css leaves the background transparent. The two are tuned
 // together — raising the alpha there hides this, and it will look like the rule
 // stopped working.
 //
-// Matched by full name rather than the ^waybar- prefix, because the workspace
-// bar deliberately does not get this. A new bar therefore has to opt in here by
-// name; that is the trade for being able to leave one out.
+// Matched on the ^waybar- prefix, so both bars are covered and a third would be
+// too just by being named consistently. waybar uses a bar's "name" as its
+// layer-shell namespace as well as its CSS class, which is what makes the prefix
+// available to match on — and why renaming a bar silently changes whether this
+// rule finds it.
 layer-rule {
-    match namespace="^waybar-top$"
+    match namespace="^waybar-"
     background-effect {
         blur true
         xray true
