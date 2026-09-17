@@ -141,11 +141,25 @@
     "modules-right": [],
 
     // niri names workspaces, and niri-tasks leans on that heavily — Mod+Alt+P
-    // opens a project on a workspace named after it. So show the name when
-    // there is one and fall back to the index when there isn't, rather than
-    // numbering everything and throwing the useful half away.
+    // opens a project on a workspace named after it, so this list is a list of
+    // what you have open.
+    //
+    // {name} rather than {value}: {value} is "the name, or the index when there
+    // isn't one", and niri always keeps one empty unnamed workspace at the end
+    // of the list, so that fallback put a bare number after the names — a "6"
+    // sitting on the end of a row of project names, looking like a count of
+    // something.
+    //
+    // {name} leaves that workspace blank. Its button is still there, so the row
+    // ends with one button's worth of padding and the pill is slightly longer
+    // on the right than the left. That is deliberate rather than unfinished:
+    // waybar has no option to hide a workspace, and the only CSS class going
+    // spare is `.empty`, which `general` also carries whenever nothing is open
+    // on it — collapsing on that would eat a named workspace at random. The
+    // blank button is also still clickable, which is how you reach the next
+    // empty workspace with the mouse.
     "niri/workspaces": {
-        "format": "{value}",
+        "format": "{name}",
         "on-click": "activate"
     }
 }
