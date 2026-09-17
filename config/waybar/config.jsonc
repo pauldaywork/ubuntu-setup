@@ -40,9 +40,15 @@
     "exclusive": false,
 
     "spacing": 6,
-    "margin-top": 8,
-    "margin-left": 13,
-    "margin-right": 13,
+
+    // Flush to the top edge, and all but flush to the sides. This bar used to be
+    // inset by 8 and 13 so that it floated in its strut band; it has no
+    // background of its own to set off any more, so that clearance read as a gap
+    // rather than as a margin. The 2 left and right is what keeps the end pills
+    // off the very corner of the screen.
+    "margin-top": 0,
+    "margin-left": 2,
+    "margin-right": 2,
 
     // Workspaces moved to the bottom bar and the window title is gone, so this
     // one is the clock on the left and status on the right.
@@ -134,9 +140,13 @@
     "on-sigusr1": "noop",
 
     "spacing": 6,
-    "margin-bottom": 8,
-    "margin-left": 13,
-    "margin-right": 13,
+
+    // Flush on all three sides, for the same reason as the top bar — and with
+    // nothing here but the workspace row, there is no end pill to keep off the
+    // corner either.
+    "margin-bottom": 0,
+    "margin-left": 0,
+    "margin-right": 0,
 
     "modules-left": ["niri/workspaces"],
     "modules-center": [],

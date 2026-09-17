@@ -11,8 +11,10 @@
  * Nothing does that now. These are fixed colours.
  *
  * The salmon accent those values came with (muted #d9bcb8, primary #eda792) has
- * since been dropped for plain white, so the focused-workspace pill reads as a
- * neutral highlight rather than as a second colour on the bar. */
+ * since been dropped for plain white, and focus is now marked by darkening a
+ * button rather than by colouring it — so @primary has no users left, and nor
+ * does @secondary. The palette is kept whole anyway: an unused line here is
+ * something to reach for later, where a deleted one is a hex value to invent. */
 
 @define-color background   #09070d;
 @define-color surface      #130f1a;
@@ -49,9 +51,12 @@ window#waybar {
     border-radius: 8px;
 }
 
-/* The bars are not exclusive (see config.jsonc), so they float in the strut
- * bands rather than being clipped to a hard edge. Rounded corners and the
- * margins in config.jsonc are what make that read as deliberate.
+/* The bars are not exclusive (see config.jsonc): they sit inside the strut bands
+ * rather than reserving space of their own. They used to float there, inset by
+ * the margins in config.jsonc and rounded off to make that read as deliberate.
+ * Those margins are ~0 now — with no background on either bar there was nothing
+ * for the inset to set off, so it read as a gap rather than as a margin, and
+ * what you see positioned is the modules and their own margins instead.
  *
  * Both bars share the rule above: they are the same surface in two places, and
  * each config.jsonc entry's "name" is available here as a class —
@@ -80,17 +85,24 @@ window#waybar.waybar-dock #workspaces {
 }
 
 #workspaces button {
-    padding: 0 10px;
-    margin: 4px 2px;
+    /* Taller, and butted up against each other: with no horizontal margin the
+     * focus wash below runs from one neighbour to the next rather than leaving a
+     * strip of bare bar between them. */
+    padding: 6px 10px;
+    margin: 8px 0px;
     color: @muted;
     background-color: transparent;
     border-radius: 6px;
 }
 
+/* Focus is marked by darkening rather than by accenting: @text on a half-opaque
+ * @background, which reads as a recess in the bar instead of a chip laid on top
+ * of it. Deliberately quieter than the urgent and hover states below, which are
+ * the two that should actually catch your eye. */
 #workspaces button.focused,
 #workspaces button.active {
-    color: @background;
-    background-color: @primary;
+    color: @text;
+    background-color: alpha(@background, 0.5);
 }
 
 #workspaces button.urgent {
