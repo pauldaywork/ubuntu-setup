@@ -280,6 +280,22 @@ if [ -d "$USER_HOME/.local/state/DankMaterialShell" ] && ! pkg_installed dms; th
     info "Removed the leftover ~/.local/state/DankMaterialShell tree"
 fi
 
+# The niri config DMS generated: colors.kdl (matugen's palette), alttab.kdl,
+# layout.kdl, wpblur.kdl, cursor.kdl, binds.kdl, and the outputs.kdl symlink into
+# profiles/. config.kdl stopped including any of it, and the one file in there
+# that was ever ours moved out to ~/.config/niri/laptop.kdl.
+#
+# Left alone these are worse than clutter, which is the whole reason the sweep
+# above exists: six .kdl files sitting in ~/.config/niri/dms/ are indis-
+# tinguishable from live config to anyone reading the directory, including you
+# in six months. Only `dms/laptop.kdl` was being removed before, which left the
+# directory present and looking load-bearing.
+if [ -d "$USER_HOME/.config/niri/dms" ] && ! pkg_installed dms; then
+    rm -rf "$USER_HOME/.config/niri/dms"
+    STALE_REMOVED=$((STALE_REMOVED + 1))
+    info "Removed the leftover ~/.config/niri/dms tree"
+fi
+
 [ "$STALE_REMOVED" -gt 0 ] && info "Removed $STALE_REMOVED file(s) this repo no longer installs"
 
 # VS Code settings (extensions are not installed here — see install.sh)

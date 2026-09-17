@@ -612,9 +612,7 @@ include "niri-tasks.kdl"
 // further up, which is the precedence the generated includes had — the profiles
 // in window-rules/ set background-color, border and shadow too, and the keys
 // here win where they overlap. Moving this higher would quietly change which
-// side wins. Note that border is `off` in both profiles and the catch-all
-// window-rule sets its own focus-ring, so in practice insert-hint and the
-// recent-windows colours below are what you actually see.
+// side wins.
 layout {
     background-color "transparent"
 
@@ -624,7 +622,22 @@ layout {
         urgent-color   "#c75c5c"
     }
 
+    // `off` is load-bearing, and it is the one line in this block that was not
+    // in the generated colors.kdl this replaces.
+    //
+    // Both window-rules profiles switch the border off and light windows with
+    // the focus-ring instead, and both set `draw-border-with-background true`.
+    // That combination means the border is not merely decorative: when it is on,
+    // niri paints its colour as a solid background behind the window, and an
+    // #3a3a3a slab is what you get instead of a translucent window over the
+    // wallpaper. A `border` node here that names only colours, with no on/off,
+    // is enough to lose the profile's `off` and turn that on.
+    //
+    // So say it explicitly rather than depending on how two layout blocks
+    // combine. The colours below still apply wherever a profile turns the
+    // border back on.
     border {
+        off
         active-color   "#f4f4f4"
         inactive-color "#3a3a3a"
         urgent-color   "#c75c5c"

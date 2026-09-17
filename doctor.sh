@@ -328,15 +328,17 @@ for rel in \
 do
     [ -e "$HOME/$rel" ] && STALE_ON_DISK+=("$rel")
 done
-# DMS's two state trees, reported only once the package is gone — configure.sh
+# DMS's three state trees, reported only once the package is gone — configure.sh
 # gates the removal the same way, and a machine still running DMS is not one
-# whose settings are leftovers. Subsumes the activetask plugin directory that
-# used to be listed here on its own.
+# whose settings are leftovers. Between them these subsume the activetask plugin
+# directory and the dms/laptop.kdl entry that used to be listed on their own.
 if ! pkg_installed dms; then
     [ -d "$HOME/.config/DankMaterialShell" ] && \
         STALE_ON_DISK+=(".config/DankMaterialShell")
     [ -d "$HOME/.local/state/DankMaterialShell" ] && \
         STALE_ON_DISK+=(".local/state/DankMaterialShell")
+    [ -d "$HOME/.config/niri/dms" ] && \
+        STALE_ON_DISK+=(".config/niri/dms")
 fi
 
 if [ "${#STALE_ON_DISK[@]}" -gt 0 ]; then
