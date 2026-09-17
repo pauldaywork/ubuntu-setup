@@ -126,6 +126,13 @@
     "height": 34,
     "exclusive": false,
 
+    // Mod+Alt+M hides the top bar, and it does that by sending SIGUSR1 — which
+    // goes to the waybar process, not to a bar. One process draws both entries
+    // in this file, so by default both act on it and the workspace row
+    // disappears along with the status row. noop opts this bar out; the bar
+    // above keeps the default "toggle" and is the only one that responds.
+    "on-sigusr1": "noop",
+
     "spacing": 6,
     "margin-bottom": 8,
     "margin-left": 13,

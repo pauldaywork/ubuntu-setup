@@ -611,8 +611,12 @@ binds {
     Mod+Space hotkey-overlay-title="Application Launcher" { spawn "fuzzel"; }
 
     // waybar toggles its own visibility on SIGUSR1. DMS took a bar index here
-    // because it could run several; there is one bar now.
-    Mod+Alt+M hotkey-overlay-title="Bar: Toggle" { spawn-sh "killall -SIGUSR1 waybar"; }
+    // because it could run several; one waybar process draws both bars now, and
+    // the signal reaches the process rather than a bar, so every bar acts on it.
+    // Which ones actually respond is therefore decided over in
+    // config/waybar/config.jsonc: the dock sets "on-sigusr1": "noop" so that this
+    // hides the top bar and leaves the workspace row where it is.
+    Mod+Alt+M hotkey-overlay-title="Top Bar: Toggle" { spawn-sh "killall -SIGUSR1 waybar"; }
     Mod+T hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
     Super+B { spawn "firefox"; }
     Super+Return hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
