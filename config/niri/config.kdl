@@ -272,24 +272,28 @@ layer-rule {
     }
 }
 
-// Both bars get the same treatment, for the same reason: they should read as the
-// same material as the terminal and the pickers, not as strips laid over the top
-// of them. Identical effect block to the launcher above — deliberately, since
-// matching is the whole point.
+// The workspace bar only. It should read as the same material as the terminal
+// and the pickers, not as a strip laid over the top of them — identical effect
+// block to the launcher above, deliberately, since matching is the whole point.
 //
 // The blur is niri's job and the translucency is waybar's: this makes the
-// wallpaper behind a bar blurry, but only shows through to the extent that
+// wallpaper behind the bar blurry, but only shows through to the extent that
 // config/waybar/style.css leaves the background transparent. The two are tuned
 // together — raising the alpha there hides this, and it will look like the rule
 // stopped working.
 //
-// Matched on the ^waybar- prefix, so both bars are covered and a third would be
-// too just by being named consistently. waybar uses a bar's "name" as its
-// layer-shell namespace as well as its CSS class, which is what makes the prefix
-// available to match on — and why renaming a bar silently changes whether this
-// rule finds it.
+// The top bar is deliberately not matched. It used to be: the match was the
+// ^waybar- prefix, which covered both bars and would have covered a third for
+// free. Blurring the top bar was dropped, and since style.css leaves that bar's
+// own background transparent, the wallpaper now shows through it untouched and
+// only the module pills carry anything. To put it back, widen this match to
+// "^waybar-" again — nothing else needs to change.
+//
+// waybar uses a bar's "name" as its layer-shell namespace as well as its CSS
+// class, which is what makes the namespace available to match on — and why
+// renaming a bar silently changes whether this rule finds it.
 layer-rule {
-    match namespace="^waybar-"
+    match namespace="^waybar-dock$"
     background-effect {
         blur true
         xray true

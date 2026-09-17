@@ -5,9 +5,10 @@
 // object waybar also accepts: a status bar along the top, and a workspace bar
 // along the bottom. Each entry's "name" becomes a CSS class on its window, so
 // style.css can target them as window#waybar.waybar-top and .waybar-dock.
-// It is also the layer-shell namespace, which is why both names carry the
-// waybar- prefix: the layer-rule in config/niri/config.kdl matches on it, and a
-// surface simply called "top" is too generic a thing to be blurring by name.
+// It is also the layer-shell namespace, which is how config/niri/config.kdl
+// picks a bar out to blur behind — currently waybar-dock only. Both names carry
+// the waybar- prefix so that a rule can still match them as a set, and because a
+// surface simply called "top" is too generic a thing to be matching by name.
 //
 // Both land in strut space that config/niri/window-rules/*.kdl already holds
 // open — `struts { top 60; bottom 50; }` in both profiles. The bottom 50 was

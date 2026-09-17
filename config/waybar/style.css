@@ -35,14 +35,15 @@
 }
 
 window#waybar {
-    /* No tint at all: the bar is a window onto the blurred wallpaper.
+    /* No tint at all on either bar: the wallpaper shows through whole, and the
+     * module pills are the only thing carrying a background.
      *
-     * config/niri/config.kdl has a layer-rule on ^waybar- that blurs the
-     * wallpaper behind both bars, and a fully transparent surface lets all of
-     * that blur through — the modules below are the only thing carrying a
-     * background. Tint this back up and the blur starts to disappear behind it;
-     * much past alpha(@background, 0.5) the bar reads as a flat strip and the
-     * layer-rule looks like it has stopped working. */
+     * What each bar shows through to differs, and that is set in niri rather
+     * than here. config/niri/config.kdl has a layer-rule matching ^waybar-dock$
+     * that blurs the wallpaper behind the workspace bar; the top bar is not
+     * matched, so it shows the wallpaper sharp. Tinting this back up hides
+     * whichever it is — much past alpha(@background, 0.5) a bar reads as a flat
+     * strip, and on the dock it looks like the layer-rule has stopped working. */
     background-color: transparent;
     color: @text;
     border-radius: 8px;
@@ -113,9 +114,11 @@ window#waybar.empty #window {
     background-color: transparent;
 }
 
-/* Translucent too, or they sit on the blurred bar as a row of solid blocks and
- * undo it. Kept a little more opaque than the bar itself so they still read as
- * raised pills rather than dissolving into it. */
+/* Translucent, or they sit on the wallpaper as a row of solid blocks and undo
+ * the transparency of the bar carrying them. Kept opaque enough to stay legible
+ * against whatever the wallpaper happens to be doing behind them — on the top
+ * bar that is now sharp wallpaper rather than a blurred wash, so this is the
+ * only thing separating the text from it. */
 #tray,
 #backlight,
 #pulseaudio,
