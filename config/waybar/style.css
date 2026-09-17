@@ -35,10 +35,13 @@ window#waybar {
      * background-effect the window-rules profiles give every window.
      *
      * This alpha is half of a pair: config/niri/config.kdl has a layer-rule on
-     * ^waybar- that blurs the wallpaper behind both bars, and what you
+     * ^waybar-top$ that blurs the wallpaper behind the status bar, and what you
      * actually see is that blur showing through here. Raise this much above 0.5
      * and the blur is hidden — the bar goes back to looking like a flat strip
-     * and the layer-rule appears to have stopped working. */
+     * and the layer-rule appears to have stopped working.
+     *
+     * The workspace bar is not blurred, so what shows through there is the
+     * wallpaper itself, sharp. It is given its own alpha below for that reason. */
     background-color: alpha(@background, 0.5);
     color: @text;
     border-radius: 8px;
@@ -54,8 +57,7 @@ window#waybar {
 
 /* The workspace bar carries nothing but the workspace list, so its own
  * background would be a full-width slab behind a short centred row. Drop it and
- * let the buttons sit directly on the wallpaper; the layer-rule still blurs
- * behind them, which is what makes them legible over a busy image. */
+ * let the pill below carry the background instead. */
 window#waybar.waybar-dock {
     background-color: transparent;
 }
@@ -65,9 +67,15 @@ window#waybar.waybar-dock {
 }
 
 /* On the dock the list is the whole bar, so give it the background the window
- * no longer has — a pill around the row rather than a band across the screen. */
+ * no longer has — a pill around the row rather than a band across the screen.
+ *
+ * More opaque than the status bar's 0.5, and that is the point rather than an
+ * inconsistency: this bar is deliberately not blurred, so the 50% that shows
+ * through is sharp wallpaper rather than a soft wash. At 0.5 the workspace
+ * names had to compete with whatever detail happened to be behind them, which
+ * on these wallpapers is foliage. */
 window#waybar.waybar-dock #workspaces {
-    background-color: alpha(@background, 0.5);
+    background-color: alpha(@background, 0.75);
     border-radius: 8px;
     padding: 0 6px;
 }
