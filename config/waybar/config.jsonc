@@ -36,7 +36,9 @@
     //
     // To reclaim that space later: set this true on both bars (or drop the
     // line) and lower `struts.top` / `struts.bottom` in normal.kdl and
-    // focus.kdl to match their heights.
+    // focus.kdl to match their heights. Note the dock no longer declares one —
+    // see the comment on that bar — so read its height off a `waybar -l debug`
+    // run rather than out of this file.
     "exclusive": false,
 
     "spacing": 6,
@@ -129,7 +131,25 @@
     "name": "waybar-dock",
     "layer": "top",
     "position": "bottom",
-    "height": 34,
+
+    // No height, deliberately, where the top bar declares 40.
+    //
+    // waybar treats "height" as a minimum it asks for, not a cap: if the
+    // modules need more it grows the bar anyway and warns that it did. The
+    // minimum here is 18 for the label at font-size 13, plus twice the
+    // workspace button's margin and twice its padding, because each applies top
+    // and bottom — currently 18 + 16 + 12 = 46. A declared 34 was simply
+    // overruled, and every restart said so in the log.
+    //
+    // That number is derived from style.css and nothing else, so declaring it
+    // here only creates something to keep in sync by hand. Letting waybar size
+    // the bar to its contents means restyling the buttons cannot desync it.
+    //
+    // What this does NOT free you from: the bottom strut. It holds 50px open
+    // and the bar is not exclusive, so nothing re-reserves when the bar grows.
+    // At 46 there are 4px of slack, and at 2px of bar per 1px of button margin
+    // or padding, that is two pixels of either before the dock fills the band
+    // and starts overlapping windows.
     "exclusive": false,
 
     // Mod+Alt+M hides the top bar, and it does that by sending SIGUSR1 — which
