@@ -389,6 +389,17 @@ if [ ! -x "$HOME/.config/niri/wallpaper-apply.sh" ]; then
     note "  Install with: bash configure.sh"
 fi
 
+# The picker behind Mod+Alt+B. Not required for the desktop to come up — unlike
+# the painter above, nothing is left blank if it is missing — so this is a
+# warning about a shortcut that will do nothing, not about a black screen.
+if [ ! -x "$HOME/.config/niri/wallpaper-pick.sh" ]; then
+    issue "wallpaper-pick.sh missing or not executable — Mod+Alt+B will do nothing"
+    note "  Install with: bash configure.sh"
+elif ! command -v ffmpeg &>/dev/null; then
+    issue "ffmpeg not installed — the wallpaper picker will list names with no thumbnails"
+    note "  Install with: sudo apt install ffmpeg"
+fi
+
 # The end-to-end check: what swww has on screen should be what wallpaper-active
 # names. Those two diverging is the whole failure mode this setup guards against
 # — a paint missed while the daemon was down leaves the screen on swww's cached

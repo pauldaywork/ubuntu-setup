@@ -65,9 +65,13 @@ DOTFILES_MAP=(
     "config/niri/window-rules/focus.kdl|.config/niri/window-rules/focus.kdl|copy"
     "config/niri/laptop.kdl|.config/niri/laptop.kdl|laptop"
 
-    # wallpaper — one directory in the repo, three destinations on disk, which
-    # is exactly why it is a feature directory rather than part of the mirror.
+    # wallpaper — one directory in the repo, four destinations on disk across
+    # three trees, which is exactly why it is a feature directory rather than
+    # part of the mirror. picker.ini lands in fuzzel's config rather than niri's
+    # because fuzzel is what reads it, even though only the wallpaper bind does.
     "wallpaper/apply.sh|.config/niri/wallpaper-apply.sh|exec"
+    "wallpaper/pick.sh|.config/niri/wallpaper-pick.sh|exec"
+    "wallpaper/picker.ini|.config/fuzzel/wallpaper-picker.ini|copy"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
 
     # ghostty — its `command =` line is rewritten after deploy

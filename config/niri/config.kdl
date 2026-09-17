@@ -601,10 +601,12 @@ binds {
     // Toggle between window-rules profiles (normal / focus-dimming)
     Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/window-rules/toggle.sh"; }
 
-    // Mod+Alt+B was "next wallpaper", which went through DMS's picker. Nothing
-    // cycles wallpapers now — the active one is whatever wallpaper/active names
-    // — so the bind is gone rather than left pointing at a missing binary. If
-    // you want it back it is a small script over wallpaper/images/, not a shell.
+    // Mod+Alt+B was "next wallpaper", which went through DMS's picker and went
+    // with it. This is not quite that bind back: it lists rather than cycles,
+    // because a handful of wallpapers have no order worth stepping through and
+    // two of the filenames are download hashes. wallpaper/pick.sh shows them in
+    // fuzzel with thumbnails and hands the choice to wallpaper-apply.sh.
+    Mod+Alt+B hotkey-overlay-title="Wallpaper: Pick" { spawn "~/.config/niri/wallpaper-pick.sh"; }
 
     // fuzzel is already installed (it's in the manifest for the project picker),
     // so the launcher is a straight swap for DMS's spotlight.

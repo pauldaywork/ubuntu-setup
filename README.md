@@ -224,7 +224,7 @@ which, fuzzel and swww, were already installed here for other reasons.
 | Bar | waybar (`config/waybar/`) |
 | Notifications | mako (`config/mako/config`) |
 | Spotlight launcher (`Mod+Space`) | fuzzel — already in the manifest for the project picker |
-| Wallpaper picker + cycling | `~/.config/niri/wallpaper-active`, a file with a path in it |
+| Wallpaper picker + cycling | `wallpaper/pick.sh` (`Mod+Alt+B`), a fuzzel picker with thumbnails, over `~/.config/niri/wallpaper-active` |
 | `dms/colors.kdl`, `dms/outputs.kdl`, … | Written out in `config/niri/config.kdl` |
 | Taskwarrior bar widget | *nothing* — see below |
 
@@ -325,11 +325,14 @@ restored swww's own stale cache.
 With the selection in a file this repo writes, there is nothing to follow. The
 watch loop, its systemd unit and the `inotify-tools` dependency are all gone.
 
-**What went with it:** there is no picker UI, no automatic cycling, and no
-`Mod+Alt+B` to step to the next image. Wallpapers also no longer retint the
-desktop — matugen re-derived the entire palette from the current image, and the
-colours in `config/waybar/style.css` and `config/mako/config` are now fixed
-values, the last ones it produced.
+**What went with it:** there is no automatic cycling. `Mod+Alt+B` is back, but
+as a picker rather than a stepper — `wallpaper/pick.sh` lists
+`~/Documents/Wallpapers` in fuzzel with ffmpeg-generated thumbnails (the first
+frame, for the animated GIFs) and writes the choice to
+`~/.config/niri/wallpaper-active` for `wallpaper-apply.sh` to paint. Wallpapers
+also no longer retint the desktop — matugen re-derived the entire palette from
+the current image, and the colours in `config/waybar/style.css` and
+`config/mako/config` are now fixed values, the last ones it produced.
 
 ---
 
