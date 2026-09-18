@@ -74,6 +74,11 @@ DOTFILES_MAP=(
     "wallpaper/picker.ini|.config/fuzzel/wallpaper-picker.ini|copy"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
 
+    # fuzzel — the launcher on Mod+Space. The other fuzzel configs are not here:
+    # picker.ini is a symlink niri-tasks installs, and wallpaper-picker.ini goes
+    # out with the wallpaper feature above.
+    "config/fuzzel/fuzzel.ini|.config/fuzzel/fuzzel.ini|copy"
+
     # ghostty — its `command =` line is rewritten after deploy
     "config/ghostty/config.ghostty|.config/ghostty/config.ghostty|copy"
 

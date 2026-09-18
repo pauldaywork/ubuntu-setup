@@ -389,6 +389,21 @@ if [ ! -x "$HOME/.config/niri/wallpaper-apply.sh" ]; then
     note "  Install with: bash configure.sh"
 fi
 
+# The launcher's icon theme and terminal, both of which used to name something
+# that was not installed: the icons silently fell back to hicolor and anything
+# with Terminal=true in its .desktop entry silently failed to start. Neither
+# announces itself, which is the reason to check them here.
+if [ -f "$HOME/.config/fuzzel/fuzzel.ini" ]; then
+    fz_icons="$(sed -n 's/^icon-theme=//p' "$HOME/.config/fuzzel/fuzzel.ini" | head -n1)"
+    if [ -n "$fz_icons" ] && [ ! -d "/usr/share/icons/$fz_icons" ]; then
+        issue "fuzzel icon-theme '$fz_icons' is not installed — launcher entries will lose their icons"
+    fi
+    fz_term="$(sed -n 's/^terminal=//p' "$HOME/.config/fuzzel/fuzzel.ini" | head -n1 | awk '{print $1}')"
+    if [ -n "$fz_term" ] && ! command -v "$fz_term" &>/dev/null; then
+        issue "fuzzel terminal '$fz_term' is not installed — terminal apps won't launch from Mod+Space"
+    fi
+fi
+
 # The picker behind Mod+Alt+B. Not required for the desktop to come up — unlike
 # the painter above, nothing is left blank if it is missing — so this is a
 # warning about a shortcut that will do nothing, not about a black screen.
