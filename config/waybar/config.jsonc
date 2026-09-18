@@ -26,6 +26,17 @@
     "position": "top",
     "height": 40,
 
+    // Start hidden, and Mod+Alt+M reveals it. Only this bar: the workspace row
+    // below is how you tell where you are, so it always comes up.
+    //
+    // Visibility is not persisted anywhere — niri spawns waybar fresh each
+    // session (spawn-at-startup in config.kdl), so a new process always starts
+    // from what this file says and never from how you left the bar last time.
+    // The same goes for a reload: SIGUSR2 re-reads the config and resets
+    // visibility with it, so the bar disappears again on every reload, which
+    // looks like a crash if you are not expecting it.
+    "start_hidden": true,
+
     // Not exclusive, which is the one non-obvious line in this file.
     //
     // An exclusive bar asks the compositor to reserve its height, and niri
