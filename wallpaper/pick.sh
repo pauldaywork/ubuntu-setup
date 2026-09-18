@@ -20,9 +20,26 @@ APPLY="$HOME/.config/niri/wallpaper-apply.sh"
 PICKER_INI="$HOME/.config/fuzzel/wallpaper-picker.ini"
 THUMBS="${XDG_CACHE_HOME:-$HOME/.cache}/wallpaper-thumbs"
 
-# fuzzel scales an icon to the row height, so this only has to be big enough not
-# to be upscaled — see line-height in wallpaper-picker.ini.
-THUMB_WIDTH=128
+# The three numbers that decide what the picker looks like. They are coupled, so
+# they live together; changing one alone will not do what you want.
+#
+# Measured behaviour, none of it documented by fuzzel: a row is two line-heights
+# tall, an icon is scaled to fit that height keeping its aspect, and anything
+# wider than the window is cropped rather than shrunk. So if a thumbnail's aspect
+# is exactly THUMB_W:THUMB_H and THUMB_H is two line-heights, the image fills its
+# row edge to edge — which is the whole trick here.
+#
+#   THUMB_H = 2 * line-height   (90 in wallpaper-picker.ini)
+#   FUZZEL_WIDTH is in characters, not pixels, and 22 comes out at ~456px with
+#   this theme's font. It was found by looking, and is the one number here you
+#   cannot calculate.
+#
+# Wallpapers are centre-cropped to this aspect rather than letterboxed. That
+# throws away the top and bottom of a 16:9 image, which is the deal: a preview
+# that fills its row tells you more at a glance than a smaller one that doesn't.
+THUMB_W=456
+THUMB_H=180
+FUZZEL_WIDTH=22
 
 die() {
     echo "$*" >&2
@@ -49,6 +66,18 @@ fi
 
 mkdir -p "$THUMBS"
 
+# Thumbnails carry their size in the name, so a previous geometry leaves a full
+# set behind that will never be read again. Drop them rather than let the cache
+# grow by one set every time the size is changed.
+shopt -s nullglob
+for stale in "$THUMBS"/*.png; do
+    case "$stale" in
+        *".${THUMB_W}x${THUMB_H}.png") ;;
+        *) rm -f "$stale" ;;
+    esac
+done
+shopt -u nullglob
+
 # A glob straight into an array: bash sorts it, so the list does not reshuffle
 # between invocations, and nullglob means an empty directory leaves an empty
 # array rather than one entry that is the unmatched pattern itself.
@@ -68,10 +97,23 @@ shopt -u nullglob
 # building this with $(printf ...) silently drops the separator — "ignored null
 # byte in input" — and every entry arrives as one long label with its own icon
 # path printed in it.
+#
+# The entry text is a single space. There are no filenames in this picker: two of
+# them are download hashes, and a label beside the image forced the image to be
+# small enough to leave room for it. A blank label means fuzzel returns nothing
+# useful on selection, which is what --index is for below — it answers with the
+# row number instead, and PICKABLE maps that back to a path.
+#
+# What this costs: type-to-filter. Every label is the same single space, so
+# typing matches nothing and empties the list. The picker is arrow keys and
+# Enter. That is a fair trade at four wallpapers and a bad one at forty.
 
 # Keyed on the full filename, extension included: 205.png and a hypothetical
-# 205.gif are different wallpapers and must not share a thumbnail.
-thumb_for() { printf '%s/%s.png' "$THUMBS" "$1"; }
+# 205.gif are different wallpapers and must not share a thumbnail. The geometry
+# is in the name too, so that changing it regenerates rather than leaving every
+# existing thumbnail at the old size — the staleness check below compares mtimes,
+# and editing this script does not make the wallpapers any newer.
+thumb_for() { printf '%s/%s.%sx%s.png' "$THUMBS" "$1" "$THUMB_W" "$THUMB_H"; }
 
 for wall in "${WALLS[@]}"; do
     [ "$HAVE_FFMPEG" = yes ] || break
@@ -85,24 +127,39 @@ for wall in "${WALLS[@]}"; do
         # worth listing, and fuzzel renders a blank icon rather than refusing.
         # Kept out of the emitting loop below so that nothing ffmpeg says can
         # end up in fuzzel's stdin.
+        # crop before scale, and crop to whichever of the two the source can
+        # actually supply, so a portrait wallpaper is cut down rather than
+        # stretched. ffmpeg centres a crop when no x/y is given.
         ffmpeg -y -loglevel error \
             -i "$wall" \
-            -vf "scale=$THUMB_WIDTH:-1" \
+            -vf "crop='min(iw,ih*$THUMB_W/$THUMB_H)':'min(ih,iw*$THUMB_H/$THUMB_W)',scale=$THUMB_W:$THUMB_H" \
             -frames:v 1 \
             "$thumb" </dev/null >/dev/null 2>&1 || true
     fi
 done
 
+# What fuzzel is actually shown, in the order it is shown. --index answers with
+# a position in this list, so it has to be built once and not re-derived: any
+# entry skipped here that was not skipped there would shift every index after it
+# and silently select the wrong wallpaper.
+PICKABLE=()
+for wall in "${WALLS[@]}"; do
+    [ -f "$wall" ] || continue
+    PICKABLE+=("$wall")
+done
+
+[ "${#PICKABLE[@]}" -gt 0 ] || die "No wallpapers in $WALLPAPERS"
+
 emit_entries() {
-    local wall name thumb
-    for wall in "${WALLS[@]}"; do
-        [ -f "$wall" ] || continue
-        name="$(basename "$wall")"
-        thumb="$(thumb_for "$name")"
+    local wall thumb
+    for wall in "${PICKABLE[@]}"; do
+        thumb="$(thumb_for "$(basename "$wall")")"
         if [ -f "$thumb" ]; then
-            printf '%s\0icon\x1f%s\n' "$name" "$thumb"
+            printf ' \0icon\x1f%s\n' "$thumb"
         else
-            printf '%s\n' "$name"
+            # No thumbnail means no icon, and a blank label would leave a row
+            # with nothing in it at all. Name it, so it is still selectable.
+            printf '%s\n' "$(basename "$wall")"
         fi
     done
 }
@@ -112,28 +169,36 @@ emit_entries() {
 # it exists means a machine that has not run configure.sh yet still gets a
 # working picker, just an unstyled one.
 #
-# --lines is sized to the list so the popup is exactly as tall as it needs to
-# be, capped at 8 — the same idea as niri-tasks' clamp_lines, a lower cap
-# because these rows are thumbnail-height rather than text-height.
-lines="${#WALLS[@]}"
-[ "$lines" -gt 8 ] && lines=8
+# --lines is sized to the list so the popup is exactly as tall as it needs to be,
+# capped so it cannot run off the screen: each row is a THUMB_H-tall image, so
+# four of them plus the input row is already most of a 1080p screen. Past the cap
+# fuzzel scrolls.
+lines="${#PICKABLE[@]}"
+[ "$lines" -gt 4 ] && lines=4
 
-FUZZEL_ARGS=(--dmenu --lines "$lines")
+# --index because the labels are blank; see emit_entries. --width here rather
+# than in the ini so that it sits next to the geometry it has to agree with.
+FUZZEL_ARGS=(--dmenu --index --lines "$lines" --width "$FUZZEL_WIDTH")
 [ -f "$PICKER_INI" ] && FUZZEL_ARGS+=(--config="$PICKER_INI")
 
 # Cancelling fuzzel is a non-zero exit, which set -e would treat as a failure.
 # It is not one: it is the answer "never mind".
-selected="$(emit_entries | fuzzel "${FUZZEL_ARGS[@]}")" || selected=""
-[ -n "$selected" ] || exit 0
+index="$(emit_entries | fuzzel "${FUZZEL_ARGS[@]}")" || index=""
+[ -n "$index" ] || exit 0
 
-# fuzzel echoes typed text verbatim when it matches no entry — that is what lets
-# the project picker create new folders. There is nothing to create here, so an
-# unmatched answer is a typo and the honest thing is to do nothing with it.
-if [ ! -f "$WALLPAPERS/$selected" ]; then
-    die "No such wallpaper: $selected"
-fi
+# --index is documented to count from zero, but this is the one thing standing
+# between a keypress and overwriting the wallpaper selection, so check rather
+# than trust: anything that is not a number, or is off the end of the list, is a
+# bug here and not something to act on.
+case "$index" in
+    ''|*[!0-9]*) die "fuzzel returned something that is not an index: $index" ;;
+esac
+[ "$index" -lt "${#PICKABLE[@]}" ] || die "fuzzel returned index $index, out of ${#PICKABLE[@]}"
 
-printf '%s\n' "$WALLPAPERS/$selected" > "$ACTIVE"
+chosen="${PICKABLE[$index]}"
+[ -f "$chosen" ] || die "No such wallpaper: $chosen"
+
+printf '%s\n' "$chosen" > "$ACTIVE"
 
 # exec, so the exit status you see is the paint's and not this script's.
 exec "$APPLY"
