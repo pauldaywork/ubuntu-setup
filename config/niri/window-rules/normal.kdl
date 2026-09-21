@@ -25,9 +25,20 @@ layout {
     center-focused-column "never"
     gaps 13
 
+    // The bands the two bars sit in. Neither bar is exclusive (see
+    // config/waybar/config.jsonc), so these are what actually keep windows off
+    // them, and they are set by hand rather than by the bars' own heights.
+    //
+    // bottom is 66 for a 46px dock: 20px of clearance, plus the 13px gap below,
+    // puts a window's bottom edge 33px above the top of the workspace row —
+    // the same clearance the top bar gets from its 60 (40px bar, 20px clear,
+    // plus the gap). It was 50, which left 4px and read as the windows nearly
+    // touching the row. The slack is also the dock's headroom: it sizes itself
+    // to its contents, so a taller button would have eaten 4px and started
+    // overlapping windows without anything saying so.
     struts {
         top 60
-        bottom 50
+        bottom 66
     }
 }
 

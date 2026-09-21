@@ -156,11 +156,13 @@
     // here only creates something to keep in sync by hand. Letting waybar size
     // the bar to its contents means restyling the buttons cannot desync it.
     //
-    // What this does NOT free you from: the bottom strut. It holds 50px open
+    // What this does NOT free you from: the bottom strut. It holds 66px open
     // and the bar is not exclusive, so nothing re-reserves when the bar grows.
-    // At 46 there are 4px of slack, and at 2px of bar per 1px of button margin
-    // or padding, that is two pixels of either before the dock fills the band
-    // and starts overlapping windows.
+    // At 46 there are 20px of slack, and at 2px of bar per 1px of button margin
+    // or padding, that is ten pixels of either before the dock fills the band
+    // and starts overlapping windows. It was 50, leaving two — the extra is
+    // mostly there to put visible space between the windows and the row, and
+    // the headroom comes along with it.
     "exclusive": false,
 
     // Mod+Alt+M hides the top bar, and it does that by sending SIGUSR1 — which
