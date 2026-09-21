@@ -272,35 +272,43 @@ layer-rule {
     }
 }
 
-// The workspace bar only. It should read as the same material as the terminal
-// and the pickers, not as a strip laid over the top of them — identical effect
-// block to the launcher above, deliberately, since matching is the whole point.
+// Neither waybar is blurred any more. There was a rule here matching
+// ^waybar-dock$ with the same effect block as the launcher, and before that one
+// matching ^waybar- and catching both bars.
 //
-// The blur is niri's job and the translucency is waybar's: this makes the
-// wallpaper behind the bar blurry, but only shows through to the extent that
-// config/waybar/style.css leaves the background transparent. The two are tuned
-// together — raising the alpha there hides this, and it will look like the rule
-// stopped working.
+// What it actually drew was a full-width blurred band along the bottom of the
+// screen — a bar-shaped slab of backdrop under a short row of workspace names.
+// style.css leaves both bars and the workspace row transparent, so with the rule
+// gone the wallpaper runs through both bars sharp and the only thing carrying a
+// background is the module pills on the top bar and the focused workspace
+// button, which tints itself with alpha(@background, 0.5).
 //
-// The top bar is deliberately not matched. It used to be: the match was the
-// ^waybar- prefix, which covered both bars and would have covered a third for
-// free. Blurring the top bar was dropped, and since style.css leaves that bar's
-// own background transparent, the wallpaper now shows through it untouched and
-// only the module pills carry anything. To put it back, widen this match to
-// "^waybar-" again — nothing else needs to change.
+// To put it back, add a layer-rule matching "^waybar-dock$" (or "^waybar-" for
+// both bars) with the same background-effect block as the launcher above, and
+// keep style.css transparent — raise the alpha there and it hides the blur, so
+// it looks like the rule stopped working.
 //
 // waybar uses a bar's "name" as its layer-shell namespace as well as its CSS
-// class, which is what makes the namespace available to match on — and why
-// renaming a bar silently changes whether this rule finds it.
-layer-rule {
-    match namespace="^waybar-dock$"
-    background-effect {
-        blur true
-        xray true
-        noise 0.05
-        saturation 1.4
-    }
-}
+// class, which is what makes a bar matchable at all — and why renaming a bar
+// silently changes whether a rule finds it.
+
+// mako is deliberately not blurred, and cannot usefully be.
+//
+// There was a layer-rule here matching ^notifications$ with the launcher's
+// effect block. It worked, but background-effect fills the layer surface's whole
+// rectangle — niri has no way to clip it to what the client actually draws
+// ("background effect clipping is unimplemented" is in the binary), and the blur
+// block only offers on/passes/offset/noise/saturation/xray, with no alpha
+// threshold. mako draws every visible notification into one surface, so the
+// margins between and below them sit inside that rectangle: the blur came out as
+// a visible box wrapping the stack, and shrinking the margins to kill the box
+// made the notifications touch.
+//
+// So the notifications carry their own opacity instead (config/mako/config) and
+// the wallpaper behind the gaps stays sharp and untouched. To try it again, add
+// a layer-rule matching "^notifications$" with the launcher's background-effect
+// block plus `geometry-corner-radius 8` to match mako's border-radius — and
+// expect the box back unless margin is 0 on every side.
 
 // swww's background surface is a layer surface like any other, so without this
 // it scrolls sideways with the workspaces and disappears behind the Overview

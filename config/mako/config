@@ -15,7 +15,17 @@
 # Palette matches config/waybar/style.css — the "Peace & Quiet" dark theme with
 # the salmon accent that DMS was themed with. See the note there about matugen:
 # these no longer retint with the wallpaper.
-background-color=#130f1aee
+#
+# The same surface colour fuzzel's popups carry (config/fuzzel/fuzzel.ini), but
+# more opaque, and that difference is load-bearing.
+#
+# fuzzel sits at 80 because niri blurs what is behind it. A notification is not
+# blurred — see the note in config/niri/config.kdl for why the layer-rule had to
+# go — so this alpha is the only thing between the text and a busy wallpaper,
+# and at 80 the wallpaper reads straight through the words. cc is dark enough to
+# hold the text and still translucent enough to sit on the desktop rather than
+# on top of it. It was ee before any of this, which is near enough to opaque.
+background-color=#130f1acc
 text-color=#f0f0f0
 border-color=#eda792
 progress-color=over #221f26
@@ -24,12 +34,27 @@ font=Noto Sans 10
 border-size=2
 border-radius=8
 padding=12
-margin=8
 default-timeout=6000
 
-# Top right, clear of the bar. The bar is 40px tall with an 8px top margin and
-# sits in a 60px strut band (see config/niri/window-rules/*.kdl), so anything
-# less than ~56 here overlaps it.
+# No horizontal margin, 8px underneath: top 0, sides 0, bottom 8 (see
+# DIRECTIONAL VALUES in `man 5 mako`).
+#
+# The 8 underneath is what separates stacked notifications: without it they butt
+# together, two 2px borders meeting with no gap. Nothing is painted in that gap
+# now, so it is the wallpaper, sharp.
+#
+# The sides stay at 0 as a leftover from the blurred version, where the surface
+# being wider than the pills was what drew a box around the stack. Harmless
+# either way now — outer-margin below is what holds the stack off the screen
+# edge, and doing it there keeps every notification the same width.
+margin=0,0,8
+
+# Top right, clear of the bar, and outer-margin rather than margin so the offset
+# applies to the list as a whole rather than to every notification in it. The bar
+# is 40px tall with an 8px top margin and sits in a 60px strut band (see
+# config/niri/window-rules/*.kdl), so anything less than ~56 here overlaps it
+# while the top bar is showing — it starts hidden, which is why 8 is liveable.
+outer-margin=8
 anchor=top-right
 layer=overlay
 width=380
