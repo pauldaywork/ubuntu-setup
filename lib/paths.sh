@@ -61,6 +61,10 @@ DOTFILES_MAP=(
 
     # niri — config.kdl is handled separately, see above
     "config/niri/window-rules/toggle.sh|.config/niri/window-rules/toggle.sh|exec"
+    # Holds one lock for every shortcut that opens a popup, so a second one
+    # cannot open on top of the first. niri-tasks' binds take the same lock by
+    # path without going through this script — see the comment in it.
+    "config/niri/popup-guard.sh|.config/niri/popup-guard.sh|exec"
     "config/niri/window-rules/normal.kdl|.config/niri/window-rules/normal.kdl|copy"
     "config/niri/window-rules/focus.kdl|.config/niri/window-rules/focus.kdl|copy"
     "config/niri/laptop.kdl|.config/niri/laptop.kdl|laptop"
