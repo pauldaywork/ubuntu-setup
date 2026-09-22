@@ -1,0 +1,40 @@
+[Desktop Entry]
+# GNOME Settings, made launchable outside GNOME.
+#
+# Two things in the stock entry (/usr/share/applications/org.gnome.Settings.desktop)
+# keep it away from you under niri, and this file overrides both by shadowing it
+# from ~/.local/share/applications, which XDG search order puts first.
+#
+# OnlyShowIn=GNOME hides the entry from any launcher whose XDG_CURRENT_DESKTOP is
+# something else — ours is "niri" — so Settings never appears in fuzzel at all.
+# Dropped here rather than widened: there is no list of desktops this should show
+# in, the answer is "this one".
+#
+# And gnome-control-center refuses to start outside GNOME or Unity, printing
+# "Running gnome-control-center is only supported under GNOME and Unity, exiting"
+# and exiting 1. That check reads XDG_CURRENT_DESKTOP too, so `env` in front of
+# the command is the whole fix.
+#
+# DBusActivatable=false matters more than it looks. Left true, a launcher starts
+# the app by asking D-Bus to activate org.gnome.Settings, which runs the service
+# file's command and never reads Exec — so the env prefix would be skipped and
+# the app would exit, while this file sat here looking correct.
+#
+# What you get is a partial Settings, and that is not this file's fault: most
+# panels are applied by gnome-settings-daemon, which does not run here. Network,
+# Bluetooth, Sound, Power, Printers, Users, Date & Time work, because they talk
+# to system services rather than to GNOME. Mouse, Touchpad, Keyboard and
+# Accessibility write settings nothing reads — niri's own input {} and binds {}
+# blocks in config/niri/config.kdl are what this machine obeys. Displays talks to
+# niri (it implements org.gnome.Mutter.DisplayConfig) but only for this session;
+# config.kdl wins at the next start. See "Where settings live" in the README.
+Name=Settings
+Icon=org.gnome.Settings
+Exec=env XDG_CURRENT_DESKTOP=GNOME gnome-control-center
+DBusActivatable=false
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=GNOME;GTK;Settings;
+Keywords=Preferences;Settings;
+X-Ubuntu-Gettext-Domain=gnome-control-center-2.0

@@ -93,6 +93,12 @@ DOTFILES_MAP=(
     "config/waybar/style.css|.config/waybar/style.css|copy"
     "config/mako/config|.config/mako/config|copy"
 
+    # GNOME Settings, shadowing the stock entry from ~/.local/share/applications
+    # so it is both visible in the launcher and able to start. The only thing
+    # this repo puts outside ~/.config; the file has to live where XDG looks for
+    # desktop entries, and that is not negotiable.
+    "config/applications/org.gnome.Settings.desktop|.local/share/applications/org.gnome.Settings.desktop|copy"
+
     # VS Code — note the live path is not the repo path
     "config/Code/settings.json|.config/Code/User/settings.json|copy"
 )

@@ -146,6 +146,8 @@ backup-os/
 │   ├── waybar/                             # config.jsonc + style.css
 │   ├── mako/config
 │   ├── ghostty/config.ghostty
+│   ├── applications/                       # → ~/.local/share/applications/  (desktop entries)
+│   │   └── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
 │   └── Code/                               # settings.json + extensions.txt
 │
 ├── wallpaper/                              # A feature, not a mirror: these land in three places
@@ -160,8 +162,10 @@ backup-os/
 Two rules keep this predictable:
 
 - **`home/` and `config/` mirror their destinations.** `config/ghostty/config.ghostty`
-  installs to `~/.config/ghostty/config.ghostty`. The one exception is VS Code,
-  which lands in `~/.config/Code/User/`.
+  installs to `~/.config/ghostty/config.ghostty`. Two exceptions: VS Code lands in
+  `~/.config/Code/User/`, and `config/applications/` lands in
+  `~/.local/share/applications/` — a desktop entry only counts where XDG looks for
+  it, and that is not under `~/.config`.
 - **Anything whose files land in more than one place gets its own directory**
   instead of being scattered to match. `wallpaper/` is the only one — its script,
   its systemd unit and its images would otherwise sit in three separate trees.
@@ -263,6 +267,59 @@ run on its own, and deleting a running application's settings out from under it
 would be rude. That step 0 is transitional: a machine installed from scratch
 today never gets DMS in the first place, so it can be deleted once every machine
 has been through one install.
+
+## Where settings live
+
+Three places, and knowing which is which saves an afternoon. The short version:
+**the desktop's behaviour is this repo, how apps look is `gsettings`, and
+hardware is the Settings app.**
+
+| What | Where | Why there |
+|---|---|---|
+| Keyboard, touchpad, mouse | `input {}` in `config/niri/config.kdl` | niri reads this directly; nothing else is consulted |
+| Keybindings | `binds {}` in the same file | same |
+| Monitors, resolution, scale | `output "eDP-1"` / `output "HDMI-A-1"` blocks | niri applies these at startup and wins over anything set at runtime |
+| Bar, notifications, launcher | `config/waybar/`, `config/mako/config`, `config/fuzzel/` | plain files this repo owns outright |
+| Wallpaper | `Mod+Alt+B`, over `~/.config/niri/wallpaper-active` | see Animated wallpapers below |
+| GTK theme, dark mode, cursor, fonts | `gsettings set org.gnome.desktop.interface …` | apps read these live through the settings portal |
+| Network, Bluetooth, Sound, Power, Printers, Users, Date & Time | Settings app | these talk to system services, not to GNOME |
+
+### The Settings app is half a Settings app
+
+`gnome-control-center` is installed and works, with two caveats worth knowing
+before you trust a panel.
+
+It did not start at all until this repo shipped
+`config/applications/org.gnome.Settings.desktop`. The stock entry carries
+`OnlyShowIn=GNOME`, which hides it from fuzzel under niri, and the binary itself
+exits with *"Running gnome-control-center is only supported under GNOME and
+Unity"* because it reads `XDG_CURRENT_DESKTOP`. The override drops the first and
+puts `env XDG_CURRENT_DESKTOP=GNOME` in front of the second. It also sets
+`DBusActivatable=false`, without which a launcher would activate the app over
+D-Bus and never read that `Exec` line at all.
+
+The deeper caveat is that **most panels are applied by `gnome-settings-daemon`,
+which does not run here.** So:
+
+- **Works** — Network, Bluetooth, Sound, Power, Printers, Users, Date & Time,
+  Online Accounts. NetworkManager, BlueZ, PipeWire, UPower and friends are
+  system services and do not care what desktop is running.
+- **Does nothing** — Mouse, Touchpad, Keyboard (repeat and shortcuts),
+  Accessibility, Night Light. These write GSettings keys that only
+  gnome-settings-daemon reads, and it is not there to read them. The change
+  appears to take and has no effect. Input belongs in `config.kdl`.
+- **Only until you log out** — Displays. niri implements
+  `org.gnome.Mutter.DisplayConfig`, so the panel really does drive your outputs,
+  but the `output` blocks in `config.kdl` are applied at startup and will quietly
+  undo it.
+- **Absent** — Appearance, Multitasking, Search, Extensions. These are GNOME
+  Shell panels and there is no Shell. Appearance lives in `gsettings`; the
+  background is swww's.
+
+Appearance is worth a line of its own, because it is the one that looks like it
+should be broken and is not. `xdg-desktop-portal-gnome` runs here, and it serves
+the settings portal, so `gsettings set org.gnome.desktop.interface color-scheme
+'prefer-dark'` reaches every GTK app without a settings daemon in sight.
 
 ## Animated wallpapers
 
