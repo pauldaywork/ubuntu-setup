@@ -373,6 +373,13 @@ binds {
 
     Mod+Q repeat=false { close-window; }
 
+    // Close the whole focused workspace: every window on it, tiled or floating,
+    // then its name. close-window is the polite close, so an app with unsaved
+    // work still gets to ask — the workspace only goes once it is empty.
+    // Dropping the name is what lets it go at all: niri keeps a named workspace
+    // around empty, and niri-tasks names most of them.
+    Mod+Shift+Q repeat=false hotkey-overlay-title="Close Workspace and Its Windows" { spawn-sh "ws=$(niri msg -j workspaces | jq '.[] | select(.is_focused) | .id'); niri msg -j windows | jq --argjson ws $ws '.[] | select(.workspace_id == $ws) | .id' | xargs -r -n1 niri msg action close-window --id; niri msg action unset-workspace-name"; }
+
     Mod+Left  { focus-column-left; }
     Mod+Down  { focus-window-down; }
     Mod+Up    { focus-window-up; }

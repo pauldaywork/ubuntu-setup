@@ -52,9 +52,9 @@ APT_PACKAGES=(
     git
     curl
     build-essential
-    # jq is no longer used by anything in this repo — the scripts that needed it
-    # moved to niri-tasks, which talks to niri's socket directly. Kept because
-    # it is a general-purpose tool worth having on a new machine.
+    # jq — the Mod+Shift+Q close-workspace bind in config/niri/config.kdl picks
+    # the focused workspace's windows out of `niri msg -j`. Also a
+    # general-purpose tool worth having on a new machine.
     jq
     tmux
     libudev-dev
