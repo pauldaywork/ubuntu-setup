@@ -26,11 +26,17 @@ All three that differed, differed by design.
 absence is the decision, not an omission to be filled in later; adding one back
 reintroduces the ambiguity the deletion removed.
 
-**Captured things are outside the path table entirely.** Every row in
-`lib/paths.sh` is written by this repo and only by this repo, so the table can
-be read left-to-right as the single direction. What capture deals in — the live
-`config.kdl`, the wallpaper images and selection, the VS Code extension list,
-the package list — appears in no row.
+**Captured things are outside the path table entirely.** What capture deals in
+— the live `config.kdl`, the wallpaper images and selection, the VS Code
+extension list, the package list — appears in no row, so the table can be read
+left-to-right as the single direction.
+
+**The one row that isn't ours alone is `config/Code/settings.json`.** VS Code
+writes it too, which is the ownership problem the retired `merge` kind existed
+for, at a smaller scale. It is deliberately left as a plain `copy`: the repo
+wins, drift shows up in `doctor.sh`, and you resolve it by hand. Adding a
+capture script for it would be the third direction this decision exists to
+avoid.
 
 **A file the repo deploys but never pulls back is a trap, and the table makes it
 visible.** `config/niri/dms/laptop.kdl` was deployed, was not gitignored, and

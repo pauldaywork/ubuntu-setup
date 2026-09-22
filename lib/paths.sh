@@ -8,9 +8,17 @@
 #
 # The capture/ scripts used to read it right-to-left as well, for the handful of
 # files a GUI owned. That was DankMaterialShell's settings, and with those gone
-# every row here is now written by this repo and only by this repo — capture/
-# deals exclusively in things that aren't in the table at all (config.kdl, the
-# wallpaper images, the VS Code extension list, the package manifest).
+# capture/ deals exclusively in things that aren't in the table at all
+# (config.kdl, the wallpaper images, the VS Code extension list, the package
+# manifest).
+#
+# One row is still not ours alone: config/Code/settings.json. VS Code rewrites
+# it whenever you change a setting in the UI, and it prunes keys it considers
+# dead — it dropped window.newWindowProfile here because the profile it named
+# did not exist on this machine. So a `copy` deploys the repo's version over
+# whatever you last clicked, and there is no capture script to bring it back.
+# Live with it by editing settings in the repo, or notice the drift in
+# doctor.sh; what you must not do is assume this file holds still.
 #
 # It had already gone wrong. `config/niri/dms/laptop.kdl` was deployed by
 # configure.sh, was not in .gitignore, and was never pulled back — so on a

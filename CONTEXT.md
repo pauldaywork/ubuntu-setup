@@ -20,9 +20,10 @@ The single declaration of what packages a machine is supposed to have.
 _Avoid_: package list, requirements
 
 **Managed file**:
-A config file this repo owns outright and is the sole author of. Every managed
-file appears in the path table, which pairs its repo location with its live
-location.
+A config file this repo deploys, listed in the path table, which pairs its repo
+location with its live location. The repo is authoritative for a managed file,
+which is not the same as being its only author: VS Code rewrites its own
+settings.json, and a deploy overwrites whatever it wrote.
 _Avoid_: dotfile (too narrow — desktop entries and systemd units are managed
 files too), tracked file (that means something else in git)
 

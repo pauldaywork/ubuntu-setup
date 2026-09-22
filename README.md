@@ -481,12 +481,18 @@ bash capture/packages.sh
 git diff                                # review before committing
 ```
 
-Note that **none of these touch `lib/paths.sh`**. Every file in that table is
-written by this repo and only by this repo. That was not true while
+Note that **none of these touch `lib/paths.sh`**. Everything `capture/` deals
+in is something the path table never held. That was not true while
 DankMaterialShell was here: its `settings.json` was a live file a GUI owned, it
 needed a merge rather than a copy on the way out, and `capture/dms-settings.sh`
-existed to bring it back. Everything `capture/` deals in now is something the
-path table never held.
+existed to bring it back.
+
+**One row in the table is still not ours alone**, and it is worth knowing which.
+VS Code rewrites `~/.config/Code/User/settings.json` whenever you change a
+setting in its UI, and it prunes keys it considers dead. Deploying copies the
+repo's version flat over the top, and no capture script brings yours back — so
+change VS Code settings in the repo, or expect `doctor.sh` to tell you they
+differ and decide then. Every other row really is written only by this repo.
 
 There is deliberately **no** capture script for `.bashrc`, the window-rules,
 waybar or ghostty. You would change those in a text editor, so change them in the
