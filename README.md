@@ -412,10 +412,12 @@ The repo deploys to the machine. That is the only automatic direction:
 bash configure.sh        # repo ──> machine
 ```
 
-Edit configs **in the repo** and deploy them. That is why 14 of the 15 managed
-files are byte-identical to the repo at any moment — nothing edits them out on
-the machine, so nothing has to be captured back. (The fifteenth is ghostty,
-whose `command =` line `configure.sh` rewrites after copying.)
+Edit configs **in the repo** and deploy them. That is why 18 of the 19 rows in
+`lib/paths.sh` are byte-identical to the repo at any moment — nothing edits them
+out on the machine, so nothing has to be captured back. (The exception is
+ghostty, whose `command =` line `configure.sh` rewrites after copying.
+`config.kdl` isn't a row at all: it's assembled with the laptop include before
+it's written, so it differs from the repo's copy on a laptop by design.)
 
 ### capture/ — the few things the machine owns
 
