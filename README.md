@@ -155,10 +155,12 @@ ubuntu-setup/
 │   │   └── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
 │   └── Code/                               # settings.json + extensions.txt
 │
-├── wallpaper/                              # A feature, not a mirror: these land in three places
-│   ├── apply.sh                            # → ~/.config/niri/wallpaper-apply.sh  Paints the selection
+├── wallpaper/                              # A feature, not a mirror: these land in four directories
+│   ├── apply.sh                            # → ~/.config/niri/wallpaper-apply.sh   Paints the selection
+│   ├── pick.sh                             # → ~/.config/niri/wallpaper-pick.sh    The picker (Mod+Alt+B)
+│   ├── picker.ini                          # → ~/.config/fuzzel/wallpaper-picker.ini  (fuzzel reads it)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
-│   ├── active                              # Which image is selected, per capture/wallpapers.sh
+│   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
 │
 ├── docs/                                   # Not installed anywhere; read by people and agents
@@ -180,8 +182,9 @@ Two rules keep this predictable:
   `~/.local/share/applications/` — a desktop entry only counts where XDG looks for
   it, and that is not under `~/.config`.
 - **Anything whose files land in more than one place gets its own directory**
-  instead of being scattered to match. `wallpaper/` is the only one — its script,
-  its systemd unit and its images would otherwise sit in three separate trees.
+  instead of being scattered to match. `wallpaper/` is the only one — its two
+  scripts, its fuzzel picker config, its systemd unit and its images would
+  otherwise be scattered across four destinations to match where each one goes.
 
 `lib/paths.sh` is what actually decides where each file goes, so the tree is free
 to be organised for reading rather than for the installer's benefit.
