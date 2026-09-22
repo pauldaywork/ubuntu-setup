@@ -113,6 +113,10 @@ After running, re-download any LM Studio models you need (not included in this r
 
 ```
 ubuntu-setup/
+├── README.md                               # This file: how to set a machine up, and why it is built this way
+├── CONTEXT.md                              # The glossary — deploy vs install vs capture vs seed
+├── AGENTS.md                               # Points coding agents at docs/agents/
+│
 ├── install.sh                              # Run on a new machine: packages, then everything below
 ├── configure.sh                            # Just the config files + wallpapers (no app installs)
 ├── doctor.sh                               # Diagnose drift on an already-set-up machine
@@ -157,6 +161,14 @@ ubuntu-setup/
 │   ├── active                              # Which image is selected, per capture/wallpapers.sh
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
 │
+├── docs/                                   # Not installed anywhere; read by people and agents
+│   ├── adr/
+│   │   └── 0001-one-way-deploy.md          # Why the repo deploys and capture/ stays manual
+│   └── agents/                             # Per-repo config for the engineering skills
+│       ├── issue-tracker.md                # Issues are markdown under .scratch/ (gitignored)
+│       ├── triage-labels.md                # The five triage states
+│       └── domain.md                       # Read CONTEXT.md and docs/adr/ before exploring
+│
 └── notes/                                  # Working notes; not installed anywhere
 ```
 
@@ -173,6 +185,30 @@ Two rules keep this predictable:
 
 `lib/paths.sh` is what actually decides where each file goes, so the tree is free
 to be organised for reading rather than for the installer's benefit.
+
+### The vocabulary, and the decisions
+
+Two files carry what the rest of this README assumes you have picked up.
+
+**`CONTEXT.md`** is the glossary, and nothing else — no mechanism, no paths. It
+exists because this repo has two nouns that sound alike and two directions that
+sound alike: packages and config files are both "installed", and deploying and
+capturing both move files between the same two places. It settles those.
+**Deploy** is repo → machine for config files, **install** is packages,
+**capture** is machine → repo, and **seed** is writing a file only if it is
+absent — what the installer does for a wallpaper or a window-rules profile,
+where it has to guarantee a choice exists without overriding the one you made.
+
+**`docs/adr/`** records decisions that are hard to reverse and surprising
+without the history. There is one so far: [ADR-0001](docs/adr/0001-one-way-deploy.md)
+on the one-way deploy, which is the long version of [Which direction things
+move](#which-direction-things-move) below — what `update.sh` was, why deleting
+it was justified by measuring first, and why the missing capture scripts are the
+decision rather than an omission.
+
+`AGENTS.md` and `docs/agents/` are for coding agents: where issues are tracked
+for this repo, the triage vocabulary, and the instruction to read `CONTEXT.md`
+and the ADRs before exploring.
 
 
 
