@@ -642,6 +642,47 @@ else
         else
             note "  Add them to the tree under '## Repo structure' in README.md"
         fi
+
+        # ── and the other way: does everything the tree names still exist? ──
+        # Matched by suffix against the repo's real paths rather than by
+        # rebuilding each entry from the tree's indentation. Depth-parsing ASCII
+        # art is the fragile part of any tool like this, and it fails by
+        # inventing paths — which would report files as deleted because someone
+        # reflowed a comment. Suffix matching cannot tell a moved file from one
+        # that is where the tree implies, and that is the honest limit: this
+        # catches deletions, which is what it is for.
+        REPO_FILES="$(cd "$DOTFILES" && find . -path ./.git -prune -o -type f -print | sed 's|^\./||')"
+        REPO_DIRS="$(cd "$DOTFILES" && find . -path ./.git -prune -o -type d -print | sed 's|^\./||')"
+
+        # Ends with the token, at a path boundary. A plain substring match would
+        # let config/mako/config satisfy a tree entry reading `ako/config`.
+        path_lists_entry() {
+            awk -v t="$1" '''
+                { n = length($0); m = length(t)
+                  if (n >= m && substr($0, n - m + 1) == t &&
+                      (n == m || substr($0, n - m, 1) == "/")) { found = 1; exit } }
+                END { exit !found }
+            '''
+        }
+
+        stale=0
+        while read -r entry; do
+            [ -n "$entry" ] || continue
+            if [[ "$entry" == */ ]]; then
+                path_lists_entry "${entry%/}" <<<"$REPO_DIRS" && continue
+                issue "The README tree names a directory that is gone: $entry"
+            else
+                path_lists_entry "$entry" <<<"$REPO_FILES" && continue
+                issue "The README tree names a file that is gone: $entry"
+            fi
+            stale=$((stale + 1))
+        done <<<"$(grep -oP '''(?<=[├└]── )[^ #]+''' <<<"$TREE")"
+
+        if [ "$stale" -eq 0 ]; then
+            ok "Everything the tree names still exists in the repo"
+        else
+            note "  Remove them from the tree, or restore the files"
+        fi
     fi
 fi
 
