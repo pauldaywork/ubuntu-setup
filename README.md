@@ -139,12 +139,14 @@ backup-os/
 │   ├── niri/
 │   │   ├── config.kdl                      # Includes niri-tasks.kdl; configure.sh seeds a stub for it
 │   │   ├── laptop.kdl                      # Installed on laptops only (auto-detected)
+│   │   ├── popup-guard.sh                  # One popup at a time: holds a lock while one is open
 │   │   └── window-rules/
 │   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
 │   │       ├── normal.kdl                  # Fully opaque windows
 │   │       └── focus.kdl                   # Unfocused windows fade out
 │   ├── waybar/                             # config.jsonc + style.css
 │   ├── mako/config
+│   ├── fuzzel/fuzzel.ini                   # The launcher only; the pickers bring their own configs
 │   ├── ghostty/config.ghostty
 │   ├── applications/                       # → ~/.local/share/applications/  (desktop entries)
 │   │   └── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
