@@ -10,3 +10,8 @@ THOUGHTS.md
 # config.kdl, and the rest were empty or unused. config/niri/dms/ no longer
 # exists in this repo — laptop.kdl, the one file in there that was ours, is
 # config/niri/laptop.kdl now.
+
+# Specs and tickets written by the engineering skills. See
+# docs/agents/issue-tracker.md — this repo tracks issues as local markdown, and
+# that working material is per-machine scratch, not configuration.
+.scratch/
