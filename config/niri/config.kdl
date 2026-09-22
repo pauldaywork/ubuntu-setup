@@ -614,21 +614,20 @@ binds {
     // because a handful of wallpapers have no order worth stepping through and
     // two of the filenames are download hashes. wallpaper/pick.sh shows them in
     // fuzzel with thumbnails and hands the choice to wallpaper-apply.sh.
-    //
-    // Through popup-guard.sh, like every other bind that puts a popup on
-    // screen: while one is open this does nothing rather than opening a second
-    // on top of it. spawn-sh rather than spawn, because the guard takes the
-    // real command as its arguments and sh is what expands the two ~ in it.
-    Mod+Alt+B hotkey-overlay-title="Wallpaper: Pick" { spawn-sh "~/.config/niri/popup-guard.sh ~/.config/niri/wallpaper-pick.sh"; }
+    Mod+Alt+B hotkey-overlay-title="Wallpaper: Pick" { spawn "~/.config/niri/wallpaper-pick.sh"; }
 
     // fuzzel is already installed (it's in the manifest for the project picker),
     // so the launcher is a straight swap for DMS's spotlight.
     //
-    // Guarded too, though fuzzel is the one popup that does not need it: it
-    // holds a lock of its own and refuses to run twice. What the guard adds is
-    // the other half — the launcher cannot open on top of niri-tasks' task box,
-    // which is not fuzzel and which fuzzel's own lock knows nothing about.
-    Mod+Space hotkey-overlay-title="Application Launcher" { spawn-sh "~/.config/niri/popup-guard.sh fuzzel"; }
+    // Deliberately not wrapped in any single-popup guard, and there was one here
+    // briefly. fuzzel needs no help — it flocks
+    // $XDG_RUNTIME_DIR/fuzzel-$WAYLAND_DISPLAY.lock and refuses to start twice,
+    // in --dmenu mode as well — and wrapping it actively broke the launcher:
+    // `flock` holds its lock through an open file descriptor, every app fuzzel
+    // launches inherits that descriptor, and the lock therefore stayed held for
+    // as long as the launched app lived. Opening Settings from the launcher
+    // jammed every guarded popup until the Settings window was closed.
+    Mod+Space hotkey-overlay-title="Application Launcher" { spawn "fuzzel"; }
 
     // waybar toggles its own visibility on SIGUSR1. DMS took a bar index here
     // because it could run several; one waybar process draws both bars now, and

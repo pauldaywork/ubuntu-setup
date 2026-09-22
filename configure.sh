@@ -242,6 +242,14 @@ STALE_FILES=(
     # into. config.kdl includes "laptop.kdl" now, so the old copy is dead — and
     # worse than dead, since it looks exactly like a live config file.
     ".config/niri/dms/laptop.kdl"
+    # A single-popup guard that wrapped the launcher and the wallpaper picker.
+    # It worked by holding an flock for the popup's lifetime, and flock holds its
+    # lock through a file descriptor that every app fuzzel launches inherits — so
+    # opening anything from the launcher kept the lock until that app was closed,
+    # and the shortcuts stayed dead meanwhile. fuzzel already refuses to run
+    # twice on its own, so the wrapper was buying nothing for the cost.
+    ".config/niri/popup-guard.sh"
+
     # The wallpaper watch loop and its unit. swww-daemon.service paints from its
     # own ExecStartPost now. The unit is disabled further up before it is
     # removed here — order matters, see the note there.
