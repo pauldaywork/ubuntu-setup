@@ -1,4 +1,4 @@
-# backup-os
+# ubuntu-setup
 
 A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a new machine and run `install.sh` to get a working environment.
 
@@ -37,7 +37,7 @@ You'll need git first:
 
 ```bash
 sudo apt install git
-git clone git@github.com:yourusername/backup-os.git ~/Documents/Code/backup-os
+git clone git@github.com:pauldaywork/ubuntu-setup.git ~/Projects/ubuntu-setup
 ```
 
 If you don't have your SSH key yet, clone with HTTPS instead — `install.sh` generates one near the end and prints the public half for you to paste into GitHub.
@@ -45,7 +45,7 @@ If you don't have your SSH key yet, clone with HTTPS instead — `install.sh` ge
 ### 3. Run the install script
 
 ```bash
-cd ~/Documents/Code/backup-os
+cd ~/Projects/ubuntu-setup
 bash install.sh
 ```
 
@@ -112,7 +112,7 @@ After running, re-download any LM Studio models you need (not included in this r
 ## Repo structure
 
 ```
-backup-os/
+ubuntu-setup/
 ├── install.sh                              # Run on a new machine: packages, then everything below
 ├── configure.sh                            # Just the config files + wallpapers (no app installs)
 ├── doctor.sh                               # Diagnose drift on an already-set-up machine
