@@ -3,6 +3,11 @@
 # ~/.bashrc, ~/.profile, and install.sh assume (e.g. a tool that got moved
 # or reinstalled by hand without its shell config being updated to match).
 #
+# The last check is the exception: it reads the repo rather than the machine,
+# and reports a README whose structure tree has fallen behind lib/paths.sh.
+# It is here rather than in a script of its own so that there is one command
+# to run — a lint nobody remembers to run catches nothing.
+#
 # Read-only by default — it only reports. Pass --fix to interactively repair
 # dangling PATH/env references in dotfiles (each fix is confirmed and the
 # file is backed up first). It never installs, uninstalls, or moves software
@@ -588,7 +593,59 @@ check_duplicate() {
 check_duplicate "rustup/cargo" "rustup" '[ -x "$HOME/.cargo/bin/rustup" ]'
 check_duplicate "ghostty"      "ghostty" 'pkg_installed ghostty'
 
-# ─── 5. Summary ───────────────────────────────────────────────────────────────
+# ─── 5. The README's structure tree ──────────────────────────────────────────
+# The only check here that reads the repo rather than the machine, and it would
+# give the same answer on a machine that has never been set up.
+#
+# It exists because the tree in README.md is maintained by hand against
+# lib/paths.sh and went stale three times: config/fuzzel/fuzzel.ini and
+# config/niri/popup-guard.sh, then wallpaper/pick.sh and wallpaper/picker.ini.
+# A tree that is missing entries is worse than no tree — it reads as a complete
+# list, so a file absent from it looks like a file the repo does not own.
+#
+# Matching is by basename against the whole code block, comments included,
+# rather than by parsing the tree into paths. That is deliberate: the tree
+# documents some directories in their comment instead of as leaf nodes
+# (`waybar/  # config.jsonc + style.css`), and a stricter parser would report
+# those as missing when they are right there. The cost is that a basename
+# appearing coincidentally elsewhere in the block could mask a real omission —
+# accepted, because a check that reports problems that are not real is the
+# failure this repo already avoids in lib/manifest.sh.
+section "Checking the README structure tree"
+
+README="$DOTFILES/README.md"
+if [ ! -f "$README" ]; then
+    issue "README.md is missing — cannot check the structure tree"
+else
+    # The fenced block under "## Repo structure", and nothing else in the file:
+    # basenames are mentioned all over the prose, which would match anything.
+    TREE="$(awk '
+        /^## Repo structure/     { insection = 1; next }
+        insection && /^```/      { infence = !infence; if (!infence) exit; next }
+        infence                  { print }
+    ' "$README")"
+
+    if [ -z "$TREE" ]; then
+        issue "Could not find the '## Repo structure' code block in README.md"
+    else
+        missing=0
+        for row in "${DOTFILES_MAP[@]}"; do
+            map_entry "$row"
+            base="$(basename "$REPO_PATH")"
+            grep -qF -- "$base" <<<"$TREE" && continue
+            issue "Not in the README structure tree: $REPO_PATH"
+            missing=$((missing + 1))
+        done
+
+        if [ "$missing" -eq 0 ]; then
+            ok "All ${#DOTFILES_MAP[@]} files in lib/paths.sh appear in the tree"
+        else
+            note "  Add them to the tree under '## Repo structure' in README.md"
+        fi
+    fi
+fi
+
+# ─── 6. Summary ───────────────────────────────────────────────────────────────
 section "Summary"
 if [ "$ISSUES" -eq 0 ]; then
     ok "No issues found"
