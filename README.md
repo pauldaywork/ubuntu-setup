@@ -161,6 +161,7 @@ ubuntu-setup/
 │   ├── picker.ini                          # → ~/.config/fuzzel/wallpaper-picker.ini  (fuzzel reads it)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
+│   ├── CREDITS.md                          # Who made each image; not installed
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
 │
 ├── docs/                                   # Not installed anywhere; read by people and agents
@@ -366,6 +367,8 @@ the settings portal, so `gsettings set org.gnome.desktop.interface color-scheme
 niri draws no background of its own, so something has to. Most of this collection
 is animated GIFs, and [swww](https://github.com/LGFae/swww) is what animates them
 — `swaybg` and friends decode one frame and stop.
+
+The images are other artists' work — see [`wallpaper/CREDITS.md`](wallpaper/CREDITS.md).
 
 | Piece | Role |
 |---|---|
