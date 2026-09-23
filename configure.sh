@@ -46,7 +46,7 @@ for _row in "${DOTFILES_MAP[@]}"; do
     esac
 done
 
-# Laptop-specific niri config (display on/off binds, vertical workspace binds).
+# Laptop-specific niri config (display on/off binds).
 #
 # This used to hang entirely on remembering `--laptop` every single time. The
 # copy above replaces config.kdl with the repo's, which never carries the

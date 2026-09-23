@@ -459,10 +459,9 @@ if [ -f "$WALLPAPER_ACTIVE" ] && command -v swww &>/dev/null \
     fi
 fi
 
-# Laptop binds. configure.sh replaces config.kdl wholesale and appends the
-# laptop include afterwards, so a re-run that decides this machine isn't a laptop
-# takes the display and workspace binds away with no error — worth noticing here
-# rather than the next time you reach for a shortcut that's gone.
+# Laptop display binds. configure.sh replaces config.kdl wholesale and appends
+# the laptop include afterwards, so a re-run that decides this machine isn't a
+# laptop takes the display binds away with no error — worth noticing here.
 NIRI_CONFIG="$HOME/.config/niri/config.kdl"
 if [ -f "$NIRI_CONFIG" ]; then
     # A machine deliberately installed as --desktop records that, and is not
@@ -477,7 +476,7 @@ if [ -f "$NIRI_CONFIG" ]; then
 
     if [ "$HAS_BATTERY" = true ] && [ "$HAS_INCLUDE" = false ]; then
         issue "This machine has a battery but config.kdl doesn't include laptop.kdl"
-        note "  The display and workspace binds in it are missing"
+        note "  The display binds in it are missing"
         note "  Fix with: bash configure.sh --laptop"
     elif [ "$HAS_INCLUDE" = true ] && [ ! -f "$HOME/.config/niri/laptop.kdl" ]; then
         issue "config.kdl includes laptop.kdl but that file is missing — niri won't load the config"

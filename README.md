@@ -49,7 +49,7 @@ cd ~/Projects/ubuntu-setup
 bash install.sh
 ```
 
-Laptops get extra niri config on top — `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on when an external monitor is connected, plus `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it.
+All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config for `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on when an external monitor is connected. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
 
 **You don't have to ask for it.** The installer reads the DMI chassis type (and falls back to looking for a battery), and records the answer in `~/.config/niri/.machine-type` so every later run agrees with the first. `--laptop` and `--desktop` override the guess, and the override is recorded too:
 
