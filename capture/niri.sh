@@ -33,10 +33,18 @@ fi
 # line that leading newline created. Stripping every trailing blank instead
 # would eat the two this file legitimately ends with, and commit that churn on
 # every run from a laptop.
+#
+# Only when the include is actually there: a desktop's live file has no include
+# and so no extra blank, and stripping one anyway ate a line the file really
+# ends with.
 TMP=$(mktemp)
-grep -v '^include "laptop.kdl"$' "$LIVE" \
-  | awk '{lines[NR]=$0} END {last=NR; if (last>0 && lines[last]=="") last--; for(i=1;i<=last;i++) print lines[i]}' \
-  > "$TMP" || true
+if grep -q '^include "laptop.kdl"$' "$LIVE"; then
+    grep -v '^include "laptop.kdl"$' "$LIVE" \
+      | awk '{lines[NR]=$0} END {last=NR; if (last>0 && lines[last]=="") last--; for(i=1;i<=last;i++) print lines[i]}' \
+      > "$TMP" || true
+else
+    cp "$LIVE" "$TMP"
+fi
 
 if cmp -s "$TMP" "$REPO"; then
     info "config.kdl already matches the repo"
