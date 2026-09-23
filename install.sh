@@ -202,6 +202,17 @@ install_deb() {
 install_deb "obsidian" \
     "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/obsidian_${OBSIDIAN_VERSION}_amd64.deb"
 
+# VS Code's postinst asks whether to add Microsoft's apt repo. Answer it up front
+# so dpkg doesn't stop to ask, and so the answer is yes — that repo is how the
+# .deb gets updates. ChatGPT's postinst adds its repo without asking.
+echo "code code/add-microsoft-repo boolean true" | sudo debconf-set-selections
+
+# DEB_PACKAGES comes from lib/manifest.sh — see the note there on why these are
+# .debs and not APT_PACKAGES.
+for entry in "${DEB_PACKAGES[@]}"; do
+    install_deb "${entry%%|*}" "${entry#*|}"
+done
+
 # ─── 3. snap packages ─────────────────────────────────────────────────────────
 section "Installing snap packages"
 
@@ -263,6 +274,25 @@ if ! command -v bluetui &>/dev/null; then
     cargo install --version "$BLUETUI_VERSION" --locked bluetui
 else
     info "bluetui already installed ($(bluetui --version 2>/dev/null))"
+fi
+
+# ─── Iosevka Term (Ghostty's font) ────────────────────────────────────────────
+# Per-user, so no sudo: fontconfig reads ~/.local/share/fonts. The Term variant
+# keeps every glyph one cell wide; config.ghostty picks its Extended width.
+section "Installing Iosevka Term font"
+
+if [ -z "$(fc-list "Iosevka Term")" ]; then
+    info "Installing Iosevka Term $IOSEVKA_VERSION"
+    tmp=$(mktemp -d)
+    curl -fsSL -o "$tmp/iosevka.zip" \
+        "https://github.com/be5invis/Iosevka/releases/download/v${IOSEVKA_VERSION}/PkgTTF-IosevkaTerm-${IOSEVKA_VERSION}.zip"
+    mkdir -p "$HOME/.local/share/fonts/iosevka-term"
+    unzip -o -q "$tmp/iosevka.zip" -d "$tmp"
+    find "$tmp" -name '*.ttf' -exec cp {} "$HOME/.local/share/fonts/iosevka-term/" \;
+    fc-cache -f "$HOME/.local/share/fonts" >/dev/null
+    rm -rf "$tmp"
+else
+    info "Iosevka Term already installed"
 fi
 
 # ─── 5. Bun ────────────────────────────────────────────────────────────────────

@@ -1,0 +1,4 @@
+#!/bin/sh
+# Run the ChatGPT desktop app natively on Wayland; left to itself it falls back
+# to X11 (Xwayland), which blurs under fractional scaling.
+exec /usr/bin/chatgpt --ozone-platform=wayland --enable-wayland-ime "$@"

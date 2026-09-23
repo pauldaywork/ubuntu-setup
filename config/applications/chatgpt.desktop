@@ -1,0 +1,18 @@
+[Desktop Entry]
+# ChatGPT, run natively on Wayland.
+#
+# Shadows /usr/share/applications/chatgpt.desktop to add the ozone flags: left
+# to itself the app falls back to Xwayland and blurs at fractional scale. Calls
+# /usr/bin/chatgpt directly rather than the ~/.local/bin wrapper, which adds the
+# same flags, so it works whatever PATH the launcher has. Otherwise a copy of
+# the stock entry — if a chatgpt update changes that, re-copy it.
+Name=ChatGPT
+Comment=ChatGPT by OpenAI
+GenericName=AI assistant
+Exec=/usr/bin/chatgpt --ozone-platform=wayland --enable-wayland-ime %U
+Icon=chatgpt
+Type=Application
+StartupNotify=true
+Categories=Utility;Development;
+MimeType=x-scheme-handler/codex;x-scheme-handler/http;x-scheme-handler/https;text/csv;application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/vnd.openxmlformats-officedocument.presentationml.presentation;text/tab-separated-values;application/vnd.ms-excel;application/vnd.ms-excel.sheet.macroEnabled.12;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;
+

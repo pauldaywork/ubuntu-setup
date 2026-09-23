@@ -67,10 +67,10 @@ The script will:
 3. Install all apt packages, from the list in `lib/manifest.sh`
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
 5. Install the NVIDIA container toolkit, but only if an NVIDIA GPU is actually present (read from sysfs, so it works before any driver is)
-6. Install apps without an apt repo (Obsidian) via their official installers
-7. Install snap packages (Firefox, VS Code, CMake)
+6. Install apps that ship as `.deb`s — Obsidian, VS Code and ChatGPT — via their official downloads (VS Code and ChatGPT add their own apt repos for updates; VS Code is the `.deb` rather than the snap because the snap forces X11)
+7. Install snap packages (Firefox, CMake)
 8. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
-9. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers)), and bluetui, which the waybar bluetooth module opens
+9. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers)), and bluetui, which the waybar bluetooth module opens, then install the Iosevka Term font Ghostty uses into `~/.local/share/fonts`
 10. Install Bun via the official installer
 11. Install NVM + Node.js v24.18.0
 12. Install Claude Code via npm
@@ -130,14 +130,15 @@ ubuntu-setup/
 │
 ├── lib/                                    # Shared by the scripts above
 │   ├── common.sh                           # info/warn/ok/issue, pkg_installed, and copy/pull
-│   ├── manifest.sh                         # What gets installed: apt + snap lists, version pins
+│   ├── manifest.sh                         # What gets installed: apt, .deb + snap lists, version pins
 │   └── paths.sh                            # The one list of which file goes where
 │
 ├── home/                                   # Mirrors ~/
 │   ├── .bashrc
 │   ├── .profile
 │   ├── .taskrc
-│   └── .tmux.conf
+│   ├── .tmux.conf
+│   └── .local/bin/chatgpt                  # Starts ChatGPT on Wayland from a terminal
 │
 ├── config/                                 # Mirrors ~/.config/
 │   ├── niri/
@@ -152,7 +153,8 @@ ubuntu-setup/
 │   ├── fuzzel/fuzzel.ini                   # The launcher only; the pickers bring their own configs
 │   ├── ghostty/config.ghostty
 │   ├── applications/                       # → ~/.local/share/applications/  (desktop entries)
-│   │   └── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
+│   │   ├── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
+│   │   └── chatgpt.desktop                 # Shadows the stock entry to start ChatGPT on Wayland
 │   └── Code/                               # settings.json + extensions.txt
 │
 ├── wallpaper/                              # A feature, not a mirror: these land in four directories
@@ -438,7 +440,7 @@ the current image, and the colours in `config/waybar/style.css` and
 
 ## One list of what's installed
 
-`lib/manifest.sh` holds the apt packages, the snaps, and the version pins for Node, swww and Obsidian. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
+`lib/manifest.sh` holds the apt packages, the `.deb` downloads, the snaps, and the version pins for Node, swww, Iosevka and Obsidian. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
 
 `lib/common.sh` holds what all five scripts print with (`info`, `warn`, `ok`, `issue`, `section`) plus `pkg_installed` and `snap_install`. `pkg_installed` is the one worth not copy-pasting: `dpkg -s` exits 0 for packages in the `rc` state — removed, config files left behind — so it matches on the status field instead.
 

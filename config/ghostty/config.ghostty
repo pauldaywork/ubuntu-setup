@@ -7,3 +7,4 @@ foreground = ffffff
 background = 000000
 window-decoration = none
 font-size = 10
+font-family = Iosevka Term Extended

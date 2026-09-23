@@ -131,6 +131,16 @@ output "HDMI-A-1" {
     position x=0 y=0
 }
 
+// The OREI UHD-404 HDMI matrix (EDID DIP switch set to 0110, 4K60 4:4:4). Matched
+// by make/model rather than connector so other machines sharing this file aren't
+// affected. 4K tops out at 30 Hz because the DP->HDMI adapter is limited to
+// 300 MHz; an active HDMI 2.0 adapter would allow 3840x2160@60.
+// Mod+Ctrl+0 toggles this at runtime to 1080p@60 when smoothness matters more.
+output "HardCom Elektronik & Datateknik HDMI MATRIX 0x00000001" {
+    mode "3840x2160@29.970"
+    scale 1.5
+}
+
 
 // Add lines like this to spawn processes at startup.
 // Note that running niri as a session supports xdg-desktop-autostart,
@@ -333,6 +343,12 @@ binds {
     // Mod-Shift-/, which is usually the same as Mod-?,
     // shows a list of important hotkeys.
     Mod+Shift+Slash { show-hotkey-overlay; }
+
+    // Toggle DP-4 between 4K@30 (sharp) and 1080p@60 (smooth). Runtime only; a
+    // restart or config reload goes back to the HDMI MATRIX output block above.
+    Mod+Ctrl+0 hotkey-overlay-title="Toggle 4K@30 / 1080p@60" {
+        spawn "sh" "-c" "if niri msg outputs | grep -q 'Current mode: 3840x2160'; then niri msg output DP-4 mode 1920x1080@60.000 && niri msg output DP-4 scale 1; else niri msg output DP-4 mode 3840x2160@29.970 && niri msg output DP-4 scale 1.5; fi";
+    }
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
     // Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }

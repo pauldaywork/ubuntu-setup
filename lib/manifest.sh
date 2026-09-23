@@ -21,6 +21,27 @@ SWWW_VERSION="v0.11.2"
 # packaged for Ubuntu. https://github.com/pythops/bluetui
 BLUETUI_VERSION="0.8.0"
 
+# Iosevka Term — Ghostty's font (the Extended width, set in config.ghostty).
+# Not packaged for Ubuntu; install.sh unpacks the release zip into
+# ~/.local/share/fonts. https://github.com/be5invis/Iosevka/releases
+IOSEVKA_VERSION="34.8.1"
+
+# ─── .deb installs ────────────────────────────────────────────────────────────
+# Downloaded directly rather than listed in APT_PACKAGES: each package's own
+# postinst adds its vendor's apt repo (with a keyring it writes itself), so the
+# repo cannot be configured before the first install, and updates arrive through
+# apt afterwards. That is also why there is no version pin — the URLs are the
+# vendors' "latest" links.
+#
+# VS Code used to be the snap. Its launcher hard-codes --ozone-platform=x11 as the
+# last argument, so it always ran under Xwayland and blurred at fractional scale;
+# the .deb runs natively on Wayland. Settings and extensions live in ~/.config/Code
+# and ~/.vscode either way, so switching loses nothing.
+DEB_PACKAGES=(
+    "code|https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64"
+    "chatgpt|https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb"
+)
+
 # ─── apt ──────────────────────────────────────────────────────────────────────
 APT_PACKAGES=(
     # window manager. niri and ghostty are from the danklinux PPA, which is why
@@ -55,6 +76,8 @@ APT_PACKAGES=(
     # dev tools
     git
     curl
+    # unzip — install.sh unpacks the Iosevka release zip with it.
+    unzip
     build-essential
     # jq — the Mod+Shift+Q close-workspace bind in config/niri/config.kdl picks
     # the focused workspace's windows out of `niri msg -j`. Also a
@@ -110,6 +133,5 @@ APT_BUILD_PACKAGES=(
 # "name" or "name:classic" — snap_install_entry in common.sh reads this form.
 SNAP_PACKAGES=(
     firefox
-    code:classic
     cmake:classic
 )

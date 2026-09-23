@@ -78,6 +78,23 @@ else
     note "  See the OBSIDIAN_VERSION .deb URL in install.sh"
 fi
 
+for entry in "${DEB_PACKAGES[@]}"; do
+    pkg="${entry%%|*}"
+    if pkg_installed "$pkg"; then
+        ok "$pkg installed"
+    else
+        issue "$pkg not installed"
+        note "  See DEB_PACKAGES in lib/manifest.sh for the .deb URL"
+    fi
+done
+
+if [ -n "$(fc-list "Iosevka Term")" ]; then
+    ok "Iosevka Term font installed"
+else
+    issue "Iosevka Term font not installed — Ghostty falls back to its built-in font"
+    note "  See IOSEVKA_VERSION in lib/manifest.sh and the font step in install.sh"
+fi
+
 if pkg_installed docker-ce; then
     issue "docker-ce is installed and conflicts with docker.io (install.sh uses Ubuntu's docker.io)"
     note "  Remove with: sudo apt remove -y docker-ce docker-ce-cli docker-ce-rootless-extras containerd.io docker-buildx-plugin docker-compose-plugin"
@@ -600,6 +617,8 @@ check_duplicate() {
 
 check_duplicate "rustup/cargo" "rustup" '[ -x "$HOME/.cargo/bin/rustup" ]'
 check_duplicate "ghostty"      "ghostty" 'pkg_installed ghostty'
+# VS Code moved from the snap to the .deb; a machine set up before that has both.
+check_duplicate "VS Code"      "code"    'pkg_installed code'
 
 # ─── 5. The README's structure tree ──────────────────────────────────────────
 # The only check here that reads the repo rather than the machine, and it would

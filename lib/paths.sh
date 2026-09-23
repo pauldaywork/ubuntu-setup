@@ -97,11 +97,16 @@ DOTFILES_MAP=(
     "config/waybar/style.css|.config/waybar/style.css|copy"
     "config/mako/config|.config/mako/config|copy"
 
-    # GNOME Settings, shadowing the stock entry from ~/.local/share/applications
-    # so it is both visible in the launcher and able to start. The only thing
-    # this repo puts outside ~/.config; the file has to live where XDG looks for
-    # desktop entries, and that is not negotiable.
+    # Desktop entries shadowing stock ones from ~/.local/share/applications —
+    # outside ~/.config because that is where XDG looks for them, and that is
+    # not negotiable. GNOME Settings, so it is both visible in the launcher and
+    # able to start; ChatGPT, so it starts on Wayland rather than Xwayland.
     "config/applications/org.gnome.Settings.desktop|.local/share/applications/org.gnome.Settings.desktop|copy"
+    "config/applications/chatgpt.desktop|.local/share/applications/chatgpt.desktop|copy"
+
+    # ChatGPT from a terminal — the same Wayland flags as the desktop entry,
+    # found ahead of /usr/bin/chatgpt because .profile puts ~/.local/bin first.
+    "home/.local/bin/chatgpt|.local/bin/chatgpt|exec"
 
     # VS Code — note the live path is not the repo path
     "config/Code/settings.json|.config/Code/User/settings.json|copy"
