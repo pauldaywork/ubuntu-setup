@@ -17,6 +17,10 @@ OBSIDIAN_VERSION="1.12.7"
 # git tag. https://github.com/LGFae/swww
 SWWW_VERSION="v0.11.2"
 
+# bluetui — the TUI the waybar bluetooth module opens. On crates.io but not
+# packaged for Ubuntu. https://github.com/pythops/bluetui
+BLUETUI_VERSION="0.8.0"
+
 # ─── apt ──────────────────────────────────────────────────────────────────────
 APT_PACKAGES=(
     # window manager. niri and ghostty are from the danklinux PPA, which is why
@@ -98,6 +102,8 @@ APT_BUILD_PACKAGES=(
     # dependencies of these.
     libgtk-4-dev
     libgtk4-layer-shell-dev
+    # bluetui talks to bluez over D-Bus, and the dbus crate links libdbus-1.
+    libdbus-1-dev
 )
 
 # ─── snap ─────────────────────────────────────────────────────────────────────

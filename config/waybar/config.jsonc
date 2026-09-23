@@ -71,6 +71,7 @@
         "tray",
         "backlight",
         "pulseaudio",
+        "bluetooth",
         "network",
         "battery"
     ],
@@ -108,6 +109,20 @@
         "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05+ -l 1.0",
         "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05-",
         "tooltip-format": "{desc}"
+    },
+
+    // bluetui in a terminal, the same way network opens nmtui. The DMS popover
+    // this replaces could pair and connect from the bar; bluetui does both.
+    "bluetooth": {
+        "format": "bt",
+        "format-off": "bt off",
+        "format-disabled": "bt off",
+        "format-connected": "bt {device_alias}",
+        "format-connected-battery": "bt {device_alias} {device_battery_percentage}%",
+        "tooltip-format": "{controller_alias}  {status}",
+        "tooltip-format-connected": "{controller_alias}  {num_connections} connected\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}  {device_address}",
+        "on-click": "ghostty -e bluetui"
     },
 
     "network": {

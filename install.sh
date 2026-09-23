@@ -253,6 +253,18 @@ else
     info "swww already installed ($(swww --version 2>/dev/null))"
 fi
 
+# ─── bluetui (bluetooth pairing) ──────────────────────────────────────────────
+# What the waybar bluetooth module opens on click, in the same way network opens
+# nmtui. DMS's bluetooth popover went with DMS and waybar has none of its own.
+section "Installing bluetui"
+
+if ! command -v bluetui &>/dev/null; then
+    info "Installing bluetui $BLUETUI_VERSION"
+    cargo install --version "$BLUETUI_VERSION" --locked bluetui
+else
+    info "bluetui already installed ($(bluetui --version 2>/dev/null))"
+fi
+
 # ─── 5. Bun ────────────────────────────────────────────────────────────────────
 section "Installing Bun"
 

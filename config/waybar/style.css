@@ -133,6 +133,7 @@ window#waybar.empty #window {
 #tray,
 #backlight,
 #pulseaudio,
+#bluetooth,
 #network,
 #battery,
 #clock {
@@ -151,6 +152,8 @@ window#waybar.empty #window {
 #battery.critical { color: @error; }
 
 #pulseaudio.muted,
+#bluetooth.off,
+#bluetooth.disabled,
 #network.disconnected {
     color: @muted;
 }

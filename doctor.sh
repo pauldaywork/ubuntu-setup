@@ -368,6 +368,15 @@ else
     note "  Install with: cargo install --git https://github.com/LGFae/swww --tag $SWWW_VERSION --locked swww swww-daemon"
 fi
 
+# The waybar bluetooth module opens it on click; without it the click does
+# nothing at all, which looks like a broken bar rather than a missing tool.
+if command -v bluetui &>/dev/null; then
+    ok "bluetui installed ($(bluetui --version 2>/dev/null))"
+else
+    issue "bluetui not installed — clicking the waybar bluetooth module does nothing"
+    note "  Install with: cargo install --version $BLUETUI_VERSION --locked bluetui"
+fi
+
 # It runs as a systemd user unit, so ask systemd rather than looking for the
 # process: it distinguishes "never installed" from "enabled but crashed", and
 # knows which one to tell you to look at.

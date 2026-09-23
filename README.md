@@ -70,7 +70,7 @@ The script will:
 6. Install apps without an apt repo (Obsidian) via their official installers
 7. Install snap packages (Firefox, VS Code, CMake)
 8. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
-9. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers))
+9. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers)), and bluetui, which the waybar bluetooth module opens
 10. Install Bun via the official installer
 11. Install NVM + Node.js v24.18.0
 12. Install Claude Code via npm
@@ -288,7 +288,7 @@ it — task state is untouched (`task` on the command line, and niri-tasks'
 `Mod+Alt+T`/`L`/`P` and its active-task overlay, which were always separate from
 the widget), but the at-a-glance count in the bar is not coming back. The
 click-through audio, network and bluetooth popovers are gone; waybar's modules
-shell out to `wpctl` and `nmtui` instead. Wallpapers no longer retint the
+shell out to `wpctl`, `nmtui` and `bluetui` instead. Wallpapers no longer retint the
 desktop. And the monitor layout is no longer detected per-machine — `config.kdl`
 names the outputs and modes explicitly, so different hardware needs an edit
 (`install.sh` warns about this at the end).
