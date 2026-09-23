@@ -95,6 +95,7 @@ DOTFILES_MAP=(
     # settings file growing keys underneath the repo and no merge to do.
     "config/waybar/config.jsonc|.config/waybar/config.jsonc|copy"
     "config/waybar/style.css|.config/waybar/style.css|copy"
+    "config/waybar/power-menu.sh|.config/waybar/power-menu.sh|exec"
     "config/mako/config|.config/mako/config|copy"
 
     # Desktop entries shadowing stock ones from ~/.local/share/applications —

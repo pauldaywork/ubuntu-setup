@@ -73,7 +73,8 @@
         "pulseaudio",
         "bluetooth",
         "network",
-        "battery"
+        "battery",
+        "custom/power"
     ],
 
     "tray": {
@@ -92,6 +93,13 @@
     },
 
     "battery": {
+        // The laptop's own battery and nothing else. Left unset, waybar watches
+        // every battery in /sys/class/power_supply — the G502's hidpp_battery
+        // included — and aborts when one vanishes mid-watch: a USB replug took
+        // the whole bar down ("Could not watch events for .../hidpp_battery_0").
+        // It never displayed those anyway. If a laptop names its battery BAT1,
+        // change this, or the module stays empty there.
+        "bat": "BAT0",
         "states": { "warning": 30, "critical": 15 },
         "format": "{capacity}% {icon}",
         "format-charging": "{capacity}% ⚡",
@@ -131,6 +139,14 @@
         "format-disconnected": "offline",
         "tooltip-format": "{ifname}  {ipaddr}",
         "on-click": "ghostty -e nmtui"
+    },
+
+    // Opens power-menu.sh: shut down, reboot, suspend, log out. ⏻ is drawn
+    // from Iosevka Term, which install.sh puts in place for Ghostty.
+    "custom/power": {
+        "format": "⏻",
+        "tooltip-format": "Power",
+        "on-click": "~/.config/waybar/power-menu.sh"
     },
 
     "clock": {

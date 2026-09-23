@@ -136,6 +136,7 @@ window#waybar.empty #window {
 #bluetooth,
 #network,
 #battery,
+#custom-power,
 #clock {
     padding: 0 10px;
     margin: 4px 2px;
@@ -146,6 +147,16 @@ window#waybar.empty #window {
 #clock {
     color: @text;
     background-color: alpha(@surfaceHigh, 0.55);
+}
+
+/* ⏻ sits small in the font it falls back to; this brings it up to the height
+ * of the text in the neighbouring pills. */
+#custom-power {
+    font-size: 18px;
+}
+
+#custom-power:hover {
+    color: @error;
 }
 
 #battery.warning  { color: @warning; }
