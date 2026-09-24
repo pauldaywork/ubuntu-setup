@@ -32,8 +32,9 @@
 # kinds:
 #   copy      plain file. Copied out, pulled back.
 #   exec      as copy, plus the executable bit on the way out.
-#   laptop    only deployed on laptops. Nothing captures it back: it is a file
-#             you edit in the repo, and a desktop has no copy to capture anyway.
+#   laptop    only deployed on laptops, and removed from a desktop. Nothing
+#             captures it back: it is a file you edit in the repo, and a
+#             desktop has no copy to capture anyway.
 #
 # There used to be a fourth, `merge`, for a file the app owned and grew keys in
 # — deploying merged rather than replaced so a re-install couldn't delete every
@@ -95,6 +96,8 @@ DOTFILES_MAP=(
     # settings file growing keys underneath the repo and no merge to do.
     "config/waybar/config.jsonc|.config/waybar/config.jsonc|copy"
     "config/waybar/style.css|.config/waybar/style.css|copy"
+    # battery + backlight for the top bar; see the include in config.jsonc
+    "config/waybar/laptop.jsonc|.config/waybar/laptop.jsonc|laptop"
     "config/mako/config|.config/mako/config|copy"
 
     # Desktop entries shadowing stock ones from ~/.local/share/applications —

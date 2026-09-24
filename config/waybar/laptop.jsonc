@@ -1,0 +1,31 @@
+// The top bar's laptop-only modules. Deployed only on laptops, and included by
+// the top bar in config.jsonc, which lists "group/laptop" among its modules; on
+// a desktop this file is absent and the group is hidden. See the note by the
+// include there.
+{
+    "group/laptop": {
+        "orientation": "inherit",
+        "modules": ["backlight", "battery"]
+    },
+
+    "backlight": {
+        "format": "{percent}% ☀",
+        // brightnessctl, matching the XF86MonBrightness binds in niri's laptop.kdl.
+        "on-scroll-up": "brightnessctl --class=backlight set +5%",
+        "on-scroll-down": "brightnessctl --class=backlight set 5%-"
+    },
+
+    "battery": {
+        // The laptop's own battery and nothing else. Left unset, waybar also
+        // watches peripheral batteries — a wireless mouse's hidpp_battery — and
+        // aborts when one vanishes mid-watch ("Could not watch events for
+        // .../hidpp_battery_0"). If a laptop names its battery BAT1, change this,
+        // or the module stays empty there.
+        "bat": "BAT0",
+        "states": { "warning": 30, "critical": 15 },
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% ⚡",
+        "format-icons": ["▁", "▂", "▄", "▆", "█"],
+        "tooltip-format": "{timeTo}  ({power}W)"
+    }
+}

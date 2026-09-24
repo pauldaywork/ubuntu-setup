@@ -49,7 +49,7 @@ cd ~/Projects/ubuntu-setup
 bash install.sh
 ```
 
-All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config for `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on when an external monitor is connected. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
+All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config — the built-in display's `eDP-1` output block, the brightness keys, and `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on when an external monitor is connected — plus battery and brightness on the top bar. A machine switched to `--desktop` has those files removed. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
 
 **You don't have to ask for it.** The installer reads the DMI chassis type (and falls back to looking for a battery), and records the answer in `~/.config/niri/.machine-type` so every later run agrees with the first. `--laptop` and `--desktop` override the guess, and the override is recorded too:
 
@@ -143,12 +143,13 @@ ubuntu-setup/
 ├── config/                                 # Mirrors ~/.config/
 │   ├── niri/
 │   │   ├── config.kdl                      # Includes niri-tasks.kdl; configure.sh seeds a stub for it
-│   │   ├── laptop.kdl                      # Installed on laptops only (auto-detected)
+│   │   ├── laptop.kdl                      # eDP-1 + brightness/display keys; laptops only (auto-detected)
 │   │   └── window-rules/
 │   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
 │   │       ├── normal.kdl                  # Fully opaque windows
 │   │       └── focus.kdl                   # Unfocused windows fade out
 │   ├── waybar/                             # config.jsonc + style.css
+│   │                                       #   + laptop.jsonc: battery/backlight, laptops only
 │   ├── mako/config
 │   ├── fuzzel/fuzzel.ini                   # The launcher only; the pickers bring their own configs
 │   ├── ghostty/config.ghostty
@@ -321,7 +322,7 @@ hardware is the Settings app.**
 |---|---|---|
 | Keyboard, touchpad, mouse | `input {}` in `config/niri/config.kdl` | niri reads this directly; nothing else is consulted |
 | Keybindings | `binds {}` in the same file | same |
-| Monitors, resolution, scale | `output "eDP-1"` / `output "HDMI-A-1"` blocks | niri applies these at startup and wins over anything set at runtime |
+| Monitors, resolution, scale | `output` blocks in `config.kdl`; the laptop screen's (`eDP-1`) in `laptop.kdl` | niri applies these at startup and wins over anything set at runtime |
 | Bar, notifications, launcher | `config/waybar/`, `config/mako/config`, `config/fuzzel/` | plain files this repo owns outright |
 | Wallpaper | `Mod+Alt+B`, over `~/.config/niri/wallpaper-active` | see Animated wallpapers below |
 | GTK theme, dark mode, cursor, fonts | `gsettings set org.gnome.desktop.interface …` | apps read these live through the settings portal |
@@ -544,7 +545,7 @@ What it checks:
 | Toolchains | rustup, bun, nvm (and that `NVM_DIR` points where nvm actually is), Node, Claude Code, TPM |
 | Desktop | waybar and mako actually running — neither is a systemd unit, so nothing else would notice. A missing bar is obvious; a missing notification daemon is not |
 | Wallpaper | swww installed, its unit enabled and running, `wallpaper-apply.sh` present, **and that what's on screen is what `wallpaper-active` names** — the one check that catches a missed paint |
-| Laptop config | A machine with a battery whose `config.kdl` lacks the laptop include, or an include pointing at a file that isn't there |
+| Laptop config | A machine with a battery whose `config.kdl` lacks the laptop include, or an include pointing at a file that isn't there. On a desktop, any laptop-only file still installed (`laptop.jsonc` would put the battery module back on the bar) |
 | Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
 | Config drift | Every file in `lib/paths.sh`: installed, matching the repo, and executable where the kind says so. `config.kdl` is compared separately, with the laptop include stripped from both sides. Files `configure.sh` rewrites after copying — ghostty — are checked for presence but not content |
 | niri-tasks | That `wt` is installed, the `niri-tasks.kdl` include exists (niri refuses to load a config whose include is missing), and the active-task overlay service is running |

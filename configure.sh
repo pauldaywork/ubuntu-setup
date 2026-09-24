@@ -96,7 +96,7 @@ fi
 echo "$MACHINE_TYPE" > "$MACHINE_TYPE_FILE"
 
 if [ "$MACHINE_TYPE" = "laptop" ]; then
-    info "Laptop-specific niri config: on ($MACHINE_REASON)"
+    info "Laptop-specific config (niri binds, waybar battery/backlight): on ($MACHINE_REASON)"
     # From the table rather than spelled out again, so doctor.sh and capture/
     # cannot end up disagreeing with this about which files those are.
     for _row in "${DOTFILES_MAP[@]}"; do
@@ -105,7 +105,20 @@ if [ "$MACHINE_TYPE" = "laptop" ]; then
         copy "$DOTFILES/$REPO_PATH" "$USER_HOME/$HOME_PATH"
     done
 else
-    info "Laptop-specific niri config: off ($MACHINE_REASON)"
+    info "Laptop-specific config (niri binds, waybar battery/backlight): off ($MACHINE_REASON)"
+    # A machine switched from laptop to desktop still has the copies an earlier
+    # run deployed. niri's would sit unread once the include is gone, but
+    # waybar's config.jsonc includes laptop.jsonc whenever it exists, and a
+    # stale one brings the battery module back — the one that aborts the bar on
+    # a mouse replug. They are plain copies of repo files, so nothing is lost.
+    for _row in "${DOTFILES_MAP[@]}"; do
+        map_entry "$_row"
+        [ "$KIND" = laptop ] || continue
+        if [ -e "$USER_HOME/$HOME_PATH" ]; then
+            rm -f "$USER_HOME/$HOME_PATH"
+            info "Removed ~/$HOME_PATH (laptop only)"
+        fi
+    done
 fi
 
 

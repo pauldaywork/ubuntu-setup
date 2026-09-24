@@ -69,42 +69,30 @@
     "modules-center": [],
     "modules-right": [
         "tray",
-        "backlight",
         "pulseaudio",
         "bluetooth",
         "network",
-        "battery",
+        "group/laptop",
         "custom/power"
     ],
+
+    // Battery and backlight exist on laptops only, and a desktop runs neither.
+    // laptop.jsonc defines group/laptop (the two modules and their settings) and
+    // is deployed only on laptops — the `laptop` kind in lib/paths.sh, the same
+    // machine-type decision that adds laptop.kdl to niri. On a desktop the
+    // include finds no file and is skipped, group/laptop has no definition, and
+    // waybar hides it ("Group definition 'group/laptop' has not been found")
+    // without creating either module.
+    //
+    // It used to be both modules here on every machine, on the grounds that they
+    // render nothing without hardware. But the battery module still watches
+    // every battery in /sys/class/power_supply, a mouse's included, and a USB
+    // replug on the desktop aborted the whole bar.
+    "include": ["~/.config/waybar/laptop.jsonc"],
 
     "tray": {
         "spacing": 10,
         "icon-size": 16
-    },
-
-    // Both of these are laptop-only in practice. waybar renders nothing for a
-    // battery that doesn't exist or a backlight it can't find, so they cost a
-    // desktop nothing and there is no need for a second config file.
-    "backlight": {
-        "format": "{percent}% ☀",
-        // brightnessctl, matching the XF86MonBrightness binds in config.kdl.
-        "on-scroll-up": "brightnessctl --class=backlight set +5%",
-        "on-scroll-down": "brightnessctl --class=backlight set 5%-"
-    },
-
-    "battery": {
-        // The laptop's own battery and nothing else. Left unset, waybar watches
-        // every battery in /sys/class/power_supply — the G502's hidpp_battery
-        // included — and aborts when one vanishes mid-watch: a USB replug took
-        // the whole bar down ("Could not watch events for .../hidpp_battery_0").
-        // It never displayed those anyway. If a laptop names its battery BAT1,
-        // change this, or the module stays empty there.
-        "bat": "BAT0",
-        "states": { "warning": 30, "critical": 15 },
-        "format": "{capacity}% {icon}",
-        "format-charging": "{capacity}% ⚡",
-        "format-icons": ["▁", "▂", "▄", "▆", "█"],
-        "tooltip-format": "{timeTo}  ({power}W)"
     },
 
     // wpctl rather than pactl, so this agrees with the XF86Audio binds in

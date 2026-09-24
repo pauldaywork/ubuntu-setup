@@ -238,8 +238,15 @@ for _row in "${DOTFILES_MAP[@]}"; do
     _live="$HOME/$HOME_PATH"
     _repo="$DOTFILES/$REPO_PATH"
 
-    # Laptop-only rows are not expected to exist on a desktop.
-    [ "$KIND" = laptop ] && [ "$MACHINE_TYPE_NOW" != laptop ] && continue
+    # Laptop-only rows are not expected to exist on a desktop — and one that
+    # does is live there: config.jsonc includes laptop.jsonc whenever it exists.
+    if [ "$KIND" = laptop ] && [ "$MACHINE_TYPE_NOW" != laptop ]; then
+        if [ -e "$_live" ]; then
+            issue "Laptop-only file on a desktop: ~/$HOME_PATH"
+            note "  Remove with: bash configure.sh"
+        fi
+        continue
+    fi
 
     CHECKED=$((CHECKED + 1))
     if [ ! -f "$_live" ]; then
