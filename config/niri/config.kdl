@@ -91,10 +91,11 @@ input {
 // which may be more convenient to use.
 // See the binds section below for more spawn examples.
 
-// The bar. This line came in with niri's default config and did nothing for as
-// long as DMS drew the bar. waybar is in lib/manifest.sh now, with its config in
-// config/waybar/, so it finally means something.
-spawn-at-startup "waybar"
+// The bar is not spawned here. The waybar package ships a systemd user unit,
+// enabled for graphical-session.target, so a spawn-at-startup line alongside it
+// drew every bar twice. The unit is the one kept because it restarts waybar when
+// it crashes — a USB replug and a SIGUSR2 reload have both aborted it — where a
+// spawned one stays gone until the next login. configure.sh enables it.
 
 // Notifications. Nothing else implements org.freedesktop.Notifications once DMS
 // is gone, and notify-send is not decoration here — window-rules/toggle.sh calls

@@ -187,6 +187,12 @@ if command -v systemctl &>/dev/null; then
     systemctl --user enable swww-daemon.service 2>/dev/null \
         && info "Enabled the swww-daemon user unit" \
         || warn "Could not enable the swww-daemon user unit (no systemd user session?)"
+    # The bar. The waybar package's own unit, which Ubuntu enables system-wide
+    # already; enabled here too so the bar does not hang on a package preset.
+    # See the note where config.kdl used to spawn it.
+    systemctl --user enable waybar.service 2>/dev/null \
+        && info "Enabled the waybar user unit" \
+        || warn "Could not enable the waybar user unit (no systemd user session?)"
     if systemctl --user is-active --quiet graphical-session.target 2>/dev/null; then
         systemctl --user restart swww-daemon.service 2>/dev/null \
             && info "Started swww-daemon" || true

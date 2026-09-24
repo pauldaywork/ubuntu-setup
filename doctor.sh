@@ -178,19 +178,28 @@ fi
 # niri-tasks' Mod+Alt+T/L/P and its active-task overlay, which were always
 # separate from the widget. What is gone is the at-a-glance count in the bar.
 
-# The desktop pieces that replaced DMS. Neither is a systemd unit — both are
-# niri spawn-at-startup lines — so there is nothing for systemctl to report and
-# a bare pgrep is the honest check.
+# The desktop pieces that replaced DMS. mako is a niri spawn-at-startup line, so
+# a bare pgrep is the honest check for it. waybar is the package's systemd unit,
+# and a pgrep count as well: a second copy (niri used to spawn one too) draws
+# every bar twice.
 #
 # A missing bar is obvious the moment you look at the screen. A missing
 # notification daemon is not: notify-send simply returns, and the first thing
 # you notice is that Mod+Alt+R stopped telling you which profile it switched to.
 if pkg_installed waybar; then
-    if pgrep -x waybar >/dev/null; then
-        ok "waybar running"
+    WAYBARS=$(pgrep -xc waybar || true)
+    if [ "$WAYBARS" -gt 1 ]; then
+        issue "$WAYBARS waybar processes running — every bar is drawn more than once"
+        note "  Only waybar.service should start it; look for a spawn-at-startup \"waybar\""
+        note "  Fix for now with: pkill -x waybar; systemctl --user restart waybar"
+    elif systemctl --user is-active --quiet waybar.service 2>/dev/null; then
+        ok "waybar running (waybar.service)"
+    elif [ "$WAYBARS" -eq 1 ]; then
+        issue "waybar is running, but not from waybar.service — nothing will restart it if it crashes"
+        note "  Fix with: pkill -x waybar; systemctl --user enable --now waybar"
     elif [ -n "${WAYLAND_DISPLAY:-}" ]; then
         issue "waybar is installed but not running — there is no bar"
-        note "  Start it with: waybar &   (or re-login; niri spawns it at startup)"
+        note "  Start it with: systemctl --user enable --now waybar"
     fi
 fi
 

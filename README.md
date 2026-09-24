@@ -9,7 +9,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 | Shell | `.bashrc`, `.profile` |
 | Terminal multiplexer | tmux (`.tmux.conf` + TPM-managed plugins) |
 | Window manager | Niri config + swappable window-rules/layout profiles (`Mod+Alt+R`) |
-| Bar | waybar (`config.jsonc` + `style.css`), started by niri |
+| Bar | waybar (`config.jsonc` + `style.css`), started by the package's `waybar.service` |
 | Notifications | mako |
 | Launcher | fuzzel (`Mod+Space`) |
 | Terminal | Ghostty (deb from the danklinux PPA, not the snap) |
@@ -547,7 +547,7 @@ What it checks:
 | Packages | Everything in `lib/manifest.sh` — the same list `install.sh` installs from, so the two can't drift. Build-only packages are excluded on purpose |
 | Docker | Group membership, service running, and `docker-ce` conflicting with Ubuntu's `docker.io` |
 | Toolchains | rustup, bun, nvm (and that `NVM_DIR` points where nvm actually is), Node, Claude Code, TPM |
-| Desktop | waybar and mako actually running — neither is a systemd unit, so nothing else would notice. A missing bar is obvious; a missing notification daemon is not |
+| Desktop | waybar running from `waybar.service`, and only once; mako actually running — it is not a systemd unit, so nothing else would notice. A missing bar is obvious; a missing notification daemon is not |
 | Wallpaper | swww installed, its unit enabled and running, `wallpaper-apply.sh` present, **and that what's on screen is what `wallpaper-active` names** — the one check that catches a missed paint |
 | Machine-type config | A machine with a battery whose `config.kdl` lacks the laptop include, an include that disagrees with the recorded machine type, or one pointing at a file that isn't there. Either type's files installed on the other (`laptop.jsonc` would put the battery module back on the bar). On a desktop, `/etc/xdg/monitors.xml` matching the repo |
 | Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
