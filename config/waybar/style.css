@@ -99,9 +99,19 @@ window#waybar.waybar-dock #workspaces {
     color: @wallpaper_accent;
     background-color: transparent;
     border-radius: 6px;
-    /* A 1px black outline, so light accent text holds up over a light patch of
-     * wallpaper. GTK has no text-stroke; four offset shadows are the stand-in. */
+}
+
+/* A 1px black outline, so light accent text holds up over a light patch of
+ * wallpaper. GTK has no text-stroke; four offset shadows are the stand-in. Set
+ * on the label rather than the button: the GTK theme styles labels itself, and
+ * that beats a shadow the label would otherwise inherit from its button. */
+#workspaces button label {
     text-shadow: 1px 0 black, -1px 0 black, 0 1px black, 0 -1px black;
+}
+
+#workspaces button.focused label,
+#workspaces button.active label {
+    text-shadow: none;
 }
 
 /* Focus is a solid chip in the wallpaper's accent colour with black text, so the
@@ -113,7 +123,6 @@ window#waybar.waybar-dock #workspaces {
 #workspaces button.active {
     color: black;
     background-color: @wallpaper_accent;
-    text-shadow: none;
     box-shadow: 0 2px 6px 1px alpha(black, 0.44);
 }
 
