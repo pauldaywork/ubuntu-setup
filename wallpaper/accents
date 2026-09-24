@@ -1,0 +1,27 @@
+# The bottom bar's accent colour for each wallpaper, chosen by eye: it fills
+# the focused workspace, under black text, and colours the other workspace
+# names. wallpaper-apply.sh looks the painted wallpaper up here by filename, and
+# only picks a colour from the image itself for one that is not listed.
+#
+#   <#rrggbb> <filename in ~/Documents/Wallpapers>
+#
+# wallhaven-wed2qq's slate blue is darker than the rest, about 4.7:1 against
+# black text where the others are 7:1 or better. That was deliberate.
+#76ffbf 205.png
+#ffd8a9 chill.gif
+#ffc499 detfftq-03e74626-78fb-446e-b7bc-dd99d5f6b63e.gif
+#ffc1b1 dez5d9x-79cb89e0-a551-4731-82cd-399bbc6ea0c5.gif
+#ffc550 dfetuzx-f10a8a84-5b6e-4581-8279-e7fbc6729eaa.gif
+#ffffff dgzz4lq-e3577211-d751-4787-b785-d8f9791f3232.gif
+#a9e4ff fireplace.gif
+#a1aaff moon.gif
+#4199ff retro2_live.gif
+#6cb0ff retro_city.gif
+#3e9aff still_on_by_kirokaze_dcsm2x8.gif
+#ff81cb sunset_live.gif
+#ffe051 wallhaven-2yy9r9.jpg
+#f1a8ff wallhaven-3l66qd.jpg
+#ffff61 wallhaven-575d77.jpg
+#fea8ff wallhaven-g7mpj7.jpg
+#ffc6ab wallhaven-qz697r.jpg
+#507d94 wallhaven-wed2qq.jpg

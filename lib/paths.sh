@@ -77,13 +77,14 @@ DOTFILES_MAP=(
     "config/niri/laptop.kdl|.config/niri/laptop.kdl|laptop"
     "config/niri/desktop.kdl|.config/niri/desktop.kdl|desktop"
 
-    # wallpaper — one directory in the repo, four destinations on disk across
+    # wallpaper — one directory in the repo, five destinations on disk across
     # three trees, which is exactly why it is a feature directory rather than
     # part of the mirror. picker.ini lands in fuzzel's config rather than niri's
     # because fuzzel is what reads it, even though only the wallpaper bind does.
     "wallpaper/apply.sh|.config/niri/wallpaper-apply.sh|exec"
     "wallpaper/pick.sh|.config/niri/wallpaper-pick.sh|exec"
     "wallpaper/picker.ini|.config/fuzzel/wallpaper-picker.ini|copy"
+    "wallpaper/accents|.config/niri/wallpaper-accents|copy"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
 
     # fuzzel — the launcher on Mod+Space. The other fuzzel configs are not here:

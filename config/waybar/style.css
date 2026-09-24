@@ -99,6 +99,9 @@ window#waybar.waybar-dock #workspaces {
     color: @wallpaper_accent;
     background-color: transparent;
     border-radius: 6px;
+    /* A 1px black outline, so light accent text holds up over a light patch of
+     * wallpaper. GTK has no text-stroke; four offset shadows are the stand-in. */
+    text-shadow: 1px 0 black, -1px 0 black, 0 1px black, 0 -1px black;
 }
 
 /* Focus is a solid chip in the wallpaper's accent colour with black text, so the
@@ -110,6 +113,7 @@ window#waybar.waybar-dock #workspaces {
 #workspaces button.active {
     color: black;
     background-color: @wallpaper_accent;
+    text-shadow: none;
     box-shadow: 0 2px 6px 1px alpha(black, 0.44);
 }
 
@@ -118,9 +122,27 @@ window#waybar.waybar-dock #workspaces {
     background-color: @error;
 }
 
+/* Hover is a faint wash of the accent behind accent text: a preview of the chip
+ * the button becomes when clicked, rather than a grey that belongs to neither
+ * state. */
 #workspaces button:hover {
-    background-color: alpha(@surfaceHigh, 0.55);
-    color: @text;
+    background-color: alpha(@wallpaper_accent, 0.2);
+    color: @wallpaper_accent;
+}
+
+/* The focused chip keeps its fill and black text under the pointer, only a
+ * touch brighter; the rule above would otherwise turn it back into a wash. Two
+ * classes outrank the one pseudo-class there, so this wins wherever it sits. */
+#workspaces button.focused:hover,
+#workspaces button.active:hover {
+    background-color: shade(@wallpaper_accent, 1.1);
+    color: black;
+}
+
+/* Urgent is the one state that should outshout the pointer. */
+#workspaces button.urgent:hover {
+    background-color: shade(@error, 1.1);
+    color: @background;
 }
 
 #window {

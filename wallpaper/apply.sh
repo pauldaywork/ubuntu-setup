@@ -87,11 +87,16 @@ if [ "$PAINTED" != yes ]; then
 fi
 
 # ─── Accent colour for the bar ────────────────────────────────────────────────
-# The focused workspace button is filled with the wallpaper's brightest, most
-# colourful colour, under black text. This is the retint matugen used to do for
-# the whole desktop, cut down to the one thing that uses it.
+# The focused workspace button is filled with an accent colour for the
+# wallpaper, under black text, and the other workspace names are drawn in it.
+# This is the retint matugen used to do for the whole desktop, cut down to the
+# one thing that uses it.
 #
-# ffmpeg's palettegen boils the first frame down to 24 colours; the one scoring
+# The colour is looked up in wallpaper-accents first, by filename: those were
+# chosen by eye, one per wallpaper, and they win. Only a wallpaper missing from
+# that list, such as one added since, gets a colour picked from the image.
+#
+# That pick: ffmpeg's palettegen boils the first frame down to 24 colours; the one scoring
 # highest on saturation² × brightness wins, so a vivid patch beats a large dull
 # one and a grey never wins while there is any colour at all. It is then pushed
 # to full brightness, and if that is still too dark for black text (a deep blue,
@@ -102,6 +107,16 @@ fi
 # wallpaper is already painted, and an out-of-date bar colour is not worth an
 # error at login.
 ACCENT_CSS="$HOME/.config/waybar/wallpaper-colors.css"
+ACCENTS="$HOME/.config/niri/wallpaper-accents"
+
+# The first "#rrggbb <filename>" line naming this wallpaper, or nothing.
+# Comments start "# " with a space, so they can never look like a colour.
+chosen_accent_for() {
+    [ -f "$ACCENTS" ] || return 1
+    awk -v name="$(basename "$1")" '
+        $1 ~ /^#[0-9A-Fa-f]{6}$/ && $2 == name { print tolower($1); found = 1; exit }
+        END { exit !found }' "$ACCENTS"
+}
 
 accent_for() {
     ffmpeg -loglevel error -i "$1" -frames:v 1 \
@@ -129,7 +144,9 @@ accent_for() {
         }'
 }
 
-if command -v ffmpeg >/dev/null && ACCENT="$(accent_for "$WALLPAPER")" && [ -n "$ACCENT" ]; then
+if ACCENT="$(chosen_accent_for "$WALLPAPER")" \
+   || { command -v ffmpeg >/dev/null && ACCENT="$(accent_for "$WALLPAPER")"; } \
+   && [ -n "$ACCENT" ]; then
     # Written aside and renamed into place: waybar exits over an import it
     # cannot read, so it must never catch this file missing or half-written.
     mkdir -p "$(dirname "$ACCENT_CSS")"
