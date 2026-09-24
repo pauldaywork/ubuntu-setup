@@ -395,6 +395,18 @@ else
     info "Wallpaper set to $ACTIVE_WALLPAPER"
 fi
 
+# The bar's accent colour. wallpaper-apply.sh derives it from the wallpaper on
+# every paint, but style.css imports it unconditionally and waybar exits over an
+# import it cannot open — no bar at all — so it has to exist before waybar first
+# starts, which can be before swww-daemon has painted anything. White until then.
+# Never overwritten: past the first paint it is the wallpaper's, not ours.
+WALLPAPER_COLORS="$USER_HOME/.config/waybar/wallpaper-colors.css"
+if [ ! -f "$WALLPAPER_COLORS" ]; then
+    mkdir -p "$(dirname "$WALLPAPER_COLORS")"
+    printf '@define-color wallpaper_accent #ffffff;\n' > "$WALLPAPER_COLORS"
+    info "Seeded the bar accent colour (white until a wallpaper is painted)"
+fi
+
 # ─── Prune old backups ────────────────────────────────────────────────────────
 # Backups are only worth keeping while they're plausibly the version you want
 # back. Nothing ever deleted them before, so they accumulated one directory per

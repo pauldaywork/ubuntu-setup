@@ -8,13 +8,20 @@
  *
  * Note what this costs: matugen used to re-derive the whole palette from the
  * current wallpaper, so the desktop retinted itself when the wallpaper changed.
- * Nothing does that now. These are fixed colours.
+ * Only the workspace buttons do that now, through @wallpaper_accent below; the
+ * rest are fixed colours.
  *
  * The salmon accent those values came with (muted #d9bcb8, primary #eda792) has
- * since been dropped for plain white, and focus is now marked by darkening a
- * button rather than by colouring it — so @primary has no users left, and nor
- * does @secondary. The palette is kept whole anyway: an unused line here is
+ * since been dropped, and the workspace buttons take the wallpaper's accent
+ * instead — so @primary has no users left, and nor does @secondary. The palette is kept whole anyway: an unused line here is
  * something to reach for later, where a deleted one is a hex value to invent. */
+
+/* @wallpaper_accent, the focused workspace's fill. wallpaper-apply.sh rewrites
+ * this file from the wallpaper each time it changes, and configure.sh seeds it
+ * with white so it exists before the first wallpaper is painted. That seed
+ * matters: waybar exits outright over an import it cannot open, so without the
+ * file there is no bar at all, not just an unstyled one. */
+@import url("wallpaper-colors.css");
 
 @define-color background   #09070d;
 @define-color surface      #130f1a;
@@ -89,19 +96,21 @@ window#waybar.waybar-dock #workspaces {
      * strip of bare bar between them. */
     padding: 6px 10px;
     margin: 8px 0px;
-    color: @muted;
+    color: @wallpaper_accent;
     background-color: transparent;
     border-radius: 6px;
 }
 
-/* Focus is marked by darkening rather than by accenting: @text on a half-opaque
- * @background, which reads as a recess in the bar instead of a chip laid on top
- * of it. Deliberately quieter than the urgent and hover states below, which are
- * the two that should actually catch your eye. */
+/* Focus is a solid chip in the wallpaper's accent colour with black text, so the
+ * current workspace can be found at a glance. The accent is always picked light
+ * enough for black; see wallpaper-apply.sh. The shadow is niri's window shadow (softness
+ * 30, spread 5, y 5, #0007) scaled down: the button has only 8px of bar above
+ * and below it, and anything past that is clipped at the bar's edge. */
 #workspaces button.focused,
 #workspaces button.active {
-    color: @text;
-    background-color: alpha(@background, 0.5);
+    color: black;
+    background-color: @wallpaper_accent;
+    box-shadow: 0 2px 6px 1px alpha(black, 0.44);
 }
 
 #workspaces button.urgent {
