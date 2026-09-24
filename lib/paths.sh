@@ -99,6 +99,7 @@ DOTFILES_MAP=(
     # settings file growing keys underneath the repo and no merge to do.
     "config/waybar/config.jsonc|.config/waybar/config.jsonc|copy"
     "config/waybar/style.css|.config/waybar/style.css|copy"
+    "config/waybar/power_menu.xml|.config/waybar/power_menu.xml|copy"
     # battery + backlight for the top bar; see the include in config.jsonc
     "config/waybar/laptop.jsonc|.config/waybar/laptop.jsonc|laptop"
     "config/mako/config|.config/mako/config|copy"

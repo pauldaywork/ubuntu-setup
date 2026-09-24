@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The top bar's power menu (custom/power in config.jsonc). waybar's own
+  /usr/share/waybar/custom_modules/power_menu.xml with a Log out entry added,
+  which the stock one has no equivalent of. Each id here is a key in the
+  module's menu-actions.
+-->
+<interface>
+  <object class="GtkMenu" id="menu">
+    <child>
+      <object class="GtkMenuItem" id="suspend">
+        <property name="label">Suspend</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="hibernate">
+        <property name="label">Hibernate</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="shutdown">
+        <property name="label">Shutdown</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="delimiter1"/>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="reboot">
+        <property name="label">Reboot</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="logout">
+        <property name="label">Log out</property>
+      </object>
+    </child>
+  </object>
+</interface>

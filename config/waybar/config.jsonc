@@ -129,21 +129,23 @@
         "on-click": "ghostty -e nmtui"
     },
 
-    // waybar's own power menu: the drop-down and its entries (suspend,
-    // hibernate, shut down, reboot) come from the menu file the waybar package
-    // ships. The actions are systemctl rather than the stock config's bare
-    // `shutdown`, which waits a minute before powering off. ⏻ is drawn from
+    // waybar's own power menu: a drop-down built from power_menu.xml, the
+    // menu file the waybar package ships plus a Log out entry. The actions are
+    // systemctl rather than the stock config's bare `shutdown`, which waits a
+    // minute before powering off. Log out is niri's quit, which keeps its own
+    // "are you sure" dialog: it closes every window. ⏻ is drawn from
     // Iosevka Term, which install.sh puts in place for Ghostty.
     "custom/power": {
         "format": "⏻",
         "tooltip-format": "Power",
         "menu": "on-click",
-        "menu-file": "/usr/share/waybar/custom_modules/power_menu.xml",
+        "menu-file": "~/.config/waybar/power_menu.xml",
         "menu-actions": {
             "suspend": "systemctl suspend",
             "hibernate": "systemctl hibernate",
             "shutdown": "systemctl poweroff",
-            "reboot": "systemctl reboot"
+            "reboot": "systemctl reboot",
+            "logout": "niri msg action quit"
         }
     },
 

@@ -149,7 +149,7 @@ ubuntu-setup/
 │   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
 │   │       ├── normal.kdl                  # Fully opaque windows
 │   │       └── focus.kdl                   # Unfocused windows fade out
-│   ├── waybar/                             # config.jsonc + style.css
+│   ├── waybar/                             # config.jsonc + style.css + power_menu.xml (the ⏻ drop-down)
 │   │                                       #   + laptop.jsonc: battery/backlight, laptops only
 │   ├── mako/config
 │   ├── fuzzel/fuzzel.ini                   # The launcher only; the pickers bring their own configs
