@@ -49,7 +49,7 @@ cd ~/Projects/ubuntu-setup
 bash install.sh
 ```
 
-All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config — the built-in display's `eDP-1` output block, the brightness keys, and `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on when an external monitor is connected — plus battery and brightness on the top bar. A machine switched to `--desktop` has those files removed. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
+All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config — the built-in display's `eDP-1` output block, the brightness keys, and `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on when an external monitor is connected — plus battery and brightness on the top bar. Desktops get the desk's monitors and their 4K modes instead (`desktop.kdl`, with `Mod+Ctrl+0` to drop the HDMI matrix to 1080p@60), and a login screen layout for the same monitor — so a laptop never has a desk's resolutions forced on whatever screen it is plugged into. A machine that changes type has the other type's files removed. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
 
 **You don't have to ask for it.** The installer reads the DMI chassis type (and falls back to looking for a battery), and records the answer in `~/.config/niri/.machine-type` so every later run agrees with the first. `--laptop` and `--desktop` override the guess, and the override is recorded too:
 
@@ -58,7 +58,7 @@ bash install.sh --laptop     # force it on
 bash install.sh --desktop    # force it off, and keep it off
 ```
 
-This used to hang on remembering the flag: the installer copied the repo's `config.kdl` over the live one and *then* appended the include, so a single re-run without `--laptop` deleted those binds with no error and nothing to notice until you reached for one. The config is now assembled with the include already in it before anything is written, and `doctor.sh` flags a machine that has a battery but no laptop include — or an include whose target file is missing, which niri refuses to load at all.
+This used to hang on remembering the flag: the installer copied the repo's `config.kdl` over the live one and *then* appended the include, so a single re-run without `--laptop` deleted those binds with no error and nothing to notice until you reached for one. The config is now assembled with the include already in it before anything is written, and `doctor.sh` flags a machine that has a battery but no laptop include, an include that disagrees with the recorded machine type, or an include whose target file is missing, which niri refuses to load at all.
 
 The script will:
 
@@ -144,6 +144,7 @@ ubuntu-setup/
 │   ├── niri/
 │   │   ├── config.kdl                      # Includes niri-tasks.kdl; configure.sh seeds a stub for it
 │   │   ├── laptop.kdl                      # eDP-1 + brightness/display keys; laptops only (auto-detected)
+│   │   ├── desktop.kdl                     # The desk's monitors, their 4K modes, Mod+Ctrl+0; desktops only
 │   │   └── window-rules/
 │   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
 │   │       ├── normal.kdl                  # Fully opaque windows
@@ -166,6 +167,9 @@ ubuntu-setup/
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
 │   ├── CREDITS.md                          # Who made each image; not installed
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
+│
+├── system/                                 # Outside $HOME, so install.sh puts these in place with sudo
+│   └── monitors.xml                        # → /etc/xdg/  The login screen's monitor layout; desktops only
 │
 ├── docs/                                   # Not installed anywhere; read by people and agents
 │   ├── adr/
@@ -322,7 +326,7 @@ hardware is the Settings app.**
 |---|---|---|
 | Keyboard, touchpad, mouse | `input {}` in `config/niri/config.kdl` | niri reads this directly; nothing else is consulted |
 | Keybindings | `binds {}` in the same file | same |
-| Monitors, resolution, scale | `output` blocks in `config.kdl`; the laptop screen's (`eDP-1`) in `laptop.kdl` | niri applies these at startup and wins over anything set at runtime |
+| Monitors, resolution, scale | `output` blocks in `laptop.kdl` (`eDP-1`) and `desktop.kdl` (the desk's monitors); the login screen's in `system/monitors.xml` | niri applies these at startup and wins over anything set at runtime |
 | Bar, notifications, launcher | `config/waybar/`, `config/mako/config`, `config/fuzzel/` | plain files this repo owns outright |
 | Wallpaper | `Mod+Alt+B`, over `~/.config/niri/wallpaper-active` | see Animated wallpapers below |
 | GTK theme, dark mode, cursor, fonts | `gsettings set org.gnome.desktop.interface …` | apps read these live through the settings portal |
@@ -461,8 +465,8 @@ Edit configs **in the repo** and deploy them. That is why 18 of the 19 rows in
 `lib/paths.sh` are byte-identical to the repo at any moment — nothing edits them
 out on the machine, so nothing has to be captured back. (The exception is
 ghostty, whose `command =` line `configure.sh` rewrites after copying.
-`config.kdl` isn't a row at all: it's assembled with the laptop include before
-it's written, so it differs from the repo's copy on a laptop by design.)
+`config.kdl` isn't a row at all: it's assembled with the machine-type include
+before it's written, so it differs from the repo's copy by design.)
 
 ### capture/ — the few things the machine owns
 
@@ -513,7 +517,7 @@ manifest declares 27, but most of the difference is Ubuntu's own base system.
 
 ### Re-running the installer is a no-op
 
-`configure.sh` compares before it writes: a file that already matches is neither copied nor backed up. `config.kdl` is assembled first — the repo's copy plus the laptop include where that applies — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
+`configure.sh` compares before it writes: a file that already matches is neither copied nor backed up. `config.kdl` is assembled first — the repo's copy plus the `laptop.kdl` or `desktop.kdl` include — so it can be compared as the finished article rather than copied and then appended to, which is what used to make it differ on every single run.
 
 The upshot is that a re-run on an in-sync machine says "Nothing needed replacing — no backup taken" and touches nothing. `~/.config-backups` also keeps only the **5** most recent snapshots now; it grew to nine directories of near-identical files before anything pruned it. Directories in there that aren't named like a timestamp are left alone.
 
@@ -545,9 +549,9 @@ What it checks:
 | Toolchains | rustup, bun, nvm (and that `NVM_DIR` points where nvm actually is), Node, Claude Code, TPM |
 | Desktop | waybar and mako actually running — neither is a systemd unit, so nothing else would notice. A missing bar is obvious; a missing notification daemon is not |
 | Wallpaper | swww installed, its unit enabled and running, `wallpaper-apply.sh` present, **and that what's on screen is what `wallpaper-active` names** — the one check that catches a missed paint |
-| Laptop config | A machine with a battery whose `config.kdl` lacks the laptop include, or an include pointing at a file that isn't there. On a desktop, any laptop-only file still installed (`laptop.jsonc` would put the battery module back on the bar) |
+| Machine-type config | A machine with a battery whose `config.kdl` lacks the laptop include, an include that disagrees with the recorded machine type, or one pointing at a file that isn't there. Either type's files installed on the other (`laptop.jsonc` would put the battery module back on the bar). On a desktop, `/etc/xdg/monitors.xml` matching the repo |
 | Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
-| Config drift | Every file in `lib/paths.sh`: installed, matching the repo, and executable where the kind says so. `config.kdl` is compared separately, with the laptop include stripped from both sides. Files `configure.sh` rewrites after copying — ghostty — are checked for presence but not content |
+| Config drift | Every file in `lib/paths.sh`: installed, matching the repo, and executable where the kind says so. `config.kdl` is compared separately, with the machine-type include stripped from both sides. Files `configure.sh` rewrites after copying — ghostty — are checked for presence but not content |
 | niri-tasks | That `wt` is installed, the `niri-tasks.kdl` include exists (niri refuses to load a config whose include is missing), and the active-task overlay service is running |
 | Leftovers | Files this repo used to install and no longer does — the workspace-task scripts, the fuzzel picker theme, the retired wallpaper-sync pair, and DankMaterialShell's config trees once the package itself is gone. Deleting them from the repo doesn't delete them from a machine that already has them |
 

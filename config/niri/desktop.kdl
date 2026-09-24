@@ -1,0 +1,37 @@
+// What only desktops get: the desk's monitors, their 4K modes, and the bind
+// that switches between them. configure.sh deploys this on machines it takes
+// for desktops (see "Machine type" in CONTEXT.md) and appends
+// `include "desktop.kdl"` to config.kdl there; a laptop has neither, so none of
+// these modes are forced on whatever screen a laptop is plugged into.
+//
+// An invalid mode is not fatal — niri picks one automatically and says so in
+// its log — so a desktop with a different monitor plugged in degrades rather
+// than failing to start.
+
+// The motherboard's HDMI port (card2-HDMI-A-1, the AMD iGPU). This used to come
+// from `include "dms/outputs.kdl"`, a symlink into DMS's own monitor-profile
+// store written from its display settings tab.
+output "HDMI-A-1" {
+    mode "3840x2160@60.000"
+    scale 1
+    position x=0 y=0
+}
+
+// The OREI UHD-404 HDMI matrix (EDID DIP switch set to 0110, 4K60 4:4:4). Matched
+// by make/model rather than connector. 4K tops out at 30 Hz because the DP->HDMI
+// adapter is limited to 300 MHz; an active HDMI 2.0 adapter would allow
+// 3840x2160@60. The login screen needs the same mode, and gets it from
+// system/monitors.xml — see there.
+// Mod+Ctrl+0 toggles this at runtime to 1080p@60 when smoothness matters more.
+output "HardCom Elektronik & Datateknik HDMI MATRIX 0x00000001" {
+    mode "3840x2160@29.970"
+    scale 1.5
+}
+
+binds {
+    // Toggle DP-4 between 4K@30 (sharp) and 1080p@60 (smooth). Runtime only; a
+    // restart or config reload goes back to the HDMI MATRIX output block above.
+    Mod+Ctrl+0 hotkey-overlay-title="Toggle 4K@30 / 1080p@60" {
+        spawn "sh" "-c" "if niri msg outputs | grep -q 'Current mode: 3840x2160'; then niri msg output DP-4 mode 1920x1080@60.000 && niri msg output DP-4 scale 1; else niri msg output DP-4 mode 3840x2160@29.970 && niri msg output DP-4 scale 1.5; fi";
+    }
+}

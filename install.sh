@@ -344,6 +344,27 @@ CONFIG_ARGS=()
 [ "$DESKTOP" = true ] && CONFIG_ARGS+=(--desktop)
 "$DOTFILES/configure.sh" "${CONFIG_ARGS[@]}"
 
+# ─── 8a. Login screen monitor layout ──────────────────────────────────────────
+# GDM's greeter reads /etc/xdg/monitors.xml; without it the desk's HDMI matrix
+# comes up in a mode its screen rejects. Here rather than in configure.sh
+# because it needs sudo, and after it because configure.sh settles the machine
+# type. Desktop only, like desktop.kdl — and taken off a machine that has since
+# become a laptop, but only if it is still our copy.
+section "Login screen monitor layout"
+
+GDM_MONITORS=/etc/xdg/monitors.xml
+if [ "$(head -n1 "$USER_HOME/.config/niri/.machine-type" 2>/dev/null)" = desktop ]; then
+    if cmp -s "$DOTFILES/system/monitors.xml" "$GDM_MONITORS"; then
+        info "$GDM_MONITORS already matches the repo"
+    else
+        sudo install -m 644 "$DOTFILES/system/monitors.xml" "$GDM_MONITORS"
+        info "Installed $GDM_MONITORS — takes effect at the next login screen"
+    fi
+elif cmp -s "$DOTFILES/system/monitors.xml" "$GDM_MONITORS"; then
+    sudo rm -f "$GDM_MONITORS"
+    info "Removed $GDM_MONITORS (desktop only)"
+fi
+
 # ─── 8b. niri-tasks ───────────────────────────────────────────────────────────
 # Workspace-scoped taskwarrior: Mod+Alt+T/L/P, the task box, and the active-task
 # overlay. Its own repo, its own release cycle — this just makes sure a new

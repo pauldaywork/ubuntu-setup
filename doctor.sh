@@ -238,11 +238,12 @@ for _row in "${DOTFILES_MAP[@]}"; do
     _live="$HOME/$HOME_PATH"
     _repo="$DOTFILES/$REPO_PATH"
 
-    # Laptop-only rows are not expected to exist on a desktop — and one that
-    # does is live there: config.jsonc includes laptop.jsonc whenever it exists.
-    if [ "$KIND" = laptop ] && [ "$MACHINE_TYPE_NOW" != laptop ]; then
+    # A laptop-only row is not expected on a desktop, nor a desktop-only row on
+    # a laptop — and one that is there anyway can be live: config.jsonc
+    # includes laptop.jsonc whenever it exists.
+    if { [ "$KIND" = laptop ] || [ "$KIND" = desktop ]; } && [ "$KIND" != "$MACHINE_TYPE_NOW" ]; then
         if [ -e "$_live" ]; then
-            issue "Laptop-only file on a desktop: ~/$HOME_PATH"
+            issue "${KIND^}-only file on a $MACHINE_TYPE_NOW: ~/$HOME_PATH"
             note "  Remove with: bash configure.sh"
         fi
         continue
@@ -276,11 +277,11 @@ fi
 if [ -f "$HOME/.config/niri/config.kdl" ]; then
     NIRI_CMP=$(mktemp)
     # Two things make a naive comparison wrong here: configure.sh appends the
-    # laptop include, and the repo file happens to end in blank lines while the
-    # appended one does not. Normalise both sides by dropping the include and
-    # every trailing blank, or this reports drift on every laptop forever.
+    # machine-type include, and the repo file happens to end in blank lines
+    # while the appended one does not. Normalise both sides by dropping the
+    # include and every trailing blank, or this reports drift forever.
     strip_kdl() {
-        grep -v '^include "laptop.kdl"$' "$1" \
+        grep -Ev '^include "(laptop|desktop)\.kdl"$' "$1" \
             | sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba'
     }
     NIRI_REPO_CMP=$(mktemp)
@@ -492,30 +493,44 @@ if [ -f "$WALLPAPER_ACTIVE" ] && command -v swww &>/dev/null \
     fi
 fi
 
-# Laptop display binds. configure.sh replaces config.kdl wholesale and appends
-# the laptop include afterwards, so a re-run that decides this machine isn't a
-# laptop takes the display binds away with no error — worth noticing here.
+# Machine-type niri config. configure.sh replaces config.kdl wholesale and
+# appends `include "laptop.kdl"` or `include "desktop.kdl"`, so a re-run that
+# decides this machine is the other type swaps the display binds and output
+# modes with no error — worth noticing here.
 NIRI_CONFIG="$HOME/.config/niri/config.kdl"
 if [ -f "$NIRI_CONFIG" ]; then
     # A machine deliberately installed as --desktop records that, and is not
-    # nagged about the binds it asked not to have.
+    # nagged about the laptop binds it asked not to have.
     MACHINE_TYPE=""
     [ -f "$HOME/.config/niri/.machine-type" ] && MACHINE_TYPE="$(head -n1 "$HOME/.config/niri/.machine-type")"
 
     HAS_BATTERY=false
     [ "$MACHINE_TYPE" != "desktop" ] && compgen -G "/sys/class/power_supply/BAT*" > /dev/null && HAS_BATTERY=true
-    HAS_INCLUDE=false
-    grep -q '^include "laptop.kdl"$' "$NIRI_CONFIG" && HAS_INCLUDE=true
+    INCLUDED="$(grep -Eo '^include "(laptop|desktop)\.kdl"$' "$NIRI_CONFIG" | head -n1 | sed -E 's/^include "(.*)\.kdl"$/\1/')" || true
 
-    if [ "$HAS_BATTERY" = true ] && [ "$HAS_INCLUDE" = false ]; then
+    if [ "$HAS_BATTERY" = true ] && [ "$INCLUDED" != laptop ]; then
         issue "This machine has a battery but config.kdl doesn't include laptop.kdl"
-        note "  The display binds in it are missing"
+        note "  The laptop screen and its binds are missing"
         note "  Fix with: bash configure.sh --laptop"
-    elif [ "$HAS_INCLUDE" = true ] && [ ! -f "$HOME/.config/niri/laptop.kdl" ]; then
-        issue "config.kdl includes laptop.kdl but that file is missing — niri won't load the config"
-        note "  Fix with: bash configure.sh --laptop"
-    elif [ "$HAS_INCLUDE" = true ]; then
-        ok "Laptop niri config included"
+    elif [ -n "$INCLUDED" ] && [ ! -f "$HOME/.config/niri/$INCLUDED.kdl" ]; then
+        issue "config.kdl includes $INCLUDED.kdl but that file is missing — niri won't load the config"
+        note "  Fix with: bash configure.sh"
+    elif [ -n "$MACHINE_TYPE" ] && [ "$INCLUDED" != "$MACHINE_TYPE" ]; then
+        issue "This machine is recorded as a $MACHINE_TYPE but config.kdl includes ${INCLUDED:-no machine-type file}"
+        note "  Fix with: bash configure.sh"
+    elif [ -n "$INCLUDED" ]; then
+        ok "${INCLUDED^} niri config included"
+    fi
+
+    # The login screen's layout (system/monitors.xml): without it the desk's
+    # HDMI matrix comes up at the greeter in a mode its screen rejects.
+    if [ "$MACHINE_TYPE" = desktop ]; then
+        if cmp -s "$DOTFILES/system/monitors.xml" /etc/xdg/monitors.xml; then
+            ok "Login screen monitor layout installed"
+        else
+            issue "/etc/xdg/monitors.xml is missing or differs from the repo — the login screen may pick a mode the desk's screen rejects"
+            note "  Fix with: sudo install -m 644 $DOTFILES/system/monitors.xml /etc/xdg/monitors.xml"
+        fi
     fi
 fi
 

@@ -1,0 +1,39 @@
+<!--
+  The login screen's monitor layout, installed to /etc/xdg/monitors.xml on
+  desktops by install.sh. GDM's greeter is a mutter session, and with no
+  monitors.xml of its own mutter reads the system-wide one here.
+
+  Without it the greeter picks the monitor's preferred mode from its EDID. The
+  HDMI matrix advertises 3840x2160@60 (594 MHz), which the DP->HDMI adapter
+  cannot carry — it tops out at 300 MHz — so the kernel drops that mode and
+  mutter falls back to the next biggest, 4096x2160, which the screen behind the
+  matrix rejects as an unsupported resolution. This pins the same 3840x2160@30
+  niri uses (desktop.kdl).
+
+  Matched by vendor/product/serial as well as connector, so a different monitor
+  on DP-4 is left to mutter's own choice. Scale 2 rather than niri's 1.5: this
+  mutter has fractional scaling switched off.
+-->
+<monitors version="2">
+  <configuration>
+    <logicalmonitor>
+      <x>0</x>
+      <y>0</y>
+      <scale>2</scale>
+      <primary>yes</primary>
+      <monitor>
+        <monitorspec>
+          <connector>DP-4</connector>
+          <vendor>HDC</vendor>
+          <product>HDMI MATRIX</product>
+          <serial>0x00000001</serial>
+        </monitorspec>
+        <mode>
+          <width>3840</width>
+          <height>2160</height>
+          <rate>29.970</rate>
+        </mode>
+      </monitor>
+    </logicalmonitor>
+  </configuration>
+</monitors>

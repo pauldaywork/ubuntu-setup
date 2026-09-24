@@ -39,14 +39,15 @@ for _row in "${DOTFILES_MAP[@]}"; do
     case "$KIND" in
         copy)  copy "$_src" "$_dst" ;;
         exec)  copy "$_src" "$_dst"; chmod +x "$_dst" ;;
-        # Deployed only on laptops, and MACHINE_TYPE is not settled until below,
-        # so that row is applied there instead.
-        laptop) ;;
+        # Deployed only on that machine type, and MACHINE_TYPE is not settled
+        # until below, so those rows are applied there instead.
+        laptop|desktop) ;;
         *) warn "lib/paths.sh: unknown kind '$KIND' for $REPO_PATH" ;;
     esac
 done
 
-# Laptop-specific niri config (display on/off binds).
+# Machine-type config: laptop.kdl + laptop.jsonc on laptops, desktop.kdl (the
+# desk's monitors and their 4K modes) on desktops.
 #
 # This used to hang entirely on remembering `--laptop` every single time. The
 # copy above replaces config.kdl with the repo's, which never carries the
@@ -95,44 +96,38 @@ fi
 
 echo "$MACHINE_TYPE" > "$MACHINE_TYPE_FILE"
 
-if [ "$MACHINE_TYPE" = "laptop" ]; then
-    info "Laptop-specific config (niri binds, waybar battery/backlight): on ($MACHINE_REASON)"
-    # From the table rather than spelled out again, so doctor.sh and capture/
-    # cannot end up disagreeing with this about which files those are.
-    for _row in "${DOTFILES_MAP[@]}"; do
-        map_entry "$_row"
-        [ "$KIND" = laptop ] || continue
+info "Machine type: $MACHINE_TYPE ($MACHINE_REASON)"
+# Deploy this machine type's rows, and remove the other type's. From the table
+# rather than spelled out again, so doctor.sh and capture/ cannot end up
+# disagreeing with this about which files those are.
+#
+# Removing matters because a machine can change type (--laptop / --desktop).
+# niri's leftover would sit unread once its include is gone, but waybar's
+# config.jsonc includes laptop.jsonc whenever it exists, and a stale one brings
+# the battery module back — the one that aborts the bar on a mouse replug. They
+# are plain copies of repo files, so nothing is lost.
+for _row in "${DOTFILES_MAP[@]}"; do
+    map_entry "$_row"
+    case "$KIND" in laptop|desktop) ;; *) continue ;; esac
+    if [ "$KIND" = "$MACHINE_TYPE" ]; then
         copy "$DOTFILES/$REPO_PATH" "$USER_HOME/$HOME_PATH"
-    done
-else
-    info "Laptop-specific config (niri binds, waybar battery/backlight): off ($MACHINE_REASON)"
-    # A machine switched from laptop to desktop still has the copies an earlier
-    # run deployed. niri's would sit unread once the include is gone, but
-    # waybar's config.jsonc includes laptop.jsonc whenever it exists, and a
-    # stale one brings the battery module back — the one that aborts the bar on
-    # a mouse replug. They are plain copies of repo files, so nothing is lost.
-    for _row in "${DOTFILES_MAP[@]}"; do
-        map_entry "$_row"
-        [ "$KIND" = laptop ] || continue
-        if [ -e "$USER_HOME/$HOME_PATH" ]; then
-            rm -f "$USER_HOME/$HOME_PATH"
-            info "Removed ~/$HOME_PATH (laptop only)"
-        fi
-    done
-fi
+    elif [ -e "$USER_HOME/$HOME_PATH" ]; then
+        rm -f "$USER_HOME/$HOME_PATH"
+        info "Removed ~/$HOME_PATH ($KIND only)"
+    fi
+done
 
 
 # niri
 # config.kdl is assembled before being installed — the repo's copy plus the
-# laptop include when this is a laptop — so copy() can compare the finished
-# article and skip a file that already matches. Appending after copying meant
-# the live file could never equal the repo's, so every run rewrote it and
-# archived the old one, which is most of how ~/.config-backups filled up.
+# include for this machine type, laptop.kdl or desktop.kdl — so copy() can
+# compare the finished article and skip a file that already matches. Appending
+# after copying meant the live file could never equal the repo's, so every run
+# rewrote it and archived the old one, which is most of how ~/.config-backups
+# filled up.
 NIRI_CONFIG_TMP=$(mktemp)
 cat "$DOTFILES/config/niri/config.kdl" > "$NIRI_CONFIG_TMP"
-if [ "$MACHINE_TYPE" = "laptop" ]; then
-    printf '\ninclude "laptop.kdl"\n' >> "$NIRI_CONFIG_TMP"
-fi
+printf '\ninclude "%s.kdl"\n' "$MACHINE_TYPE" >> "$NIRI_CONFIG_TMP"
 copy "$NIRI_CONFIG_TMP" "$USER_HOME/.config/niri/config.kdl"
 rm -f "$NIRI_CONFIG_TMP"
 

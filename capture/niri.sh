@@ -28,18 +28,19 @@ if [ ! -f "$LIVE" ]; then
     exit 0
 fi
 
-# configure.sh appends '\ninclude "laptop.kdl"\n' on laptops. That line is
-# machine-specific, so undoing it means dropping the include *and* the one blank
-# line that leading newline created. Stripping every trailing blank instead
-# would eat the two this file legitimately ends with, and commit that churn on
-# every run from a laptop.
+# configure.sh appends '\ninclude "laptop.kdl"\n' on laptops and the same for
+# desktop.kdl on desktops. That line is machine-specific, so undoing it means
+# dropping the include *and* the one blank line that leading newline created.
+# Stripping every trailing blank instead would eat the two this file
+# legitimately ends with, and commit that churn on every run.
 #
-# Only when the include is actually there: a desktop's live file has no include
-# and so no extra blank, and stripping one anyway ate a line the file really
-# ends with.
+# Only when the include is actually there: a live file from before configure.sh
+# appended one has no extra blank, and stripping one anyway ate a line the file
+# really ends with.
 TMP=$(mktemp)
-if grep -q '^include "laptop.kdl"$' "$LIVE"; then
-    grep -v '^include "laptop.kdl"$' "$LIVE" \
+MACHINE_INCLUDE='^include "(laptop|desktop)\.kdl"$'
+if grep -Eq "$MACHINE_INCLUDE" "$LIVE"; then
+    grep -Ev "$MACHINE_INCLUDE" "$LIVE" \
       | awk '{lines[NR]=$0} END {last=NR; if (last>0 && lines[last]=="") last--; for(i=1;i<=last;i++) print lines[i]}' \
       > "$TMP" || true
 else
@@ -50,7 +51,7 @@ if cmp -s "$TMP" "$REPO"; then
     info "config.kdl already matches the repo"
 elif [ "$DRY_RUN" = true ]; then
     info "Would update config/niri/config.kdl:"
-    diff -u --label "repo" --label "live (laptop include stripped)" "$REPO" "$TMP" \
+    diff -u --label "repo" --label "live (machine-type include stripped)" "$REPO" "$TMP" \
       | head -40 | sed 's/^/    /'
     captured
 elif confirm_overwrite "$TMP" "$REPO"; then
