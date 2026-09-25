@@ -212,6 +212,21 @@ fi
 sed -i "s|^command = .*|command = $GHOSTTY_COMMAND|" \
     "$USER_HOME/.config/ghostty/config.ghostty"
 
+# ghostty runs as one long-lived process (gtk-single-instance) that reads its
+# config once at startup, so every new window keeps the old `command =` until
+# it is told to reload — which, after a rename, means new windows that fail to
+# start at all. SIGUSR2 is its reload signal, from 1.2 on. Older versions don't
+# handle it, and SIGUSR2's default action is to terminate, so check first.
+if pgrep -u "$USER" -x ghostty >/dev/null; then
+    GHOSTTY_VERSION=$(ghostty --version 2>/dev/null | sed -n 's/^Ghostty \([0-9.]*\).*/\1/p')
+    if [ -n "$GHOSTTY_VERSION" ] \
+       && [ "$(printf '%s\n' 1.2 "$GHOSTTY_VERSION" | sort -V | head -1)" = 1.2 ]; then
+        pkill -USR2 -u "$USER" -x ghostty && info "Reloaded ghostty's config"
+    else
+        warn "ghostty ${GHOSTTY_VERSION:-(unknown version)} can't reload by signal — press ctrl+shift+, in a ghostty window"
+    fi
+fi
+
 # The DankMaterialShell theme path rewrite that used to follow is gone with the
 # settings file it edited. waybar and mako need no post-processing: their colours
 # are written literally into config/waybar/style.css and config/mako/config,
