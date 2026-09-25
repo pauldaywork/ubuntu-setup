@@ -226,7 +226,7 @@ fi
 # Files configure.sh rewrites *after* copying, so the live copy is meant to
 # differ from the repo's and comparing them would report drift forever:
 #
-#   ghostty  its `command =` line becomes `wt tmux-session` when wt is on PATH
+#   ghostty  its `command =` line becomes `niritasks tmux-session` when niritasks is on PATH
 #
 # Presence is still checked; only the content comparison is skipped.
 is_post_processed() {
@@ -319,8 +319,8 @@ done
 # The workspace-task system lives in its own repo now. Delegate to its doctor
 # rather than duplicating the checks here — it knows what it installed, and this
 # repo works fine without it.
-if command -v wt >/dev/null; then
-    ok "wt installed ($(wt --version 2>/dev/null || echo 'version unknown'))"
+if command -v niritasks >/dev/null; then
+    ok "niritasks installed ($(niritasks --version 2>/dev/null || echo 'version unknown'))"
 
     # niri refuses to load a config whose include is missing, so this one is
     # fatal to the whole session rather than just to the task binds.
@@ -338,7 +338,7 @@ if command -v wt >/dev/null; then
         note "  Start it with: systemctl --user start niri-tasks"
     fi
 else
-    note "wt not installed — Mod+Alt+T/L/P and the active-task overlay are absent"
+    note "niritasks not installed — Mod+Alt+T/L/P and the active-task overlay are absent"
     note "  Install with: https://github.com/pauldaywork/niri-tasks"
 
     # The stub still has to exist, or niri will not load at all.

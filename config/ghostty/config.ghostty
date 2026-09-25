@@ -1,4 +1,4 @@
-command = wt tmux-session
+command = niritasks tmux-session
 mouse-scroll-multiplier = 0.5
 background-opacity = 0.5
 background-opacity-cells = true

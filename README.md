@@ -248,7 +248,7 @@ lives in **[niri-tasks](https://github.com/pauldaywork/niri-tasks)** now, not he
 
 It used to be fifteen shell scripts under `config/niri/` plus a DankMaterialShell
 plugin, enumerated by hand in `configure.sh`, `doctor.sh` and what was then `update.sh`.
-It is one binary (`wt`) and one repo, which `install.sh` clones to
+It is one binary (`niritasks`) and one repo, which `install.sh` clones to
 `~/Projects/niri-tasks` and builds straight after the config copy — early enough
 that its installer can replace the include stub that step just seeded.
 
@@ -258,7 +258,7 @@ What this repo still owns:
   an **empty stub** at that path. niri refuses to load a config whose include is
   missing, so the stub is what lets this repo install on a machine that does not
   want niri-tasks. Its installer symlinks the real file over the stub.
-- Ghostty's `command =` is set to `wt tmux-session` when `wt` is on `PATH`, and
+- Ghostty's `command =` is set to `niritasks tmux-session` when `niritasks` is on `PATH`, and
   to plain `tmux` when it is not.
 
 ---
@@ -552,7 +552,7 @@ What it checks:
 | Machine-type config | A machine with a battery whose `config.kdl` lacks the laptop include, an include that disagrees with the recorded machine type, or one pointing at a file that isn't there. Either type's files installed on the other (`laptop.jsonc` would put the battery module back on the bar). On a desktop, `/etc/xdg/monitors.xml` matching the repo |
 | Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
 | Config drift | Every file in `lib/paths.sh`: installed, matching the repo, and executable where the kind says so. `config.kdl` is compared separately, with the machine-type include stripped from both sides. Files `configure.sh` rewrites after copying — ghostty — are checked for presence but not content |
-| niri-tasks | That `wt` is installed, the `niri-tasks.kdl` include exists (niri refuses to load a config whose include is missing), and the active-task overlay service is running |
+| niri-tasks | That `niritasks` is installed, the `niri-tasks.kdl` include exists (niri refuses to load a config whose include is missing), and the active-task overlay service is running |
 | Leftovers | Files this repo used to install and no longer does — the workspace-task scripts, the fuzzel picker theme, the retired wallpaper-sync pair, and DankMaterialShell's config trees once the package itself is gone. Deleting them from the repo doesn't delete them from a machine that already has them |
 
 The wallpaper row is the one worth running after a reboot: every other check can be green while the screen shows a stale image, because swww restores its own cache when it starts.

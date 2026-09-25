@@ -200,12 +200,12 @@ if command -v systemctl &>/dev/null; then
 fi
 
 # ghostty
-# `wt tmux-session` opens a tmux session named after the focused workspace, in
+# `niritasks tmux-session` opens a tmux session named after the focused workspace, in
 # the matching ~/Projects folder. It belongs to niri-tasks, which is optional —
 # so fall back to plain tmux rather than leaving ghostty pointed at a command
 # that doesn't exist, which would mean no terminal at all.
-if command -v wt >/dev/null; then
-    GHOSTTY_COMMAND="wt tmux-session"
+if command -v niritasks >/dev/null; then
+    GHOSTTY_COMMAND="niritasks tmux-session"
 else
     GHOSTTY_COMMAND="tmux"
 fi

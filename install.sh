@@ -374,7 +374,7 @@ fi
 # already seeded; its installer symlinks the real file over that stub.
 #
 # It lives in ~/Projects like any other project rather than somewhere hidden, so
-# `wt project open` finds it and editing it is `cargo install --path` again.
+# `niritasks project open` finds it and editing it is `cargo install --path` again.
 section "Installing niri-tasks"
 
 NIRI_TASKS_DIR="$USER_HOME/Projects/niri-tasks"
