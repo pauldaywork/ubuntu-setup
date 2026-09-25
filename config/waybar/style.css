@@ -107,11 +107,14 @@ window#waybar.waybar-dock #workspaces {
  * that beats a shadow the label would otherwise inherit from its button. */
 #workspaces button label {
     text-shadow: 1px 0 black, -1px 0 black, 0 1px black, 0 -1px black;
+    /* Bold, so the thin accent strokes are not eaten by that outline. */
+    font-weight: bold;
 }
 
 #workspaces button.focused label,
 #workspaces button.active label {
     text-shadow: none;
+    font-weight: normal;
 }
 
 /* Focus is a solid chip in the wallpaper's accent colour with black text, so the
