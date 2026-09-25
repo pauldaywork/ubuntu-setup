@@ -1,6 +1,7 @@
 command = wt tmux-session
 mouse-scroll-multiplier = 0.5
 background-opacity = 0.5
+background-opacity-cells = true
 window-padding-x = 8
 window-padding-y = 8
 foreground = ffffff
