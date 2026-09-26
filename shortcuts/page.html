@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shortcuts</title>
+<!--
+  The page behind Mod+Alt+Ctrl+/. shortcuts/build.py fills in __SHORTCUTS_DATA__ from
+  the real configs on every deploy; edit this file for how it looks, and the
+  configs (never this page) for what is bound.
+-->
+<style>
+  :root {
+    --bg: #f7f6f3; --panel: #ffffff; --ink: #1d1b18; --muted: #6b665e; --line: #e4e0d8;
+    --chip: #efece6; --chip-on: #1d1b18; --chip-on-ink: #ffffff; --hit: #fff1a8;
+    --mod: #e9e2ff; --mod-b: #b9a6f5; --alt: #daf5e3; --alt-b: #86d6a2; --ctrl: #dcefff; --ctrl-b: #86c1ef;
+    --shift: #fff0c9; --shift-b: #f0c860; --prefix: #ffe0ec; --prefix-b: #f09bbc; --key: #ffffff; --key-b: #cfc9bf;
+    --accent: #5b3fd1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151412; --panel: #1e1c1a; --ink: #ece8e1; --muted: #a39d93; --line: #34312d;
+      --chip: #2a2825; --chip-on: #ece8e1; --chip-on-ink: #151412; --hit: #5a4d10;
+      --mod: #342a5c; --mod-b: #6f5bc4; --alt: #1f4030; --alt-b: #3f8f60; --ctrl: #1c3448; --ctrl-b: #3f7fb0;
+      --shift: #463a17; --shift-b: #a8872c; --prefix: #4a2233; --prefix-b: #b0587c; --key: #26241f; --key-b: #4a463f;
+      --accent: #a894ff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151412; --panel: #1e1c1a; --ink: #ece8e1; --muted: #a39d93; --line: #34312d;
+    --chip: #2a2825; --chip-on: #ece8e1; --chip-on-ink: #151412; --hit: #5a4d10;
+    --mod: #342a5c; --mod-b: #6f5bc4; --alt: #1f4030; --alt-b: #3f8f60; --ctrl: #1c3448; --ctrl-b: #3f7fb0;
+    --shift: #463a17; --shift-b: #a8872c; --prefix: #4a2233; --prefix-b: #b0587c; --key: #26241f; --key-b: #4a463f;
+    --accent: #a894ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 16px 60px; }
+  header h1 { margin: 0; font-size: 30px; letter-spacing: -.01em; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .explain { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 18px 0 8px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+  .card b { display: block; margin-bottom: 4px; }
+  .card .row { margin: 3px 0; }
+
+  .controls { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 0 10px; border-bottom: 1px solid var(--line); }
+  .search { display: flex; gap: 10px; align-items: center; }
+  .search input { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 10px;
+                  border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .search input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .count { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+  .chips .label { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); width: 92px; flex: none; }
+  button.chip { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--chip); color: var(--ink);
+                padding: 3px 10px; border-radius: 999px; cursor: pointer; }
+  button.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-ink); border-color: var(--chip-on); }
+  button.link { font: inherit; font-size: 12px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 2px 4px; }
+  select { font: inherit; font-size: 13px; background: var(--chip); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 3px 6px; }
+  label.toggle { font-size: 13px; color: var(--muted); display: inline-flex; gap: 5px; align-items: center; }
+
+  section.group { margin-top: 22px; }
+  section.group h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
+  section.group h2 .tool { color: var(--ink); }
+  .list { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .item { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 4px 16px; padding: 9px 14px;
+          border-top: 1px solid var(--line); align-items: start; }
+  .item:first-child { border-top: 0; }
+  .title { font-weight: 550; }
+  .note { color: var(--muted); font-size: 12.5px; font-weight: 400; margin-top: 1px; }
+  .keys { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+  .chord { display: inline-flex; gap: 2px; align-items: center; }
+  .chord.dim { opacity: .35; }
+  kbd { font: 600 12px/1 ui-monospace, SFMono-Regular, monospace; padding: 4px 6px; border-radius: 6px; background: var(--key);
+        border: 1px solid var(--key-b); border-bottom-width: 2px; color: var(--ink); white-space: nowrap; }
+  kbd.Mod { background: var(--mod); border-color: var(--mod-b); }
+  kbd.Alt { background: var(--alt); border-color: var(--alt-b); }
+  kbd.Ctrl { background: var(--ctrl); border-color: var(--ctrl-b); }
+  kbd.Shift { background: var(--shift); border-color: var(--shift-b); }
+  kbd.prefix { background: var(--prefix); border-color: var(--prefix-b); }
+  .then { color: var(--muted); font-size: 11px; margin: 0 1px; }
+  .badge { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--chip);
+           color: var(--muted); margin-left: 6px; vertical-align: 1px; font-weight: 500; }
+  .badge.run { background: var(--alt); color: var(--ink); }
+  mark { background: var(--hit); color: inherit; border-radius: 3px; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+  .unset .title { color: var(--muted); }
+  footer { margin-top: 30px; color: var(--muted); font-size: 12.5px; }
+  @media (max-width: 640px) {
+    .item { grid-template-columns: 1fr; }
+    .chips .label { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Shortcuts</h1>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div class="explain">
+    <div class="card"><b>niri: one job per modifier</b>
+      <div class="row"><kbd class="Mod">Mod</kbd> + key: move around and shape windows</div>
+      <div class="row"><kbd class="Mod">Mod</kbd><kbd class="Alt">Alt</kbd> + letter: every command</div>
+      <div class="row">+ <kbd class="Ctrl">Ctrl</kbd>: the same key's companion (carry, list, rename…)</div>
+      <div class="row">+ <kbd class="Shift">Shift</kbd>: toward another monitor</div>
+    </div>
+    <div class="card"><b>herdr: prefix, then key</b>
+      <div class="row">Press <kbd id="prefix-key">Ctrl+B</kbd>, let go, then the key: <kbd class="prefix">prefix</kbd><span class="then">▸</span><kbd>V</kbd> splits side by side.</div>
+      <div class="row">Inside herdr, <kbd class="prefix">prefix</kbd><span class="then">▸</span><kbd>?</kbd> lists what's bound right now.</div>
+    </div>
+    <div class="card"><b>Find and run</b>
+      <div class="row"><kbd class="Mod">Mod</kbd><kbd class="Alt">Alt</kbd><kbd>/</kbd> searches this list in fuzzel, and Enter runs anything marked <span class="badge run">↵ runs</span>.</div>
+      <div class="row"><kbd class="Mod">Mod</kbd><kbd class="Alt">Alt</kbd><kbd class="Ctrl">Ctrl</kbd><kbd>/</kbd> opens this page.</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="search">
+      <input id="q" type="search" placeholder="Search actions or keys — try “workspace”, “alt ctrl t”, “split”   ( / )" autocomplete="off">
+      <span class="count" id="count"></span>
+    </div>
+    <div class="chips" id="tools"><span class="label">Apps</span></div>
+    <div class="chips" id="cats"><span class="label">Categories</span></div>
+    <div class="chips" id="mods"><span class="label">Exact mods</span></div>
+    <div class="chips"><span class="label">Show</span>
+      <label class="toggle">Machine <select id="machine">
+        <option value="both">Both</option><option value="laptop">Laptop</option><option value="desktop">Desktop</option>
+      </select></label>
+      <label class="toggle"><input type="checkbox" id="unset"> herdr actions with no key yet</label>
+      <label class="toggle"><input type="checkbox" id="mouse" checked> Mouse wheel binds</label>
+      <button class="link" id="reset">Reset filters</button>
+    </div>
+  </div>
+
+  <main id="out"></main>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const DATA = __SHORTCUTS_DATA__;
+const TOOLS = ["niri", "niri-tasks", "herdr", "ghostty"];
+const MOD_ORDER = ["Mod", "Alt", "Ctrl", "Shift", "prefix"];
+// Categories in the order you'd look for them, not the order the files list them.
+const CAT_ORDER = ["Launch", "Tasks", "Workspace", "Focus & move", "Window layout", "Screen & session", "Hardware keys",
+                   "Session", "Workspaces", "Tabs", "Panes", "Agents", "Worktrees (worktrunk)", "Navigate mode",
+                   "Copy mode", "Text fields", "Keybind help", "Terminal"];
+const catRank = c => { const i = CAT_ORDER.indexOf(c); return i < 0 ? 99 : i; };
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("shortcuts." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("shortcuts." + k, JSON.stringify(v)); } catch {} },
+};
+const DEFAULTS = () => ({ q: "", tools: TOOLS.slice(), offCats: [], mods: [], machine: DATA.machine || "both", unset: false, mouse: true });
+let state = Object.assign(DEFAULTS(), store.get("state", {}));
+// page.html?q=split opens with a search already typed — handy for bookmarks.
+const urlQ = new URLSearchParams(location.search).get("q");
+if (urlQ !== null) state.q = urlQ;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// Two ways to match. Words search the title, note and category ("split",
+// "workspace"). A key-shaped query — one with a + or a modifier name in it —
+// matches inside a single chord instead, so "alt ctrl t" finds Mod+Alt+Ctrl+T
+// and not every entry with an Alt chord, a Ctrl chord and a "t" somewhere.
+const MOD_WORDS = { mod: "mod", super: "mod", win: "mod", alt: "alt", ctrl: "ctrl", control: "ctrl", shift: "shift", prefix: "prefix" };
+for (const e of DATA.entries) {
+  e.hay = [e.title, e.note || "", e.tool, e.cat].join(" ").toLowerCase();
+  e.chordToks = e.chords.map((c, i) => new Set([
+    ...c.map(t => t[0].toLowerCase()),
+    ...e.keys[i].toLowerCase().split("+"),
+  ]));
+  e.mouse = e.keys.length > 0 && e.keys.every(k => /Wheel/.test(k));
+  e.modsets = e.chords.map(c => c.filter(t => t[1]).map(t => t[1]).sort().join("+"));
+}
+const CATS = [...new Set(DATA.entries.map(e => e.tool + "|" + e.cat))]
+  .sort((a, b) => TOOLS.indexOf(a.split("|")[0]) - TOOLS.indexOf(b.split("|")[0]) || catRank(a.split("|")[1]) - catRank(b.split("|")[1]));
+
+function chip(label, pressed, onClick, extra = "") {
+  const b = document.createElement("button");
+  b.className = "chip"; b.textContent = label; b.setAttribute("aria-pressed", pressed); b.onclick = onClick;
+  if (extra) b.title = extra;
+  return b;
+}
+
+function drawControls() {
+  const tools = $("tools"); tools.querySelectorAll("button").forEach(b => b.remove());
+  for (const t of TOOLS) {
+    const n = DATA.entries.filter(e => e.tool === t).length;
+    if (!n) continue;
+    tools.append(chip(`${t} · ${n}`, state.tools.includes(t), () => {
+      state.tools = state.tools.includes(t) ? state.tools.filter(x => x !== t) : [...state.tools, t]; update();
+    }));
+  }
+  const cats = $("cats"); cats.querySelectorAll("button").forEach(b => b.remove());
+  const visible = CATS.filter(c => state.tools.includes(c.split("|")[0]));
+  const names = [...new Set(visible.map(c => c.split("|")[1]))];
+  for (const c of names) {
+    cats.append(chip(c, !state.offCats.includes(c), () => {
+      state.offCats = state.offCats.includes(c) ? state.offCats.filter(x => x !== c) : [...state.offCats, c]; update();
+    }));
+  }
+  const all = document.createElement("button"); all.className = "link"; all.textContent = "All";
+  all.onclick = () => { state.offCats = []; update(); };
+  const none = document.createElement("button"); none.className = "link"; none.textContent = "None";
+  none.onclick = () => { state.offCats = names.slice(); update(); };
+  cats.append(all, none);
+
+  const mods = $("mods"); mods.querySelectorAll("button").forEach(b => b.remove());
+  for (const m of MOD_ORDER) {
+    mods.append(chip(m, state.mods.includes(m), () => {
+      state.mods = state.mods.includes(m) ? state.mods.filter(x => x !== m) : [...state.mods, m]; update();
+    }, "Show only chords using exactly the selected modifiers"));
+  }
+  $("machine").value = state.machine;
+  $("unset").checked = state.unset;
+  $("mouse").checked = state.mouse;
+}
+
+function chordHTML(tokens, dim) {
+  const parts = [];
+  tokens.forEach((t, i) => {
+    parts.push(`<kbd class="${esc(t[1])}">${esc(t[0])}</kbd>`);
+    if (t[1] === "prefix" && i < tokens.length - 1) parts.push('<span class="then">▸</span>');
+  });
+  return `<span class="chord${dim ? " dim" : ""}">${parts.join("")}</span>`;
+}
+
+function highlight(text, terms) {
+  let out = esc(text);
+  for (const t of terms) {
+    if (t.length < 2) continue;
+    const re = new RegExp("(" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig");
+    out = out.replace(/(^|>)([^<]*)/g, (m, a, b) => a + b.replace(re, "<mark>$1</mark>"));
+  }
+  return out;
+}
+
+function update() {
+  store.set("state", state);
+  drawControls();
+  const terms = state.q.toLowerCase().replace(/\+/g, " ").split(/\s+/).filter(Boolean).map(t => MOD_WORDS[t] || t);
+  const keyQuery = /\+/.test(state.q) || state.q.toLowerCase().split(/[\s+]+/).some(t => t in MOD_WORDS);
+  const chordHit = (e, i) => terms.length > 0 && terms.every(t => e.chordToks[i].has(t));
+  const modset = state.mods.slice().sort().join("+");
+  const shown = DATA.entries.filter(e => {
+    if (!state.tools.includes(e.tool) || state.offCats.includes(e.cat)) return false;
+    if (e.replaced) return false;
+    if (e.unset && !state.unset) return false;
+    if (e.mouse && !state.mouse) return false;
+    if (state.machine !== "both" && e.machine && e.machine !== "all" && e.machine !== state.machine) return false;
+    if (state.mods.length && !e.modsets.includes(modset)) return false;
+    if (!terms.length) return true;
+    const byKey = e.chords.some((c, i) => chordHit(e, i));
+    return keyQuery ? byKey : byKey || terms.every(t => e.hay.includes(t));
+  });
+
+  const groups = new Map(CATS.map(k => [k, []]));
+  for (const e of shown) {
+    const k = e.tool + "|" + e.cat;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(e);
+  }
+  const out = [];
+  for (const [k, list] of groups) {
+    if (!list.length) continue;
+    const [tool, cat] = k.split("|");
+    out.push(`<section class="group"><h2><span class="tool">${esc(tool)}</span> · ${esc(cat)} <span class="count">${list.length}</span></h2><div class="list">`);
+    for (const e of list) {
+      const keys = e.chords.map((c, i) => {
+        const dimMod = state.mods.length && e.modsets[i] !== modset;
+        const dimMouse = !state.mouse && /Wheel/.test(e.keys[i]);
+        const dimKey = keyQuery && !chordHit(e, i);
+        return chordHTML(c, dimMod || dimMouse || dimKey);
+      }).join("") || '<span class="note">No key — set one in config.toml</span>';
+      const badges = (e.run ? '<span class="badge run" title="Enter in the Mod+Alt+/ search runs this">↵ runs</span>' : "")
+        + (e.machine && e.machine !== "all" ? `<span class="badge">${esc(e.machine)}</span>` : "");
+      out.push(`<div class="item${e.unset ? " unset" : ""}"><div><div class="title">${highlight(e.title, keyQuery ? [] : terms)}${badges}</div>`
+        + (e.note ? `<div class="note">${highlight(e.note, keyQuery ? [] : terms)}</div>` : "")
+        + `</div><div class="keys">${keys}</div></div>`);
+    }
+    out.push("</div></section>");
+  }
+  $("out").innerHTML = out.join("") || '<div class="empty">Nothing matches. <button class="link" onclick="resetAll()">Reset filters</button></div>';
+  $("count").textContent = `${shown.length} of ${DATA.entries.filter(e => !e.replaced).length}`;
+}
+
+function resetAll() { const q = state.q; state = DEFAULTS(); state.q = ""; $("q").value = ""; update(); }
+
+$("meta").textContent = `Built ${DATA.generated} from this machine's configs` + (DATA.machine ? ` · ${DATA.machine}` : "")
+  + ` · herdr defaults as of ${DATA.herdrVersion}`;
+$("prefix-key").textContent = DATA.herdrPrefix.split("+").map(p => p.length === 1 ? p.toUpperCase() : p[0].toUpperCase() + p.slice(1)).join("+");
+$("foot").textContent = "Rebuilt by configure.sh from config/niri, niri-tasks.kdl, config/herdr/config.toml and config/ghostty. herdr's own defaults are pinned to "
+  + DATA.herdrVersion + " in shortcuts/build.py.";
+$("q").value = state.q;
+$("q").addEventListener("input", e => { state.q = e.target.value; update(); });
+$("machine").onchange = e => { state.machine = e.target.value; update(); };
+$("unset").onchange = e => { state.unset = e.target.checked; update(); };
+$("mouse").onchange = e => { state.mouse = e.target.checked; update(); };
+$("reset").onclick = resetAll;
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); $("q").select(); }
+  else if (e.key === "Escape" && document.activeElement === $("q")) {
+    if ($("q").value) { $("q").value = ""; state.q = ""; update(); } else $("q").blur();
+  }
+});
+update();
+if (!state.q) $("q").focus();
+</script>
+</body>
+</html>

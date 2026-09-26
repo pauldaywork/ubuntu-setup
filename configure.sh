@@ -447,6 +447,17 @@ if [ ! -f "$WALLPAPER_COLORS" ]; then
     info "Seeded the bar accent colour (white until a wallpaper is painted)"
 fi
 
+# ─── Shortcut page ────────────────────────────────────────────────────────────
+# Mod+Alt+/ searches every shortcut in fuzzel and Mod+Alt+Ctrl+/ opens the page.
+# Both are built here, after every config above is in place, from the repo's
+# niri, herdr and ghostty configs plus the live niri-tasks.kdl — so they list
+# what is bound now, not what was bound when someone last updated a page.
+if python3 "$DOTFILES/shortcuts/build.py" --out "$USER_HOME/.local/share/shortcuts" --machine "$MACHINE_TYPE" >/dev/null; then
+    info "Built the shortcut search list and page (Mod+Alt+/, Mod+Alt+Ctrl+/)"
+else
+    warn "Could not build the shortcut page — see shortcuts/build.py"
+fi
+
 # ─── Prune old backups ────────────────────────────────────────────────────────
 # Backups are only worth keeping while they're plausibly the version you want
 # back. Nothing ever deleted them before, so they accumulated one directory per

@@ -51,7 +51,7 @@ bash install.sh
 
 All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config — the built-in display's `eDP-1` output block, the brightness keys, and `Mod+Alt+D` to turn the built-in display off/on when an external monitor is connected — plus battery and brightness on the top bar. Desktops get the desk's monitors and their 4K modes instead (`desktop.kdl`, with `Mod+Alt+D` to drop the HDMI matrix to 1080p@60), and a login screen layout for the same monitor — so a laptop never has a desk's resolutions forced on whatever screen it is plugged into. A machine that changes type has the other type's files removed. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
 
-The binds follow one pattern: `Mod+key` moves around and shapes windows, `Mod+Alt+letter` is every command (tasks, workspaces, wallpaper, bar, display), adding `Ctrl` gives the same key's companion (carry rather than focus, list tasks rather than add one, rename the workspace rather than make one), and `Shift` points at another monitor. Most `Mod+Ctrl` binds also work as `Mod+Alt`. `Mod+Alt+Ctrl+Up`/`Down` and `Mod+Alt+Ctrl+1`–`9` move the workspace itself, and `Mod+Shift+/` lists the lot.
+The binds follow one pattern: `Mod+key` moves around and shapes windows, `Mod+Alt+letter` is every command (tasks, workspaces, wallpaper, bar, display), adding `Ctrl` gives the same key's companion (carry rather than focus, list tasks rather than add one, rename the workspace rather than make one), and `Shift` points at another monitor. Most `Mod+Ctrl` binds also work as `Mod+Alt`. `Mod+Alt+Ctrl+Up`/`Down` and `Mod+Alt+Ctrl+1`–`9` move the workspace itself, and `Mod+Shift+/` shows niri's own overlay. For everything — niri, niri-tasks, herdr and ghostty together — `Mod+Alt+/` searches them in fuzzel and runs the niri action you pick, and `Mod+Alt+Ctrl+/` opens the same list as a page with category and modifier filters. Both are rebuilt from the configs on every `configure.sh`, so they can't fall behind a bind change; herdr's own defaults are the one thing copied in by hand, pinned to its version in `shortcuts/build.py`.
 
 **You don't have to ask for it.** The installer reads the DMI chassis type (and falls back to looking for a battery), and records the answer in `~/.config/niri/.machine-type` so every later run agrees with the first. `--laptop` and `--desktop` override the guess, and the override is recorded too:
 
@@ -172,6 +172,11 @@ ubuntu-setup/
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
 │   ├── CREDITS.md                          # Who made each image; not installed
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
+│
+├── shortcuts/                              # Every shortcut, browsable and searchable
+│   ├── build.py                            # Reads niri, niri-tasks, herdr and ghostty configs; configure.sh runs it
+│   ├── page.html                           # The page's template (Mod+Alt+Ctrl+/); built into ~/.local/share/shortcuts/
+│   └── search.sh                           # → ~/.config/niri/shortcuts-search.sh  fuzzel search that runs your pick (Mod+Alt+/)
 │
 ├── system/                                 # Outside $HOME, so install.sh puts these in place with sudo
 │   └── monitors.xml                        # → /etc/xdg/  The login screen's monitor layout; desktops only

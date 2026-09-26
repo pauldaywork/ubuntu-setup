@@ -84,6 +84,11 @@ DOTFILES_MAP=(
     "wallpaper/accents|.config/niri/wallpaper-accents|copy"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
 
+    # shortcuts — the searchable list of every shortcut. Only the runner behind
+    # Mod+Alt+/ is a managed file; the page and the list it reads are built
+    # by configure.sh from build.py and page.html, which stay in the repo.
+    "shortcuts/search.sh|.config/niri/shortcuts-search.sh|exec"
+
     # fuzzel — the launcher on Mod+Space. The other fuzzel configs are not here:
     # picker.ini is a symlink niri-tasks installs, and wallpaper-picker.ini goes
     # out with the wallpaper feature above.

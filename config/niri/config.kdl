@@ -654,6 +654,12 @@ binds {
     // hides the top bar and leaves the workspace row where it is.
     Mod+Alt+M hotkey-overlay-title="Top Bar: Toggle" { spawn-sh "killall -SIGUSR1 waybar"; }
     Mod+B hotkey-overlay-title="Open Browser" { spawn "firefox"; }
+
+    // Every shortcut — niri's, niri-tasks', herdr's and ghostty's — built by
+    // configure.sh from shortcuts/build.py. Mod+Alt+/ searches them in fuzzel
+    // and runs your pick; its Ctrl companion opens the page to browse.
+    Mod+Alt+Slash hotkey-overlay-title="All Shortcuts: Search and Run" { spawn "~/.config/niri/shortcuts-search.sh"; }
+    Mod+Alt+Ctrl+Slash hotkey-overlay-title="All Shortcuts: Page" { spawn-sh "xdg-open ~/.local/share/shortcuts/shortcuts.html"; }
     Mod+Return hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
 }
 
