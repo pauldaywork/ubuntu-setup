@@ -294,7 +294,8 @@ binds {
     //   +Shift           toward another monitor. Mod+? for help and Mod+Shift+F for
     //                    fullscreen are the two left as niri ships them.
     // Most Mod+Ctrl binds also answer to Mod+Alt, so a hand already on Mod+Alt
-    // can move things without changing modifiers. F and M have no Mod+Alt twin:
+    // can move things without changing modifiers. Those twins carry no
+    // hotkey-overlay-title, so Mod+? lists each action once. F and M have no Mod+Alt twin:
     // Mod+Alt+F is the focus profile and Mod+Alt+M the top bar.
 
     // Mod-Shift-/, which is usually the same as Mod-?,
@@ -309,7 +310,7 @@ binds {
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
     // For example, this is a standard bind to toggle the screen reader (orca).
-    Mod+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
+    Mod+Alt+S allow-when-locked=true hotkey-overlay-title="Toggle Screen Reader" { spawn-sh "pkill orca || exec orca"; }
 
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
@@ -504,7 +505,7 @@ binds {
     Mod+Alt+9 { move-column-to-workspace 9; }
 
     // Put the focused workspace at position N.
-    Mod+Alt+Ctrl+1 { move-workspace-to-index 1; }
+    Mod+Alt+Ctrl+1 hotkey-overlay-title="Move Workspace to Position 1 (…9)" { move-workspace-to-index 1; }
     Mod+Alt+Ctrl+2 { move-workspace-to-index 2; }
     Mod+Alt+Ctrl+3 { move-workspace-to-index 3; }
     Mod+Alt+Ctrl+4 { move-workspace-to-index 4; }
@@ -536,12 +537,12 @@ binds {
     // Neither the backwards cycle nor reset-window-height has a bind — both
     // cycles wrap round.
     Mod+R      { switch-preset-column-width; }
-    Mod+Ctrl+R { switch-preset-window-height; }
+    Mod+Ctrl+R hotkey-overlay-title="Cycle Window Heights" { switch-preset-window-height; }
     Mod+Alt+R  { switch-preset-window-height; }
 
     Mod+F { maximize-column; }
     Mod+Shift+F { fullscreen-window; }
-    Mod+Alt+Ctrl+F { fullscreen-window; }
+    Mod+Alt+Ctrl+F hotkey-overlay-title="Fullscreen (also Mod+Shift+F)" { fullscreen-window; }
 
     // While maximize-column leaves gaps and borders around the window,
     // maximize-window-to-edges doesn't: the window expands to the edges of the screen.
@@ -571,14 +572,14 @@ binds {
     Mod+Equal { set-column-width "+10%"; }
 
     // Finer height adjustments when in column with other windows.
-    Mod+Ctrl+Minus { set-window-height "-10%"; }
-    Mod+Ctrl+Equal { set-window-height "+10%"; }
+    Mod+Ctrl+Minus hotkey-overlay-title="Window Height −10%" { set-window-height "-10%"; }
+    Mod+Ctrl+Equal hotkey-overlay-title="Window Height +10%" { set-window-height "+10%"; }
     Mod+Alt+Minus  { set-window-height "-10%"; }
     Mod+Alt+Equal  { set-window-height "+10%"; }
 
     // Move the focused window between the floating and the tiling layout.
     Mod+V      { toggle-window-floating; }
-    Mod+Ctrl+V { switch-focus-between-floating-and-tiling; }
+    Mod+Ctrl+V hotkey-overlay-title="Focus Floating ↔ Tiling" { switch-focus-between-floating-and-tiling; }
     Mod+Alt+V  { switch-focus-between-floating-and-tiling; }
 
     // Toggle tabbed column display mode.
@@ -610,7 +611,7 @@ binds {
 
     // The quit action will show a confirmation dialog to avoid accidental exits.
     // Mod+Alt+Ctrl+Q is the companion of Mod+Alt+Q, close workspace.
-    Mod+Alt+Ctrl+Q { quit; }
+    Mod+Alt+Ctrl+Q hotkey-overlay-title="Quit niri" { quit; }
     Ctrl+Alt+Delete { quit; }
 
     // Powers off the monitors. To turn them back on, do any input like
