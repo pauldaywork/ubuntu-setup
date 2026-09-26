@@ -200,23 +200,18 @@ if command -v systemctl &>/dev/null; then
 fi
 
 # ghostty
-# `niritasks tmux-session` opens a tmux session named after the focused workspace, in
-# the matching ~/Projects folder. It belongs to niri-tasks, which is optional —
-# so fall back to plain tmux rather than leaving ghostty pointed at a command
-# that doesn't exist, which would mean no terminal at all.
-if command -v niritasks >/dev/null; then
-    GHOSTTY_COMMAND="niritasks tmux-session"
-else
-    GHOSTTY_COMMAND="tmux"
-fi
-sed -i "s|^command = .*|command = $GHOSTTY_COMMAND|" \
-    "$USER_HOME/.config/ghostty/config.ghostty"
-
+# No post-processing any more. Its `command =` line used to be rewritten here to
+# `niritasks tmux-session`, a wrapper that put each window in a tmux session in
+# the workspace's ~/Projects folder. Now ghostty runs a plain login shell, and
+# whoever asks for the window picks the folder: Mod+Return runs
+# `niritasks terminal`, which opens one in ~/Projects/<workspace>.
+#
 # ghostty runs as one long-lived process (gtk-single-instance) that reads its
-# config once at startup, so every new window keeps the old `command =` until
-# it is told to reload — which, after a rename, means new windows that fail to
-# start at all. SIGUSR2 is its reload signal, from 1.2 on. Older versions don't
-# handle it, and SIGUSR2's default action is to terminate, so check first.
+# config once at startup, so every new window keeps the old config until it is
+# told to reload — which, when the old config named a command that has since
+# gone, means new windows that fail to start at all. SIGUSR2 is its reload
+# signal, from 1.2 on. Older versions don't handle it, and SIGUSR2's default
+# action is to terminate, so check first.
 if pgrep -u "$USER" -x ghostty >/dev/null; then
     GHOSTTY_VERSION=$(ghostty --version 2>/dev/null | sed -n 's/^Ghostty \([0-9.]*\).*/\1/p')
     if [ -n "$GHOSTTY_VERSION" ] \
@@ -262,6 +257,17 @@ STALE_FILES=(
     ".config/niri/default_workspace_name.sh"
     ".config/niri/open_project_workspace.sh"
     ".config/niri/tmux-niri-session.sh"
+    # tmux, dropped: herdr is the multiplexer now, one session per project
+    # workspace, and plain terminals are plain shells. ~/.tmux (TPM and its
+    # plugins) is left alone — it was never a managed file.
+    ".tmux.conf"
+    # ghostty's legacy config file, which predates config.ghostty and was never
+    # managed. ghostty loads both, so it was quietly setting working-directory
+    # to ~/Code and a DankMaterialShell theme; what was worth keeping from it
+    # now lives in config/ghostty/config.ghostty, colours included, so the
+    # theme DMS generated goes with it.
+    ".config/ghostty/config"
+    ".config/ghostty/themes/dankcolors"
     # Its fuzzel theme too — niri-tasks installs its own as picker.ini.
     ".config/fuzzel/project-picker.ini"
     # The window-rules toggle moved in beside the profiles it switches between,

@@ -84,7 +84,6 @@ APT_PACKAGES=(
     # Mod+Alt+D reads which outputs are lit the same way. Also a
     # general-purpose tool worth having on a new machine.
     jq
-    tmux
     libudev-dev
     util-linux-extra
 

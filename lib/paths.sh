@@ -67,9 +67,6 @@ DOTFILES_MAP=(
     # taskwarrior — the data location is all that matters to niri-tasks
     "home/.taskrc|.taskrc|copy"
 
-    # tmux
-    "home/.tmux.conf|.tmux.conf|copy"
-
     # niri — config.kdl is handled separately, see above
     "config/niri/window-rules/toggle.sh|.config/niri/window-rules/toggle.sh|exec"
     "config/niri/window-rules/normal.kdl|.config/niri/window-rules/normal.kdl|copy"
@@ -92,7 +89,7 @@ DOTFILES_MAP=(
     # out with the wallpaper feature above.
     "config/fuzzel/fuzzel.ini|.config/fuzzel/fuzzel.ini|copy"
 
-    # ghostty — its `command =` line is rewritten after deploy
+    # ghostty
     "config/ghostty/config.ghostty|.config/ghostty/config.ghostty|copy"
 
     # waybar + mako — what replaced DankMaterialShell. Plain copies, which is

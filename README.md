@@ -7,7 +7,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 | Category | Files |
 |---|---|
 | Shell | `.bashrc`, `.profile` |
-| Terminal multiplexer | tmux (`.tmux.conf` + TPM-managed plugins) |
+| Terminal multiplexer | [herdr](https://herdr.dev), one session per project workspace (installed by hand, not by this repo) |
 | Window manager | Niri config + swappable window-rules/layout profiles (`Mod+Alt+F`) |
 | Bar | waybar (`config.jsonc` + `style.css`), started by the package's `waybar.service` |
 | Notifications | mako |
@@ -78,10 +78,9 @@ The script will:
 12. Install Claude Code via npm
 13. Copy all config files to their correct locations, install the swww systemd unit, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
 14. Clone [niri-tasks](https://github.com/pauldaywork/niri-tasks) to `~/Projects/niri-tasks` and build it — this runs straight after the config copy, so its installer can replace the `niri-tasks.kdl` stub that was just seeded
-15. Install TPM (tmux plugin manager) and fetch tmux plugins
-16. Install VS Code extensions from `config/Code/extensions.txt`
-17. Prompt for your git name and email
-18. Generate a new SSH key and print the public key so you can add it to GitHub
+15. Install VS Code extensions from `config/Code/extensions.txt`
+16. Prompt for your git name and email
+17. Generate a new SSH key and print the public key so you can add it to GitHub
 
 ### 4. After the script finishes
 
@@ -139,7 +138,6 @@ ubuntu-setup/
 │   ├── .bashrc
 │   ├── .profile
 │   ├── .taskrc
-│   ├── .tmux.conf
 │   └── .local/bin/chatgpt                  # Starts ChatGPT on Wayland from a terminal
 │
 ├── config/                                 # Mirrors ~/.config/
@@ -260,8 +258,12 @@ What this repo still owns:
   an **empty stub** at that path. niri refuses to load a config whose include is
   missing, so the stub is what lets this repo install on a machine that does not
   want niri-tasks. Its installer symlinks the real file over the stub.
-- Ghostty's `command =` is set to `niritasks tmux-session` when `niritasks` is on `PATH`, and
-  to plain `tmux` when it is not.
+- `config.kdl` binds `Mod+Return` to plain `ghostty`. niri-tasks rebinds it to
+  `niritasks terminal`, which opens the terminal in `~/Projects/<workspace>`; its
+  include comes later, and a later bind of the same key wins. Without niri-tasks
+  you get a plain terminal. Ghostty itself has no `command =` line — every
+  window is a login shell — and `Mod+Alt+P` opens the project's terminal on its
+  herdr session, `herdr --session <workspace>`.
 
 ---
 
@@ -463,12 +465,11 @@ The repo deploys to the machine. That is the only automatic direction:
 bash configure.sh        # repo ──> machine
 ```
 
-Edit configs **in the repo** and deploy them. That is why 18 of the 19 rows in
-`lib/paths.sh` are byte-identical to the repo at any moment — nothing edits them
-out on the machine, so nothing has to be captured back. (The exception is
-ghostty, whose `command =` line `configure.sh` rewrites after copying.
-`config.kdl` isn't a row at all: it's assembled with the machine-type include
-before it's written, so it differs from the repo's copy by design.)
+Edit configs **in the repo** and deploy them. That is why every row in
+`lib/paths.sh` is byte-identical to the repo at any moment — nothing edits them
+out on the machine, so nothing has to be captured back. (`config.kdl` isn't a
+row at all: it's assembled with the machine-type include before it's written,
+so it differs from the repo's copy by design.)
 
 ### capture/ — the few things the machine owns
 
@@ -553,7 +554,7 @@ What it checks:
 | Wallpaper | swww installed, its unit enabled and running, `wallpaper-apply.sh` present, **and that what's on screen is what `wallpaper-active` names** — the one check that catches a missed paint |
 | Machine-type config | A machine with a battery whose `config.kdl` lacks the laptop include, an include that disagrees with the recorded machine type, or one pointing at a file that isn't there. Either type's files installed on the other (`laptop.jsonc` would put the battery module back on the bar). On a desktop, `/etc/xdg/monitors.xml` matching the repo |
 | Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
-| Config drift | Every file in `lib/paths.sh`: installed, matching the repo, and executable where the kind says so. `config.kdl` is compared separately, with the machine-type include stripped from both sides. Files `configure.sh` rewrites after copying — ghostty — are checked for presence but not content |
+| Config drift | Every file in `lib/paths.sh`: installed, matching the repo, and executable where the kind says so. `config.kdl` is compared separately, with the machine-type include stripped from both sides |
 | niri-tasks | That `niritasks` is installed, the `niri-tasks.kdl` include exists (niri refuses to load a config whose include is missing), and the active-task overlay service is running |
 | Leftovers | Files this repo used to install and no longer does — the workspace-task scripts, the fuzzel picker theme, the retired wallpaper-sync pair, and DankMaterialShell's config trees once the package itself is gone. Deleting them from the repo doesn't delete them from a machine that already has them |
 

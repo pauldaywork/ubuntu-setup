@@ -165,13 +165,6 @@ else
     note "  Install with: npm install -g @anthropic-ai/claude-code"
 fi
 
-if [ -d "$HOME/.tmux/plugins/tpm" ]; then
-    ok "TPM (tmux plugin manager) installed"
-else
-    issue "TPM not installed at ~/.tmux/plugins/tpm"
-    note "  Install with: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/bin/install_plugins"
-fi
-
 # The DMS taskwarrior widget was checked here. It was a DMS plugin, so it went
 # with DMS — there is no waybar equivalent packaged, and nothing in this repo
 # replaces it. Task state is still there: `task` on the command line, and
@@ -223,19 +216,6 @@ fi
 #
 # Only mismatches are reported. A machine in sync says so in one line rather
 # than eighteen, which keeps the interesting output visible.
-# Files configure.sh rewrites *after* copying, so the live copy is meant to
-# differ from the repo's and comparing them would report drift forever:
-#
-#   ghostty  its `command =` line becomes `niritasks tmux-session` when niritasks is on PATH
-#
-# Presence is still checked; only the content comparison is skipped.
-is_post_processed() {
-    case "$1" in
-        .config/ghostty/config.ghostty) return 0 ;;
-        *) return 1 ;;
-    esac
-}
-
 MISSING=0
 DRIFTED=0
 CHECKED=0
@@ -263,11 +243,13 @@ for _row in "${DOTFILES_MAP[@]}"; do
         issue "Not installed: ~/$HOME_PATH"
         note "  Install with: bash configure.sh"
         MISSING=$((MISSING + 1))
-    elif ! is_post_processed "$HOME_PATH" && ! cmp -s "$_live" "$_repo"; then
+    elif ! cmp -s "$_live" "$_repo"; then
         # Every row is a plain copy now, so every row is expected to match
         # byte-for-byte. The `merge` exemption that used to be here covered
         # DankMaterialShell's two settings files, whose live copies legitimately
-        # carried keys the repo's snapshot had never heard of.
+        # carried keys the repo's snapshot had never heard of; the ghostty
+        # exemption after it covered a `command =` line configure.sh rewrote,
+        # which is gone now that ghostty runs a plain login shell.
         note "Differs from the repo: ~/$HOME_PATH"
         DRIFTED=$((DRIFTED + 1))
     fi
