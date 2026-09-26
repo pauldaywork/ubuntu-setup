@@ -54,10 +54,22 @@
   button.chip { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--chip); color: var(--ink);
                 padding: 3px 10px; border-radius: 999px; cursor: pointer; }
   button.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-ink); border-color: var(--chip-on); }
+  #filters-toggle .n { margin-left: 5px; font-size: 11px; padding: 0 6px; border-radius: 999px;
+                       background: var(--accent); color: #fff; }
   button.link { font: inherit; font-size: 12px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 2px 4px; }
   select { font: inherit; font-size: 13px; background: var(--chip); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 3px 6px; }
   label.toggle { font-size: 13px; color: var(--muted); display: inline-flex; gap: 5px; align-items: center; }
 
+  .tabs { margin-top: 8px; }
+  .tabrow { display: grid; grid-template-columns: 92px 1fr; align-items: baseline; }
+  .tabrow .family { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .tabrow .list-tabs { display: flex; flex-wrap: wrap; gap: 0 2px; }
+  button.tab { font: inherit; font-size: 13.5px; background: none; border: 0; border-bottom: 2px solid transparent;
+               color: var(--muted); padding: 6px 10px 7px; cursor: pointer; white-space: nowrap; margin-bottom: -1px; }
+  button.tab:hover { color: var(--ink); }
+  button.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+  button.tab .n { font-size: 11px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+  button.tab.empty { opacity: .45; }
   section.group { margin-top: 22px; }
   section.group h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
   section.group h2 .tool { color: var(--ink); }
@@ -87,6 +99,7 @@
   footer { margin-top: 30px; color: var(--muted); font-size: 12.5px; }
   @media (max-width: 640px) {
     .item { grid-template-columns: 1fr; }
+    .tabrow { grid-template-columns: 1fr; }
     .chips .label { width: 100%; }
   }
 </style>
@@ -119,9 +132,11 @@
     <div class="search">
       <input id="q" type="search" placeholder="Search actions or keys — try “workspace”, “alt ctrl t”, “split”   ( / )" autocomplete="off">
       <span class="count" id="count"></span>
+      <button class="chip" id="filters-toggle" aria-expanded="false" aria-controls="filters">Filters</button>
     </div>
+    <div id="filters" hidden>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Categories"></nav>
     <div class="chips" id="tools"><span class="label">Apps</span></div>
-    <div class="chips" id="cats"><span class="label">Categories</span></div>
     <div class="chips" id="mods"><span class="label">Exact mods</span></div>
     <div class="chips"><span class="label">Show</span>
       <label class="toggle">Machine <select id="machine">
@@ -130,6 +145,7 @@
       <label class="toggle"><input type="checkbox" id="unset"> herdr actions with no key yet</label>
       <label class="toggle"><input type="checkbox" id="mouse" checked> Mouse wheel binds</label>
       <button class="link" id="reset">Reset filters</button>
+    </div>
     </div>
   </div>
 
@@ -148,14 +164,18 @@ const CAT_ORDER = ["Launch", "Tasks", "Workspace", "Focus & move", "Window layou
 const catRank = c => { const i = CAT_ORDER.indexOf(c); return i < 0 ? 99 : i; };
 
 const store = {
-  get(k, d) { try { const v = localStorage.getItem("shortcuts." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem("shortcuts." + k, JSON.stringify(v)); } catch {} },
+  get(k, d) { try { const v = localStorage.getItem("shortcuts.v2." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("shortcuts.v2." + k, JSON.stringify(v)); } catch {} },
 };
-const DEFAULTS = () => ({ q: "", tools: TOOLS.slice(), offCats: [], mods: [], machine: DATA.machine || "both", unset: false, mouse: true });
+// Nothing hidden until you ask: both machines' binds, herdr actions with no key
+// yet, and defaults your config replaced all show, the last two greyed out.
+const DEFAULTS = () => ({ q: "", tab: "all", tools: TOOLS.slice(), mods: [], machine: "both", unset: true, mouse: true, showFilters: false });
 let state = Object.assign(DEFAULTS(), store.get("state", {}));
 // page.html?q=split opens with a search already typed — handy for bookmarks.
 const urlQ = new URLSearchParams(location.search).get("q");
 if (urlQ !== null) state.q = urlQ;
+// …and ?tab=panes (or ?tab=herdr|panes) opens on that tab.
+const urlTab = (new URLSearchParams(location.search).get("tab") || "").toLowerCase();
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -174,6 +194,12 @@ for (const e of DATA.entries) {
   e.mouse = e.keys.length > 0 && e.keys.every(k => /Wheel/.test(k));
   e.modsets = e.chords.map(c => c.filter(t => t[1]).map(t => t[1]).sort().join("+"));
 }
+// A tab is a category within an app. niri-tasks' binds are niri binds, so they
+// share niri's tabs — otherwise there would be two "Workspace" tabs side by side.
+const family = t => t === "niri-tasks" ? "niri" : t;
+for (const e of DATA.entries) e.tab = family(e.tool) + "|" + e.cat;
+const TABS = [...new Set(DATA.entries.map(e => e.tab))]
+  .sort((a, b) => TOOLS.indexOf(a.split("|")[0]) - TOOLS.indexOf(b.split("|")[0]) || catRank(a.split("|")[1]) - catRank(b.split("|")[1]));
 const CATS = [...new Set(DATA.entries.map(e => e.tool + "|" + e.cat))]
   .sort((a, b) => TOOLS.indexOf(a.split("|")[0]) - TOOLS.indexOf(b.split("|")[0]) || catRank(a.split("|")[1]) - catRank(b.split("|")[1]));
 
@@ -184,7 +210,48 @@ function chip(label, pressed, onClick, extra = "") {
   return b;
 }
 
+function drawTabs(counts, total) {
+  // One row per app, labelled like the filter rows, so a wrap never strands an
+  // app's name at the end of one line and its tabs on the next.
+  const nav = $("tabs"); nav.innerHTML = "";
+  const row = label => {
+    const r = document.createElement("div"); r.className = "tabrow";
+    const l = document.createElement("span"); l.className = "family"; l.textContent = label;
+    const tabs = document.createElement("div"); tabs.className = "list-tabs";
+    r.append(l, tabs); nav.append(r); return tabs;
+  };
+  const tab = (r, key, label, n) => {
+    const b = document.createElement("button");
+    b.className = "tab" + (n ? "" : " empty"); b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", state.tab === key); b.dataset.key = key;
+    b.innerHTML = `${esc(label)}<span class="n">${n}</span>`;
+    b.onclick = () => { state.tab = key; update(); };
+    r.append(b);
+  };
+  tab(row(""), "all", "All", total);
+  let fam = null, r = null;
+  for (const k of TABS) {
+    const [f, cat] = k.split("|");
+    if (!state.tools.some(t => family(t) === f)) continue;
+    if (f !== fam) { fam = f; r = row(f); }
+    tab(r, k, cat, counts.get(k) || 0);
+  }
+}
+
+// How many filters differ from the defaults — a tab other than All counts too —
+// shown on the toggle, so a closed panel can't quietly hide results.
+function activeFilters() {
+  const d = DEFAULTS();
+  return (state.tab !== "all") + (state.tools.length !== d.tools.length) + (state.mods.length > 0) + (state.machine !== d.machine)
+       + (state.unset !== d.unset) + (state.mouse !== d.mouse);
+}
+
 function drawControls() {
+  const n = activeFilters(), t = $("filters-toggle");
+  $("filters").hidden = !state.showFilters;
+  t.setAttribute("aria-expanded", state.showFilters);
+  t.setAttribute("aria-pressed", state.showFilters);
+  t.innerHTML = (state.showFilters ? "Hide filters" : "Filters") + (n ? `<span class="n">${n}</span>` : "");
   const tools = $("tools"); tools.querySelectorAll("button").forEach(b => b.remove());
   for (const t of TOOLS) {
     const n = DATA.entries.filter(e => e.tool === t).length;
@@ -193,20 +260,6 @@ function drawControls() {
       state.tools = state.tools.includes(t) ? state.tools.filter(x => x !== t) : [...state.tools, t]; update();
     }));
   }
-  const cats = $("cats"); cats.querySelectorAll("button").forEach(b => b.remove());
-  const visible = CATS.filter(c => state.tools.includes(c.split("|")[0]));
-  const names = [...new Set(visible.map(c => c.split("|")[1]))];
-  for (const c of names) {
-    cats.append(chip(c, !state.offCats.includes(c), () => {
-      state.offCats = state.offCats.includes(c) ? state.offCats.filter(x => x !== c) : [...state.offCats, c]; update();
-    }));
-  }
-  const all = document.createElement("button"); all.className = "link"; all.textContent = "All";
-  all.onclick = () => { state.offCats = []; update(); };
-  const none = document.createElement("button"); none.className = "link"; none.textContent = "None";
-  none.onclick = () => { state.offCats = names.slice(); update(); };
-  cats.append(all, none);
-
   const mods = $("mods"); mods.querySelectorAll("button").forEach(b => b.remove());
   for (const m of MOD_ORDER) {
     mods.append(chip(m, state.mods.includes(m), () => {
@@ -238,15 +291,19 @@ function highlight(text, terms) {
 }
 
 function update() {
+  if (urlTab && !update.done) {
+    state.tab = TABS.find(k => k.toLowerCase() === urlTab || k.split("|")[1].toLowerCase() === urlTab) || "all";
+    update.done = true;
+  }
+  if (state.tab !== "all" && !TABS.includes(state.tab)) state.tab = "all";
   store.set("state", state);
   drawControls();
   const terms = state.q.toLowerCase().replace(/\+/g, " ").split(/\s+/).filter(Boolean).map(t => MOD_WORDS[t] || t);
   const keyQuery = /\+/.test(state.q) || state.q.toLowerCase().split(/[\s+]+/).some(t => t in MOD_WORDS);
   const chordHit = (e, i) => terms.length > 0 && terms.every(t => e.chordToks[i].has(t));
   const modset = state.mods.slice().sort().join("+");
-  const shown = DATA.entries.filter(e => {
-    if (!state.tools.includes(e.tool) || state.offCats.includes(e.cat)) return false;
-    if (e.replaced) return false;
+  const base = DATA.entries.filter(e => {
+    if (!state.tools.includes(e.tool)) return false;
     if (e.unset && !state.unset) return false;
     if (e.mouse && !state.mouse) return false;
     if (state.machine !== "both" && e.machine && e.machine !== "all" && e.machine !== state.machine) return false;
@@ -255,6 +312,10 @@ function update() {
     const byKey = e.chords.some((c, i) => chordHit(e, i));
     return keyQuery ? byKey : byKey || terms.every(t => e.hay.includes(t));
   });
+  const counts = new Map();
+  for (const e of base) counts.set(e.tab, (counts.get(e.tab) || 0) + 1);
+  drawTabs(counts, base.length);
+  const shown = state.tab === "all" ? base : base.filter(e => e.tab === state.tab);
 
   const groups = new Map(CATS.map(k => [k, []]));
   for (const e of shown) {
@@ -276,17 +337,17 @@ function update() {
       }).join("") || '<span class="note">No key — set one in config.toml</span>';
       const badges = (e.run ? '<span class="badge run" title="Enter in the Mod+Alt+/ search runs this">↵ runs</span>' : "")
         + (e.machine && e.machine !== "all" ? `<span class="badge">${esc(e.machine)}</span>` : "");
-      out.push(`<div class="item${e.unset ? " unset" : ""}"><div><div class="title">${highlight(e.title, keyQuery ? [] : terms)}${badges}</div>`
+      out.push(`<div class="item${e.unset || e.replaced ? " unset" : ""}"><div><div class="title">${highlight(e.title, keyQuery ? [] : terms)}${badges}</div>`
         + (e.note ? `<div class="note">${highlight(e.note, keyQuery ? [] : terms)}</div>` : "")
         + `</div><div class="keys">${keys}</div></div>`);
     }
     out.push("</div></section>");
   }
   $("out").innerHTML = out.join("") || '<div class="empty">Nothing matches. <button class="link" onclick="resetAll()">Reset filters</button></div>';
-  $("count").textContent = `${shown.length} of ${DATA.entries.filter(e => !e.replaced).length}`;
+  $("count").textContent = `${shown.length} of ${DATA.entries.length}`;
 }
 
-function resetAll() { const q = state.q; state = DEFAULTS(); state.q = ""; $("q").value = ""; update(); }
+function resetAll() { const open = state.showFilters; state = DEFAULTS(); state.showFilters = open; $("q").value = ""; update(); }
 
 $("meta").textContent = `Built ${DATA.generated} from this machine's configs` + (DATA.machine ? ` · ${DATA.machine}` : "")
   + ` · herdr defaults as of ${DATA.herdrVersion}`;
@@ -299,6 +360,16 @@ $("machine").onchange = e => { state.machine = e.target.value; update(); };
 $("unset").onchange = e => { state.unset = e.target.checked; update(); };
 $("mouse").onchange = e => { state.mouse = e.target.checked; update(); };
 $("reset").onclick = resetAll;
+$("filters-toggle").onclick = () => { state.showFilters = !state.showFilters; update(); };
+$("tabs").addEventListener("keydown", e => {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  const tabs = [...$("tabs").querySelectorAll("button.tab")];
+  const i = tabs.findIndex(b => b.dataset.key === state.tab);
+  const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+  state.tab = next.dataset.key; update();
+  $("tabs").querySelector('[aria-selected="true"]').focus();
+  e.preventDefault();
+});
 document.addEventListener("keydown", e => {
   if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); $("q").select(); }
   else if (e.key === "Escape" && document.activeElement === $("q")) {
