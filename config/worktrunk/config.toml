@@ -1,0 +1,6 @@
+# worktrunk (`wt`) user config. What a worktree gets set up with is not here:
+# that is each repo's own .config/wt.toml — see docs/worktree-setup.md.
+
+# Outside ~/Projects: niritasks lists every folder there as a project, and a
+# worktree is a branch of one, not a project of its own.
+worktree-path = "~/.worktrees/{{ repo }}/{{ branch | sanitize }}"

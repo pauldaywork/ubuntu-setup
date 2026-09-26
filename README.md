@@ -154,6 +154,10 @@ ubuntu-setup/
 │   ├── mako/config
 │   ├── fuzzel/fuzzel.ini                   # The launcher only; the pickers bring their own configs
 │   ├── ghostty/config.ghostty
+│   ├── herdr/config.toml                   # herdr's theme and the worktree keys (plugin actions)
+│   ├── herdr/plugins/config/worktrunk/config.toml   # The herdr-worktrunk plugin's settings
+│   ├── worktrunk/config.toml               # Where worktrees go: ~/.worktrees/<repo>/<branch>
+│   ├── claude/skills/worktree-setup/SKILL.md   # → ~/.claude/skills/  Writes a repo's wt.toml by interview
 │   ├── applications/                       # → ~/.local/share/applications/  (desktop entries)
 │   │   ├── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
 │   │   └── chatgpt.desktop                 # Shadows the stock entry to start ChatGPT on Wayland
@@ -174,7 +178,9 @@ ubuntu-setup/
 │
 ├── docs/                                   # Not installed anywhere; read by people and agents
 │   ├── adr/
-│   │   └── 0001-one-way-deploy.md          # Why the repo deploys and capture/ stays manual
+│   │   ├── 0001-one-way-deploy.md          # Why the repo deploys and capture/ stays manual
+│   │   └── 0002-worktrunk-owns-worktrees.md  # Why worktrees are worktrunk's, set up by each repo's hooks
+│   ├── worktree-setup.md                   # The convention every repo's .config/wt.toml follows
 │   └── agents/                             # Per-repo config for the engineering skills
 │       ├── issue-tracker.md                # Issues are markdown under .scratch/ (gitignored)
 │       ├── triage-labels.md                # The five triage states
@@ -212,7 +218,9 @@ absent — what the installer does for a wallpaper or a window-rules profile,
 where it has to guarantee a choice exists without overriding the one you made.
 
 **`docs/adr/`** records decisions that are hard to reverse and surprising
-without the history. There is one so far: [ADR-0001](docs/adr/0001-one-way-deploy.md)
+without the history. [ADR-0002](docs/adr/0002-worktrunk-owns-worktrees.md) is
+why worktrees belong to worktrunk rather than herdr or a script of ours.
+[ADR-0001](docs/adr/0001-one-way-deploy.md) is
 on the one-way deploy, which is the long version of [Which direction things
 move](#which-direction-things-move) below — what `update.sh` was, why deleting
 it was justified by measuring first, and why the missing capture scripts are the
@@ -265,6 +273,17 @@ What this repo still owns:
   you get a plain terminal. Ghostty itself has no `command =` line — every
   window is a login shell — and `Mod+Alt+P` opens the project's terminal on its
   herdr session, `herdr --session <workspace>`.
+
+### Worktrees for parallel agents
+
+Agents work in parallel, one per git worktree, each with its own `.env`, ports
+and cloned database. [worktrunk](https://worktrunk.dev) creates and removes
+them from herdr's keys (`prefix+shift+g` to create, `prefix+shift+e` to remove;
+the herdr-worktrunk plugin), and each repo's `.config/wt.toml` sets them up. The
+convention every repo follows is [docs/worktree-setup.md](docs/worktree-setup.md),
+the `worktree-setup` Claude skill writes it for a repo by interview, and
+[ADR 0002](docs/adr/0002-worktrunk-owns-worktrees.md) records why it is
+worktrunk and not herdr's own worktrees or a script of ours.
 
 ---
 

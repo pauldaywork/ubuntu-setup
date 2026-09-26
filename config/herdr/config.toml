@@ -1,0 +1,50 @@
+# herdr — the terminal multiplexer. niritasks opens one session per project
+# workspace (`herdr --session <workspace>`), so this is what a project's
+# terminal is.
+onboarding = false
+
+[theme]
+name = "catppuccin"
+auto_switch = false
+
+# ─── worktrees ────────────────────────────────────────────────────────────────
+# Worktrees go through worktrunk, by way of the herdr-worktrunk plugin, never
+# herdr's own worktree commands. worktrunk runs the repo's .config/wt.toml hooks
+# — the .env copy, a port and a cloned database per worktree, and dropping that
+# database on the way out — and herdr's native worktrees run none of it. So the
+# plugin takes the keys, prefix+shift+g included (herdr's own "new worktree";
+# a user binding silently replaces a default one). herdr's sidebar menu still
+# lists its native worktree items, and nothing here can remove them: don't use
+# them. See docs/worktree-setup.md.
+#
+# prefix+shift+d and +r, which the plugin's README suggests, are herdr's close
+# workspace and reload config, so remove and remotes sit on free letters.
+[[keys.command]]
+key = "prefix+shift+g"
+type = "plugin_action"
+command = "worktrunk.open"
+description = "worktree: switch to or create (from the default branch)"
+
+[[keys.command]]
+key = "prefix+shift+c"
+type = "plugin_action"
+command = "worktrunk.open-current"
+description = "worktree: create from the current branch"
+
+[[keys.command]]
+key = "prefix+shift+o"
+type = "plugin_action"
+command = "worktrunk.open-with-remotes"
+description = "worktree: pick from local and remote branches"
+
+[[keys.command]]
+key = "prefix+shift+m"
+type = "plugin_action"
+command = "worktrunk.merge"
+description = "worktree: merge into the default branch and remove"
+
+[[keys.command]]
+key = "prefix+shift+e"
+type = "plugin_action"
+command = "worktrunk.remove"
+description = "worktree: remove (drops its database; keeps an unmerged branch)"

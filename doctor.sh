@@ -393,6 +393,35 @@ else
     note "  Install with: cargo install --version $BLUETUI_VERSION --locked bluetui"
 fi
 
+# Worktree agents: worktrunk runs the repos' .config/wt.toml hooks, which call
+# dotenvx to point a new worktree's .env at its own port and database.
+for tool in wt:WORKTRUNK dotenvx:DOTENVX; do
+    bin=${tool%%:*}; pinned_var="${tool#*:}_VERSION"; pinned=${!pinned_var}
+    if ! command -v "$bin" &>/dev/null; then
+        issue "$bin not installed — worktree setup hooks will fail"
+        note "  Install with: bash install.sh (pinned $pinned, see lib/manifest.sh)"
+    elif ! "$bin" --version 2>/dev/null | grep -qF "$pinned"; then
+        note "$bin is $("$bin" --version 2>/dev/null), manifest pins $pinned"
+    else
+        ok "$bin $pinned installed"
+    fi
+done
+
+# herdr-worktrunk: without it the worktree keys in herdr do nothing, and the
+# only worktree option left in herdr is its native one, which skips the hooks.
+if command -v herdr &>/dev/null; then
+    ref=$(herdr plugin list --json 2>/dev/null \
+        | jq -r '.result.plugins[]? | select(.plugin_id == "worktrunk") | .source.resolved_commit' 2>/dev/null)
+    if [ -z "$ref" ]; then
+        issue "herdr-worktrunk plugin not installed — herdr's worktree keys do nothing"
+        note "  Install with: bash configure.sh"
+    elif [ "$ref" != "$HERDR_WORKTRUNK_REF" ]; then
+        note "herdr-worktrunk is at ${ref:0:12}, manifest pins ${HERDR_WORKTRUNK_REF:0:12}"
+    else
+        ok "herdr-worktrunk ${ref:0:12} installed"
+    fi
+fi
+
 # It runs as a systemd user unit, so ask systemd rather than looking for the
 # process: it distinguishes "never installed" from "enabled but crashed", and
 # knows which one to tell you to look at.

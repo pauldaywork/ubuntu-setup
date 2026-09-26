@@ -92,6 +92,14 @@ DOTFILES_MAP=(
     # ghostty
     "config/ghostty/config.ghostty|.config/ghostty/config.ghostty|copy"
 
+    # herdr and worktrunk — a project's terminal sessions, and the worktrees its
+    # agents work in. See docs/worktree-setup.md.
+    "config/herdr/config.toml|.config/herdr/config.toml|copy"
+    "config/herdr/plugins/config/worktrunk/config.toml|.config/herdr/plugins/config/worktrunk/config.toml|copy"
+    "config/worktrunk/config.toml|.config/worktrunk/config.toml|copy"
+    # The skill that writes a repo's worktree hooks, by interview.
+    "config/claude/skills/worktree-setup/SKILL.md|.claude/skills/worktree-setup/SKILL.md|copy"
+
     # waybar + mako — what replaced DankMaterialShell. Plain copies, which is
     # the whole difference: nothing writes to these but us, so there is no
     # settings file growing keys underneath the repo and no merge to do.

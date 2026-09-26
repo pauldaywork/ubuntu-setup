@@ -1,0 +1,11 @@
+# herdr-worktrunk (https://github.com/devashish2203/herdr-worktrunk).
+# Each worktree opens as a herdr workspace grouped under the project's.
+open_mode = "workspace"
+picker_placement = "split"
+
+# Keep the pane open after worktrunk finishes, so the hook output — the .env
+# copy, the database clone, the first-run approval prompt — can be read before
+# it goes. Any key closes it.
+hold_on_create = true
+hold_on_merge = true
+hold_on_remove = true

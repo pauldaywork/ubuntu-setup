@@ -15,7 +15,7 @@ for arg in "$@"; do
 done
 
 # ─── shared helpers ───────────────────────────────────────────────────────────
-for _lib in common paths; do
+for _lib in common paths manifest; do
     if [ ! -f "$DOTFILES/lib/$_lib.sh" ]; then
         echo "Missing $DOTFILES/lib/$_lib.sh — run this from a full clone of the repo" >&2
         exit 1
@@ -24,6 +24,8 @@ done
 # shellcheck source=/dev/null
 source "$DOTFILES/lib/common.sh"
 source "$DOTFILES/lib/paths.sh"
+# For HERDR_WORKTRUNK_REF, the one pin configure.sh installs from.
+source "$DOTFILES/lib/manifest.sh"
 
 # ─── Copy dotfiles ────────────────────────────────────────────────────────────
 section "Copying dotfiles"
@@ -219,6 +221,23 @@ if pgrep -u "$USER" -x ghostty >/dev/null; then
         pkill -USR2 -u "$USER" -x ghostty && info "Reloaded ghostty's config"
     else
         warn "ghostty ${GHOSTTY_VERSION:-(unknown version)} can't reload by signal — press ctrl+shift+, in a ghostty window"
+    fi
+fi
+
+# herdr-worktrunk
+# The plugin is installed here rather than as a managed file: herdr keeps its
+# own checkout and records which commit it came from, and installing is the one
+# way to get both. Pinned in lib/manifest.sh; reinstalled only when the pin
+# moves. herdr is installed by hand, so without it this is skipped.
+if command -v herdr >/dev/null; then
+    installed_ref=$(herdr plugin list --json 2>/dev/null \
+        | jq -r '.result.plugins[]? | select(.plugin_id == "worktrunk") | .source.resolved_commit' 2>/dev/null)
+    if [ "$installed_ref" = "$HERDR_WORKTRUNK_REF" ]; then
+        info "herdr-worktrunk already at ${HERDR_WORKTRUNK_REF:0:12}"
+    elif herdr plugin install devashish2203/herdr-worktrunk --ref "$HERDR_WORKTRUNK_REF" -y >/dev/null 2>&1; then
+        info "Installed herdr-worktrunk ${HERDR_WORKTRUNK_REF:0:12}"
+    else
+        warn "Could not install herdr-worktrunk — worktree keys in herdr will do nothing"
     fi
 fi
 

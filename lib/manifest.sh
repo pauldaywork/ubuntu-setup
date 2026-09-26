@@ -26,6 +26,31 @@ BLUETUI_VERSION="0.8.0"
 # ~/.local/share/fonts. https://github.com/be5invis/Iosevka/releases
 IOSEVKA_VERSION="34.8.1"
 
+# worktrunk (`wt`) — git worktrees for running coding agents in parallel, one
+# per branch, each set up by the repo's own .config/wt.toml hooks. The prebuilt
+# musl binary rather than `cargo install`: 0.79 needs a newer rustc than the
+# toolchain here, and upgrading every project's compiler to install one tool is
+# the wrong trade. https://github.com/max-sixty/worktrunk/releases
+WORKTRUNK_VERSION="0.79.0"
+WORKTRUNK_SHA256="b8c190b1d652370ef9f6b8f4694a2d6831b5b22f4b789f047612aad32764c6cf"
+
+# dotenvx — worktree hooks use `dotenvx set KEY value -f .env --plain` to
+# *replace* a key in a copied .env (a new port, a cloned database), which plain
+# appending gets wrong: the copied value stays first and wins. Standalone
+# binary, Node bundled. Its curl | sh installer checks no checksum, so this pins
+# one. https://github.com/dotenvx/dotenvx/releases
+DOTENVX_VERSION="2.30.0"
+DOTENVX_SHA256="1ac0fb8fef37c10de4297686a273719290fbc29d8c3abf9595ab7a023119c1c3"
+
+# herdr-worktrunk — the herdr plugin that drives worktrunk from herdr's keys and
+# shows each worktree as a workspace grouped under its project. A herdr plugin
+# is unsandboxed code, so it is pinned to a full commit whose source was read
+# (2026-09-26): it runs `wt` in a visible pane, never passes --yes past
+# worktrunk's hook approval, and makes no network calls of its own. Bump the
+# pin only after reading the diff.
+# https://github.com/devashish2203/herdr-worktrunk
+HERDR_WORKTRUNK_REF="8ceca541de8fb0d6006727e172534e1e2af17224"
+
 # ─── .deb installs ────────────────────────────────────────────────────────────
 # Downloaded directly rather than listed in APT_PACKAGES: each package's own
 # postinst adds its vendor's apt repo (with a keyring it writes itself), so the
@@ -84,6 +109,8 @@ APT_PACKAGES=(
     # Mod+Alt+D reads which outputs are lit the same way. Also a
     # general-purpose tool worth having on a new machine.
     jq
+    # fzf — the herdr-worktrunk plugin's branch picker.
+    fzf
     libudev-dev
     util-linux-extra
 

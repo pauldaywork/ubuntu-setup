@@ -55,6 +55,31 @@ snap_install_entry() {
     fi
 }
 
+# ─── release binaries ─────────────────────────────────────────────────────────
+# Download a release archive, refuse it unless it matches the sha256 pinned in
+# lib/manifest.sh, and install one binary from it into ~/.local/bin. For tools
+# with a prebuilt Linux build and no apt package: a pinned checksum means a
+# changed or tampered release fails loudly here rather than running.
+#
+#   install_release_binary <url> <sha256> <path-in-archive> [<installed-name>]
+install_release_binary() {
+    local url="$1" sha256="$2" member="$3" name="${4:-$(basename "$3")}"
+    local tmp
+    tmp=$(mktemp -d)
+    if ! curl -fsSL -o "$tmp/archive" "$url"; then
+        warn "Could not download $url"
+        rm -rf "$tmp"; return 1
+    fi
+    if ! echo "$sha256  $tmp/archive" | sha256sum -c --quiet - >/dev/null 2>&1; then
+        warn "Checksum mismatch for $url — not installed"
+        rm -rf "$tmp"; return 1
+    fi
+    tar -xf "$tmp/archive" -C "$tmp" "$member"
+    mkdir -p "$HOME/.local/bin"
+    install -m 755 "$tmp/$member" "$HOME/.local/bin/$name"
+    rm -rf "$tmp"
+}
+
 # ─── moving config files about ────────────────────────────────────────────────
 # copy/backup_existing used to live in configure.sh and
 # pull/confirm_overwrite in update.sh — inverse operations on the same files,

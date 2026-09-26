@@ -127,6 +127,11 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # rustup/cargo (installed via rustup.rs, not the rustup snap)
 . "$HOME/.cargo/env"
 
+# worktrunk: a `wt` function over the binary, so `wt switch` can cd you into the
+# worktree. Here rather than via `wt config shell install`, which would edit this
+# file on the machine behind the repo's back.
+command -v wt >/dev/null && eval "$(command wt config shell init bash)"
+
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:$HOME/.lmstudio/bin"
 # End of LM Studio CLI section

@@ -276,6 +276,31 @@ else
     info "bluetui already installed ($(bluetui --version 2>/dev/null))"
 fi
 
+# ─── worktrunk and dotenvx (worktrees for parallel agents) ────────────────────
+# Prebuilt, checksum-pinned binaries into ~/.local/bin — see lib/manifest.sh for
+# why not cargo or curl | sh. Reinstalled when the pinned version changes.
+section "Installing worktrunk and dotenvx"
+
+if wt --version 2>/dev/null | grep -qF "$WORKTRUNK_VERSION"; then
+    info "worktrunk already installed ($(wt --version 2>/dev/null))"
+else
+    info "Installing worktrunk $WORKTRUNK_VERSION"
+    install_release_binary \
+        "https://github.com/max-sixty/worktrunk/releases/download/v${WORKTRUNK_VERSION}/worktrunk-x86_64-unknown-linux-musl.tar.xz" \
+        "$WORKTRUNK_SHA256" "worktrunk-x86_64-unknown-linux-musl/wt" \
+        || warn "worktrunk install failed — see above"
+fi
+
+if dotenvx --version 2>/dev/null | grep -qF "$DOTENVX_VERSION"; then
+    info "dotenvx already installed ($(dotenvx --version 2>/dev/null))"
+else
+    info "Installing dotenvx $DOTENVX_VERSION"
+    install_release_binary \
+        "https://github.com/dotenvx/dotenvx/releases/download/v${DOTENVX_VERSION}/dotenvx-${DOTENVX_VERSION}-linux-x86_64.tar.gz" \
+        "$DOTENVX_SHA256" "./dotenvx" \
+        || warn "dotenvx install failed — see above"
+fi
+
 # ─── Iosevka Term (Ghostty's font) ────────────────────────────────────────────
 # Per-user, so no sudo: fontconfig reads ~/.local/share/fonts. The Term variant
 # keeps every glyph one cell wide; config.ghostty picks its Extended width.
