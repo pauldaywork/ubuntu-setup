@@ -164,6 +164,7 @@ ubuntu-setup/
 │   ├── pick.sh                             # → ~/.config/niri/wallpaper-pick.sh    The picker (Mod+Alt+B)
 │   ├── picker.ini                          # → ~/.config/fuzzel/wallpaper-picker.ini  (fuzzel reads it)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
+│   ├── accents                             # → ~/.config/niri/wallpaper-accents  Bottom bar's colour per image
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
 │   ├── CREDITS.md                          # Who made each image; not installed
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
