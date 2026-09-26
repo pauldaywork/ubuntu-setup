@@ -366,7 +366,7 @@ elif cmp -s "$DOTFILES/system/monitors.xml" "$GDM_MONITORS"; then
 fi
 
 # ─── 8b. niri-tasks ───────────────────────────────────────────────────────────
-# Workspace-scoped taskwarrior: Mod+Alt+T/L/P, the task box, and the active-task
+# Workspace-scoped taskwarrior: Mod+Alt+T/P and Mod+Alt+Ctrl+T, the task box, and the active-task
 # overlay. Its own repo, its own release cycle — this just makes sure a new
 # machine ends up with it.
 #
@@ -387,7 +387,7 @@ if [ -d "$NIRI_TASKS_DIR/.git" ]; then
 else
     info "Cloning niri-tasks"
     git clone "$NIRI_TASKS_REPO" "$NIRI_TASKS_DIR" \
-        || warn "Could not clone niri-tasks — Mod+Alt+T/L/P will be absent"
+        || warn "Could not clone niri-tasks — Mod+Alt+T/P and Mod+Alt+Ctrl+T will be absent"
 fi
 
 if [ -x "$NIRI_TASKS_DIR/install.sh" ]; then

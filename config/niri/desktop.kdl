@@ -22,7 +22,7 @@ output "HDMI-A-1" {
 // adapter is limited to 300 MHz; an active HDMI 2.0 adapter would allow
 // 3840x2160@60. The login screen needs the same mode, and gets it from
 // system/monitors.xml — see there.
-// Mod+Ctrl+0 toggles this at runtime to 1080p@60 when smoothness matters more.
+// Mod+Alt+D toggles this at runtime to 1080p@60 when smoothness matters more.
 output "HardCom Elektronik & Datateknik HDMI MATRIX 0x00000001" {
     mode "3840x2160@29.970"
     scale 1.5
@@ -31,7 +31,8 @@ output "HardCom Elektronik & Datateknik HDMI MATRIX 0x00000001" {
 binds {
     // Toggle DP-4 between 4K@30 (sharp) and 1080p@60 (smooth). Runtime only; a
     // restart or config reload goes back to the HDMI MATRIX output block above.
-    Mod+Ctrl+0 hotkey-overlay-title="Toggle 4K@30 / 1080p@60" {
+    // Mod+Alt+D is the display toggle on every machine, as laptop.kdl's is.
+    Mod+Alt+D hotkey-overlay-title="Toggle 4K@30 / 1080p@60" {
         spawn "sh" "-c" "if niri msg outputs | grep -q 'Current mode: 3840x2160'; then niri msg output DP-4 mode 1920x1080@60.000 && niri msg output DP-4 scale 1; else niri msg output DP-4 mode 3840x2160@29.970 && niri msg output DP-4 scale 1.5; fi";
     }
 }

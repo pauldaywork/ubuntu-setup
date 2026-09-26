@@ -8,7 +8,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 |---|---|
 | Shell | `.bashrc`, `.profile` |
 | Terminal multiplexer | tmux (`.tmux.conf` + TPM-managed plugins) |
-| Window manager | Niri config + swappable window-rules/layout profiles (`Mod+Alt+R`) |
+| Window manager | Niri config + swappable window-rules/layout profiles (`Mod+Alt+F`) |
 | Bar | waybar (`config.jsonc` + `style.css`), started by the package's `waybar.service` |
 | Notifications | mako |
 | Launcher | fuzzel (`Mod+Space`) |
@@ -49,7 +49,9 @@ cd ~/Projects/ubuntu-setup
 bash install.sh
 ```
 
-All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config — the built-in display's `eDP-1` output block, the brightness keys, and `Super+Alt+Comma` / `Super+Alt+Period` to turn the built-in display off/on when an external monitor is connected — plus battery and brightness on the top bar. Desktops get the desk's monitors and their 4K modes instead (`desktop.kdl`, with `Mod+Ctrl+0` to drop the HDMI matrix to 1080p@60), and a login screen layout for the same monitor — so a laptop never has a desk's resolutions forced on whatever screen it is plugged into. A machine that changes type has the other type's files removed. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
+All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config — the built-in display's `eDP-1` output block, the brightness keys, and `Mod+Alt+D` to turn the built-in display off/on when an external monitor is connected — plus battery and brightness on the top bar. Desktops get the desk's monitors and their 4K modes instead (`desktop.kdl`, with `Mod+Alt+D` to drop the HDMI matrix to 1080p@60), and a login screen layout for the same monitor — so a laptop never has a desk's resolutions forced on whatever screen it is plugged into. A machine that changes type has the other type's files removed. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
+
+The binds follow one pattern: `Mod+key` moves around and shapes windows, `Mod+Alt+letter` is every command (tasks, workspaces, wallpaper, bar, display), adding `Ctrl` gives the same key's companion (carry rather than focus, list tasks rather than add one, rename the workspace rather than make one), and `Shift` points at another monitor. Most `Mod+Ctrl` binds also work as `Mod+Alt`. `Mod+Alt+Ctrl+Up`/`Down` and `Mod+Alt+Ctrl+1`–`9` move the workspace itself, and `Mod+Shift+/` lists the lot.
 
 **You don't have to ask for it.** The installer reads the DMI chassis type (and falls back to looking for a battery), and records the answer in `~/.config/niri/.machine-type` so every later run agrees with the first. `--laptop` and `--desktop` override the guess, and the override is recorded too:
 
@@ -144,9 +146,9 @@ ubuntu-setup/
 │   ├── niri/
 │   │   ├── config.kdl                      # Includes niri-tasks.kdl; configure.sh seeds a stub for it
 │   │   ├── laptop.kdl                      # eDP-1 + brightness/display keys; laptops only (auto-detected)
-│   │   ├── desktop.kdl                     # The desk's monitors, their 4K modes, Mod+Ctrl+0; desktops only
+│   │   ├── desktop.kdl                     # The desk's monitors, their 4K modes, Mod+Alt+D; desktops only
 │   │   └── window-rules/
-│   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+R)
+│   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+F)
 │   │       ├── normal.kdl                  # Fully opaque windows
 │   │       └── focus.kdl                   # Unfocused windows fade out
 │   ├── waybar/                             # config.jsonc + style.css + power_menu.xml (the ⏻ drop-down)
@@ -229,7 +231,7 @@ and the ADRs before exploring.
 
 Niri is set up with two swappable profiles — `normal` (fully opaque windows) and `focus` (unfocused windows fade out, with its own gaps/border/layout tuning) — defined in `config/niri/window-rules/normal.kdl` and `focus.kdl`. Each file is a self-contained `layout { ... }` + `window-rule { ... }` block; `config.kdl` includes whichever one is active via the `~/.config/niri/window-rules-active.kdl` symlink.
 
-Press **`Mod+Alt+R`** to cycle between profiles. This runs `config/niri/window-rules/toggle.sh`, which:
+Press **`Mod+Alt+F`** to cycle between profiles. This runs `config/niri/window-rules/toggle.sh`, which:
 
 1. Repoints the `window-rules-active.kdl` symlink at the next profile
 2. Records the choice in `~/.config/niri/.window-rules-profile`
@@ -243,7 +245,7 @@ The symlink and state file are machine-local, not tracked in git — `configure.
 ## Workspace tasks and project workspaces
 
 `Mod+Alt+P` to open a project on its own named workspace, `Mod+Alt+T` to add a
-task to it, `Mod+Alt+L` to list and act on that workspace's tasks — all of that
+task to it, `Mod+Alt+Ctrl+T` to list and act on that workspace's tasks — all of that
 lives in **[niri-tasks](https://github.com/pauldaywork/niri-tasks)** now, not here.
 
 It used to be fifteen shell scripts under `config/niri/` plus a DankMaterialShell
@@ -292,7 +294,7 @@ application considered its own.
 `makoctl restore`, which brings back the most recently dismissed notification and
 nothing more. The taskwarrior bar widget is gone and nothing packaged replaces
 it — task state is untouched (`task` on the command line, and niri-tasks'
-`Mod+Alt+T`/`L`/`P` and its active-task overlay, which were always separate from
+`Mod+Alt+T`/`P`, `Mod+Alt+Ctrl+T` and its active-task overlay, which were always separate from
 the widget), but the at-a-glance count in the bar is not coming back. The
 click-through audio, network and bluetooth popovers are gone; waybar's modules
 shell out to `wpctl`, `nmtui` and `bluetui` instead. Wallpapers no longer retint the

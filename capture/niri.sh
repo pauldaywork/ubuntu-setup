@@ -5,7 +5,7 @@
 #
 # You would normally edit config/niri/config.kdl in the repo and deploy it. This
 # exists for the times the machine is ahead anyway — it is natural to try a
-# layout change against the running compositor, with Mod+Alt+R and a reload,
+# layout change against the running compositor, with Mod+Alt+F and a reload,
 # before committing to it.
 #
 # That used to be the lesser reason. The real one was that DMS's KeybindsService

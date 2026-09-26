@@ -15,8 +15,11 @@ output "eDP-1" {
 }
 
 binds {
-    Super+Alt+Comma  hotkey-overlay-title="Turn off main display" { spawn "sh" "-c" "niri msg output eDP-1 off"; }
-    Super+Alt+Period hotkey-overlay-title="Turn on main display"  { spawn "sh" "-c" "niri msg output eDP-1 on"; }
+    // Mod+Alt+D is the display toggle on every machine; here it switches the
+    // built-in screen off and on. It won't switch off the only screen that's lit
+    // — that leaves nothing to see the next keypress on. An output that is off
+    // has a null "logical" in `niri msg -j outputs`.
+    Mod+Alt+D hotkey-overlay-title="Toggle Built-in Display" { spawn-sh "o=$(niri msg -j outputs); if echo \"$o\" | jq -e '.\"eDP-1\".logical' >/dev/null; then echo \"$o\" | jq -e '[.[] | select(.logical)] | length > 1' >/dev/null && niri msg output eDP-1 off; else niri msg output eDP-1 on; fi"; }
 
     // brightnessctl, matching the backlight module's scroll in laptop.jsonc.
     XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }

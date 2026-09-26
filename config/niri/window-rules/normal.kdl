@@ -1,5 +1,5 @@
 // "normal" profile: same border/focus-ring styling as "focus",
-// but no opacity dimming — all windows stay fully visible. Toggle with Mod+Alt+R.
+// but no opacity dimming — all windows stay fully visible. Toggle with Mod+Alt+F.
 layout {
     background-color "transparent"
     preset-column-widths {

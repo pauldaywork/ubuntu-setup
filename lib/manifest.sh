@@ -79,8 +79,9 @@ APT_PACKAGES=(
     # unzip — install.sh unpacks the Iosevka release zip with it.
     unzip
     build-essential
-    # jq — the Mod+Shift+Q close-workspace bind in config/niri/config.kdl picks
-    # the focused workspace's windows out of `niri msg -j`. Also a
+    # jq — the Mod+Alt+Q close-workspace bind in config/niri/config.kdl picks
+    # the focused workspace's windows out of `niri msg -j`, and laptop.kdl's
+    # Mod+Alt+D reads which outputs are lit the same way. Also a
     # general-purpose tool worth having on a new machine.
     jq
     tmux

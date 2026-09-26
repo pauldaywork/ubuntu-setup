@@ -99,7 +99,7 @@ input {
 
 // Notifications. Nothing else implements org.freedesktop.Notifications once DMS
 // is gone, and notify-send is not decoration here — window-rules/toggle.sh calls
-// it on every Mod+Alt+R profile switch.
+// it on every Mod+Alt+F profile switch.
 //
 // Until the DMS package is actually removed there are two daemons wanting the
 // same DBus name. That resolves itself rather than breaking: whichever starts
@@ -205,7 +205,7 @@ window-rule {
 }
 
 // Swappable window-rules profile ("normal" or "focus") — toggled at runtime
-// with Mod+Alt+R via window-rules/toggle.sh, which symlinks this target.
+// with Mod+Alt+F via window-rules/toggle.sh, which symlinks this target.
 include "window-rules-active.kdl"
 
 // fuzzel names its layer surface "launcher", so this is what gives the project
@@ -284,6 +284,18 @@ binds {
     //
     // Most actions that you can bind here can also be invoked programmatically with
     // `niri msg action do-something`.
+    //
+    // How the modifiers divide up:
+    //   Mod+key          moving around and shaping windows, plus the app launchers
+    //   Mod+Alt+letter   every command — tasks, workspaces, wallpaper, bar, display
+    //   +Ctrl            the companion of the same key: carry the column rather
+    //                    than just focus it, list tasks rather than add one, rename
+    //                    the workspace rather than make one
+    //   +Shift           toward another monitor. Mod+? for help and Mod+Shift+F for
+    //                    fullscreen are the two left as niri ships them.
+    // Most Mod+Ctrl binds also answer to Mod+Alt, so a hand already on Mod+Alt
+    // can move things without changing modifiers. F and M have no Mod+Alt twin:
+    // Mod+Alt+F is the focus profile and Mod+Alt+M the top bar.
 
     // Mod-Shift-/, which is usually the same as Mod-?,
     // shows a list of important hotkeys.
@@ -297,7 +309,7 @@ binds {
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
     // For example, this is a standard bind to toggle the screen reader (orca).
-    Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
+    Mod+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
 
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
@@ -327,7 +339,7 @@ binds {
     // work still gets to ask — the workspace only goes once it is empty.
     // Dropping the name is what lets it go at all: niri keeps a named workspace
     // around empty, and niri-tasks names most of them.
-    Mod+Shift+Q repeat=false hotkey-overlay-title="Close Workspace and Its Windows" { spawn-sh "ws=$(niri msg -j workspaces | jq '.[] | select(.is_focused) | .id'); niri msg -j windows | jq --argjson ws $ws '.[] | select(.workspace_id == $ws) | .id' | xargs -r -n1 niri msg action close-window --id; niri msg action unset-workspace-name"; }
+    Mod+Alt+Q repeat=false hotkey-overlay-title="Close Workspace and Its Windows" { spawn-sh "ws=$(niri msg -j workspaces | jq '.[] | select(.is_focused) | .id'); niri msg -j windows | jq --argjson ws $ws '.[] | select(.workspace_id == $ws) | .id' | xargs -r -n1 niri msg action close-window --id; niri msg action unset-workspace-name"; }
 
     Mod+Left  { focus-column-left; }
     Mod+Down  { focus-workspace-down; }
@@ -347,6 +359,15 @@ binds {
     Mod+Ctrl+K     { move-window-up; }
     Mod+Ctrl+L     { move-column-right; }
 
+    Mod+Alt+Left  { move-column-left; }
+    Mod+Alt+Down  { move-column-to-workspace-down; }
+    Mod+Alt+Up    { move-column-to-workspace-up; }
+    Mod+Alt+Right { move-column-right; }
+    Mod+Alt+H     { move-column-left; }
+    Mod+Alt+J     { move-window-down; }
+    Mod+Alt+K     { move-window-up; }
+    Mod+Alt+L     { move-column-right; }
+
     // Alternative commands that move across workspaces when reaching
     // the first or last window in a column.
     // Mod+J     { focus-window-or-workspace-down; }
@@ -358,6 +379,8 @@ binds {
     Mod+End  { focus-column-last; }
     Mod+Ctrl+Home { move-column-to-first; }
     Mod+Ctrl+End  { move-column-to-last; }
+    Mod+Alt+Home  { move-column-to-first; }
+    Mod+Alt+End   { move-column-to-last; }
 
     Mod+Shift+Left  { focus-monitor-left; }
     Mod+Shift+Down  { focus-monitor-down; }
@@ -393,13 +416,22 @@ binds {
     Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
     Mod+Ctrl+U         { move-column-to-workspace-down; }
     Mod+Ctrl+I         { move-column-to-workspace-up; }
+    Mod+Alt+Page_Down  { move-column-to-workspace-down; }
+    Mod+Alt+Page_Up    { move-column-to-workspace-up; }
+    Mod+Alt+U          { move-column-to-workspace-down; }
+    Mod+Alt+I          { move-column-to-workspace-up; }
 
     // Alternatively, there are commands to move just a single window:
     // Mod+Ctrl+Page_Down { move-window-to-workspace-down; }
     // ...
 
-    Mod+Alt+Ctrl+Down { move-workspace-down; }
-    Mod+Alt+Ctrl+Up   { move-workspace-up; }
+    // The workspace itself: the Ctrl companions of the Mod+Alt column moves.
+    Mod+Alt+Ctrl+Down  hotkey-overlay-title="Move Workspace Down" { move-workspace-down; }
+    Mod+Alt+Ctrl+Up    hotkey-overlay-title="Move Workspace Up" { move-workspace-up; }
+    Mod+Alt+Ctrl+U     { move-workspace-down; }
+    Mod+Alt+Ctrl+I     { move-workspace-up; }
+    Mod+Alt+Ctrl+Left  hotkey-overlay-title="Move Workspace to Monitor Left" { move-workspace-to-monitor-left; }
+    Mod+Alt+Ctrl+Right hotkey-overlay-title="Move Workspace to Monitor Right" { move-workspace-to-monitor-right; }
 
     // You can bind mouse wheel scroll ticks using the following syntax.
     // These binds will change direction based on the natural-scroll setting.
@@ -411,6 +443,8 @@ binds {
     Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
     Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
     Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
+    Mod+Alt+WheelScrollDown  cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Alt+WheelScrollUp    cooldown-ms=150 { move-column-to-workspace-up; }
 
     Mod+WheelScrollRight      { focus-column-right; }
     Mod+WheelScrollLeft       { focus-column-left; }
@@ -459,6 +493,26 @@ binds {
     Mod+Ctrl+7 { move-column-to-workspace 7; }
     Mod+Ctrl+8 { move-column-to-workspace 8; }
     Mod+Ctrl+9 { move-column-to-workspace 9; }
+    Mod+Alt+1 { move-column-to-workspace 1; }
+    Mod+Alt+2 { move-column-to-workspace 2; }
+    Mod+Alt+3 { move-column-to-workspace 3; }
+    Mod+Alt+4 { move-column-to-workspace 4; }
+    Mod+Alt+5 { move-column-to-workspace 5; }
+    Mod+Alt+6 { move-column-to-workspace 6; }
+    Mod+Alt+7 { move-column-to-workspace 7; }
+    Mod+Alt+8 { move-column-to-workspace 8; }
+    Mod+Alt+9 { move-column-to-workspace 9; }
+
+    // Put the focused workspace at position N.
+    Mod+Alt+Ctrl+1 { move-workspace-to-index 1; }
+    Mod+Alt+Ctrl+2 { move-workspace-to-index 2; }
+    Mod+Alt+Ctrl+3 { move-workspace-to-index 3; }
+    Mod+Alt+Ctrl+4 { move-workspace-to-index 4; }
+    Mod+Alt+Ctrl+5 { move-workspace-to-index 5; }
+    Mod+Alt+Ctrl+6 { move-workspace-to-index 6; }
+    Mod+Alt+Ctrl+7 { move-workspace-to-index 7; }
+    Mod+Alt+Ctrl+8 { move-workspace-to-index 8; }
+    Mod+Alt+Ctrl+9 { move-workspace-to-index 9; }
 
     // Alternatively, there are commands to move just a single window:
     // Mod+Ctrl+1 { move-window-to-workspace 1; }
@@ -478,15 +532,16 @@ binds {
     Mod+Period { expel-window-from-column; }
 
     // Cycle through widths set in preset-column-widths.
-    Mod+R { switch-preset-column-width; }
-    // Cycling through the presets in reverse order is also possible.
-    Mod+Shift+R { switch-preset-column-width-back; }
-
-    Mod+Ctrl+Shift+R { switch-preset-window-height; }
-    Mod+Ctrl+R { reset-window-height; }
+    // Ctrl is the other axis: window heights, as with Minus/Equal below.
+    // Neither the backwards cycle nor reset-window-height has a bind — both
+    // cycles wrap round.
+    Mod+R      { switch-preset-column-width; }
+    Mod+Ctrl+R { switch-preset-window-height; }
+    Mod+Alt+R  { switch-preset-window-height; }
 
     Mod+F { maximize-column; }
     Mod+Shift+F { fullscreen-window; }
+    Mod+Alt+Ctrl+F { fullscreen-window; }
 
     // While maximize-column leaves gaps and borders around the window,
     // maximize-window-to-edges doesn't: the window expands to the edges of the screen.
@@ -502,6 +557,7 @@ binds {
 
     // Center all fully visible columns on screen.
     Mod+Ctrl+C { center-visible-columns; }
+    Mod+Alt+C  { center-visible-columns; }
 
     // Finer width adjustments.
     // This command can also:
@@ -515,12 +571,15 @@ binds {
     Mod+Equal { set-column-width "+10%"; }
 
     // Finer height adjustments when in column with other windows.
-    Mod+Shift+Minus { set-window-height "-10%"; }
-    Mod+Shift+Equal { set-window-height "+10%"; }
+    Mod+Ctrl+Minus { set-window-height "-10%"; }
+    Mod+Ctrl+Equal { set-window-height "+10%"; }
+    Mod+Alt+Minus  { set-window-height "-10%"; }
+    Mod+Alt+Equal  { set-window-height "+10%"; }
 
     // Move the focused window between the floating and the tiling layout.
-    Mod+V       { toggle-window-floating; }
-    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+    Mod+V      { toggle-window-floating; }
+    Mod+Ctrl+V { switch-focus-between-floating-and-tiling; }
+    Mod+Alt+V  { switch-focus-between-floating-and-tiling; }
 
     // Toggle tabbed column display mode.
     // Windows in this column will appear as vertical tabs,
@@ -550,18 +609,21 @@ binds {
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
     // The quit action will show a confirmation dialog to avoid accidental exits.
-    Mod+Shift+E { quit; }
+    // Mod+Alt+Ctrl+Q is the companion of Mod+Alt+Q, close workspace.
+    Mod+Alt+Ctrl+Q { quit; }
     Ctrl+Alt+Delete { quit; }
 
     // Powers off the monitors. To turn them back on, do any input like
     // moving the mouse or pressing any other key.
-    Mod+Shift+P { power-off-monitors; }
+    // The companion of Mod+Alt+D, the display toggle in laptop.kdl / desktop.kdl.
+    Mod+Alt+Ctrl+D hotkey-overlay-title="Power Off Monitors" { power-off-monitors; }
 
     // The workspace-naming, project-picker and task binds live in
     // niri-tasks.kdl — see the include at the bottom of this file.
 
-    // Toggle between window-rules profiles (normal / focus-dimming)
-    Mod+Alt+R hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/window-rules/toggle.sh"; }
+    // Toggle between window-rules profiles (normal / focus-dimming). F for the
+    // "focus" profile.
+    Mod+Alt+F hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/window-rules/toggle.sh"; }
 
     // Mod+Alt+B was "next wallpaper", which went through DMS's picker and went
     // with it. This is not quite that bind back: it lists rather than cycles,
@@ -590,9 +652,8 @@ binds {
     // config/waybar/config.jsonc: the dock sets "on-sigusr1": "noop" so that this
     // hides the top bar and leaves the workspace row where it is.
     Mod+Alt+M hotkey-overlay-title="Top Bar: Toggle" { spawn-sh "killall -SIGUSR1 waybar"; }
-    Mod+T hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
-    Super+B { spawn "firefox"; }
-    Super+Return hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
+    Mod+B hotkey-overlay-title="Open Browser" { spawn "firefox"; }
+    Mod+Return hotkey-overlay-title="Open Terminal" { spawn "ghostty"; }
 }
 
 

@@ -1,5 +1,5 @@
 // "focus" profile: fades unfocused windows to near-invisible, focused
-// window drawn back in at partial opacity. Toggle with Mod+Alt+R.
+// window drawn back in at partial opacity. Toggle with Mod+Alt+F.
 layout {
     background-color "transparent"
     preset-column-widths {
