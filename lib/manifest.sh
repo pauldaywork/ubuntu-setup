@@ -98,6 +98,13 @@ APT_PACKAGES=(
     # of an animated GIF, and most of these wallpapers are animated GIFs.
     ffmpeg
 
+    # Bluetooth. Both come with ubuntu-desktop-minimal today, and named here
+    # for the same reason as fuzzel: waybar's bluetooth module and bluetui are
+    # clients of bluez, and doctor.sh reads rfkill to spot a saved soft block —
+    # which nothing on the bar can lift since DMS went.
+    bluez
+    rfkill
+
     # dev tools
     git
     curl

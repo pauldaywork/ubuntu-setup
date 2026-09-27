@@ -396,10 +396,16 @@ fi
 # A soft block outlives reboots — systemd-rfkill saves it and puts it back at
 # boot — and nothing on the bar can lift it: DMS's toggle went with DMS, and
 # bluetui only sees an adapter that won't power on. The bar just says "bt off".
-if rfkill --noheadings --output SOFT list bluetooth 2>/dev/null | grep -qx blocked; then
+bt_rfkill=$(rfkill --noheadings --output SOFT,HARD list bluetooth 2>/dev/null || true)
+if ! command -v rfkill &>/dev/null; then
+    issue "rfkill not installed — can't tell whether bluetooth is blocked"
+    note "  Install with: sudo apt install rfkill"
+elif [ -z "$bt_rfkill" ]; then
+    note "No bluetooth adapter found — the waybar bluetooth module will stay empty"
+elif awk '$1 == "blocked"' <<<"$bt_rfkill" | grep -q .; then
     issue "Bluetooth is soft-blocked by rfkill — the adapter can't power on"
     note "  Unblock with: rfkill unblock bluetooth"
-elif rfkill --noheadings --output HARD list bluetooth 2>/dev/null | grep -qx blocked; then
+elif awk '$2 == "blocked"' <<<"$bt_rfkill" | grep -q .; then
     issue "Bluetooth is hard-blocked — check the laptop's airplane-mode key or BIOS"
 else
     ok "Bluetooth not blocked by rfkill"
