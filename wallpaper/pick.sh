@@ -87,6 +87,23 @@ shopt -u nullglob
 
 [ "${#WALLS[@]}" -gt 0 ] || die "No wallpapers in $WALLPAPERS"
 
+# --random is Mod+Alt+Ctrl+B: skip the picker and apply any wallpaper but the
+# current one. Excluding the current one is what makes every press a visible
+# change; with only one wallpaper there is nothing else to pick, so it is
+# repainted. Handled before the thumbnails, which it has no use for.
+if [ "${1:-}" = --random ]; then
+    current="$(head -n1 "$ACTIVE" 2>/dev/null || true)"
+    CANDIDATES=()
+    for wall in "${WALLS[@]}"; do
+        [ -f "$wall" ] && [ "$wall" != "$current" ] && CANDIDATES+=("$wall")
+    done
+    [ "${#CANDIDATES[@]}" -gt 0 ] || CANDIDATES=("$current")
+    [ -f "${CANDIDATES[0]}" ] || die "No wallpapers in $WALLPAPERS"
+
+    printf '%s\n' "${CANDIDATES[RANDOM % ${#CANDIDATES[@]}]}" > "$ACTIVE"
+    exec "$APPLY"
+fi
+
 # The dmenu stream. Rofi's extended protocol, which fuzzel implements: the entry
 # text, then a NUL, then "icon", then 0x1f, then the icon. fuzzel takes an
 # absolute path there as well as an icon-theme name, which is the whole reason
