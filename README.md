@@ -165,7 +165,7 @@ ubuntu-setup/
 │
 ├── wallpaper/                              # A feature, not a mirror: these land in four directories
 │   ├── apply.sh                            # → ~/.config/niri/wallpaper-apply.sh   Paints the selection
-│   ├── pick.sh                             # → ~/.config/niri/wallpaper-pick.sh    The picker (Mod+Alt+B), or a random one (Mod+Alt+Ctrl+B)
+│   ├── pick.sh                             # → ~/.config/niri/wallpaper-pick.sh    The picker (Mod+Alt+B), or the next one (Mod+Alt+Ctrl+B)
 │   ├── picker.ini                          # → ~/.config/fuzzel/wallpaper-picker.ini  (fuzzel reads it)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
 │   ├── accents                             # → ~/.config/niri/wallpaper-accents  Accent colour per image (unused by the bar for now)
@@ -305,7 +305,7 @@ which, fuzzel and swww, were already installed here for other reasons.
 | Bar | waybar (`config/waybar/`) |
 | Notifications | mako (`config/mako/config`) |
 | Spotlight launcher (`Mod+Space`) | fuzzel — already in the manifest for the project picker |
-| Wallpaper picker + cycling | `wallpaper/pick.sh` (`Mod+Alt+B`), a fuzzel picker with thumbnails, and `Mod+Alt+Ctrl+B` for a random one, over `~/.config/niri/wallpaper-active` |
+| Wallpaper picker + cycling | `wallpaper/pick.sh` (`Mod+Alt+B`), a fuzzel picker with thumbnails, and `Mod+Alt+Ctrl+B` for the next one, over `~/.config/niri/wallpaper-active` |
 | `dms/colors.kdl`, `dms/outputs.kdl`, … | Written out in `config/niri/config.kdl` |
 | Taskwarrior bar widget | *nothing* — see below |
 
@@ -357,7 +357,7 @@ hardware is the Settings app.**
 | Keybindings | `binds {}` in the same file | same |
 | Monitors, resolution, scale | `output` blocks in `laptop.kdl` (`eDP-1`) and `desktop.kdl` (the desk's monitors); the login screen's in `system/monitors.xml` | niri applies these at startup and wins over anything set at runtime |
 | Bar, notifications, launcher | `config/waybar/`, `config/mako/config`, `config/fuzzel/` | plain files this repo owns outright |
-| Wallpaper | `Mod+Alt+B` (pick) / `Mod+Alt+Ctrl+B` (random), over `~/.config/niri/wallpaper-active` | see Animated wallpapers below |
+| Wallpaper | `Mod+Alt+B` (pick) / `Mod+Alt+Ctrl+B` (next), over `~/.config/niri/wallpaper-active` | see Animated wallpapers below |
 | GTK theme, dark mode, cursor, fonts | `gsettings set org.gnome.desktop.interface …` | apps read these live through the settings portal |
 | Network, Bluetooth, Sound, Power, Printers, Users, Date & Time | Settings app | these talk to system services, not to GNOME |
 
@@ -466,7 +466,7 @@ as a picker rather than a stepper — `wallpaper/pick.sh` lists
 `~/Documents/Wallpapers` in fuzzel with ffmpeg-generated thumbnails (the first
 frame, for the animated GIFs) and writes the choice to
 `~/.config/niri/wallpaper-active` for `wallpaper-apply.sh` to paint;
-`Mod+Alt+Ctrl+B` skips the list and applies any wallpaper but the current one. Wallpapers
+`Mod+Alt+Ctrl+B` skips the list and applies the next one in filename order, wrapping round. Wallpapers
 also no longer retint the desktop — matugen re-derived the entire palette from
 the current image, and the colours in `config/waybar/style.css` and
 `config/mako/config` are now fixed values, the last ones it produced.

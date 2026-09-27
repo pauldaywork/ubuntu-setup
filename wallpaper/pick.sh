@@ -87,20 +87,29 @@ shopt -u nullglob
 
 [ "${#WALLS[@]}" -gt 0 ] || die "No wallpapers in $WALLPAPERS"
 
-# --random is Mod+Alt+Ctrl+B: skip the picker and apply any wallpaper but the
-# current one. Excluding the current one is what makes every press a visible
-# change; with only one wallpaper there is nothing else to pick, so it is
-# repainted. Handled before the thumbnails, which it has no use for.
-if [ "${1:-}" = --random ]; then
+# --next is Mod+Alt+Ctrl+B: skip the picker and apply the wallpaper after the
+# current one, in the same sorted order as the list, wrapping round at the end.
+# An order rather than a dice roll, so that pressing it N times always lands in
+# the same place and every wallpaper comes round once per lap. A current one
+# that is not in the list (renamed, deleted, never set) starts from the first.
+# Handled before the thumbnails, which it has no use for.
+if [ "${1:-}" = --next ]; then
     current="$(head -n1 "$ACTIVE" 2>/dev/null || true)"
-    CANDIDATES=()
+    CYCLE=()
     for wall in "${WALLS[@]}"; do
-        [ -f "$wall" ] && [ "$wall" != "$current" ] && CANDIDATES+=("$wall")
+        [ -f "$wall" ] && CYCLE+=("$wall")
     done
-    [ "${#CANDIDATES[@]}" -gt 0 ] || CANDIDATES=("$current")
-    [ -f "${CANDIDATES[0]}" ] || die "No wallpapers in $WALLPAPERS"
+    [ "${#CYCLE[@]}" -gt 0 ] || die "No wallpapers in $WALLPAPERS"
 
-    printf '%s\n' "${CANDIDATES[RANDOM % ${#CANDIDATES[@]}]}" > "$ACTIVE"
+    next=0
+    for i in "${!CYCLE[@]}"; do
+        if [ "${CYCLE[$i]}" = "$current" ]; then
+            next=$(( (i + 1) % ${#CYCLE[@]} ))
+            break
+        fi
+    done
+
+    printf '%s\n' "${CYCLE[$next]}" > "$ACTIVE"
     exec "$APPLY"
 fi
 

@@ -642,8 +642,8 @@ binds {
     // two of the filenames are download hashes. wallpaper/pick.sh shows them in
     // fuzzel with thumbnails and hands the choice to wallpaper-apply.sh.
     Mod+Alt+B hotkey-overlay-title="Wallpaper: Pick" { spawn "~/.config/niri/wallpaper-pick.sh"; }
-    // Its companion skips the list: any wallpaper but the current one, at random.
-    Mod+Alt+Ctrl+B hotkey-overlay-title="Wallpaper: Random" { spawn "~/.config/niri/wallpaper-pick.sh" "--random"; }
+    // Its companion skips the list: the next wallpaper along, in filename order.
+    Mod+Alt+Ctrl+B hotkey-overlay-title="Wallpaper: Next" { spawn "~/.config/niri/wallpaper-pick.sh" "--next"; }
 
     // fuzzel is already installed (it's in the manifest for the project picker),
     // so the launcher is a straight swap for DMS's spotlight.
