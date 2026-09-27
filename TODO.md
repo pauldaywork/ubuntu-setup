@@ -5,7 +5,7 @@ Nothing outstanding. Add new items here.
 ## Follow-ups from the niri-tasks extraction
 
 - [x] Push `~/Projects/niri-tasks` to GitHub — published at https://github.com/pauldaywork/niri-tasks, and `NIRI_TASKS_REPO` in `install.sh` points at it.
-- [ ] Verify the active-task overlay on a second monitor. It creates one surface per output and handles hotplug, but only a single-output machine was available to test on.
+- [ ] Verify the niri-tasks task panel on a second monitor: each monitor should list the tasks of the workspace *it* is showing, and plugging or unplugging a monitor should add or drop its panel. Only a single-output machine was available to test on.
 
 ## Done
 

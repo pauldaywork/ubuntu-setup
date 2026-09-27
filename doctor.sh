@@ -168,7 +168,7 @@ fi
 # The DMS taskwarrior widget was checked here. It was a DMS plugin, so it went
 # with DMS — there is no waybar equivalent packaged, and nothing in this repo
 # replaces it. Task state is still there: `task` on the command line, and
-# niri-tasks' Mod+Alt+T/P and Mod+Alt+Ctrl+T and its active-task overlay, which were always
+# niri-tasks' Mod+Alt+T/P and Mod+Alt+Ctrl+T and its task panel, which were always
 # separate from the widget. What is gone is the at-a-glance count in the bar.
 
 # The desktop pieces that replaced DMS. mako is a niri spawn-at-startup line, so
@@ -314,13 +314,13 @@ if command -v niritasks >/dev/null; then
     fi
 
     if systemctl --user is-active --quiet niri-tasks.service; then
-        ok "Active-task overlay running"
+        ok "Task panel running"
     else
-        issue "niri-tasks.service is not running — the active-task overlay will not appear"
+        issue "niri-tasks.service is not running — the task panel will not appear"
         note "  Start it with: systemctl --user start niri-tasks"
     fi
 else
-    note "niritasks not installed — Mod+Alt+T/P and Mod+Alt+Ctrl+T and the active-task overlay are absent"
+    note "niritasks not installed — Mod+Alt+T/P and Mod+Alt+Ctrl+T and the task panel are absent"
     note "  Install with: https://github.com/pauldaywork/niri-tasks"
 
     # The stub still has to exist, or niri will not load at all.

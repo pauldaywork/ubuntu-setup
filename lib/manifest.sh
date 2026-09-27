@@ -154,7 +154,7 @@ APT_BUILD_PACKAGES=(
     liblz4-dev
     libwayland-dev
     wayland-protocols
-    # niri-tasks: the task box is a GTK window, and the active-task readout is a
+    # niri-tasks: the task box is a GTK window, and the task panel is a
     # gtk4-layer-shell surface. Build-time only — the runtime libs come in as
     # dependencies of these.
     libgtk-4-dev

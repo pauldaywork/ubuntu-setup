@@ -321,7 +321,7 @@ application considered its own.
 `makoctl restore`, which brings back the most recently dismissed notification and
 nothing more. The taskwarrior bar widget is gone and nothing packaged replaces
 it — task state is untouched (`task` on the command line, and niri-tasks'
-`Mod+Alt+T`/`P`, `Mod+Alt+Ctrl+T` and its active-task overlay, which were always separate from
+`Mod+Alt+T`/`P`, `Mod+Alt+Ctrl+T` and its task panel, which were always separate from
 the widget), but the at-a-glance count in the bar is not coming back. The
 click-through audio, network and bluetooth popovers are gone; waybar's modules
 shell out to `wpctl`, `nmtui` and `bluetui` instead. Wallpapers no longer retint the
@@ -580,7 +580,7 @@ What it checks:
 | Machine-type config | A machine with a battery whose `config.kdl` lacks the laptop include, an include that disagrees with the recorded machine type, or one pointing at a file that isn't there. Either type's files installed on the other (`laptop.jsonc` would put the battery module back on the bar). On a desktop, `/etc/xdg/monitors.xml` matching the repo |
 | Dotfiles | `PATH`/env references in `.bashrc` and `.profile` that point at paths which no longer exist, skipping ones guarded by a file test |
 | Config drift | Every file in `lib/paths.sh`: installed, matching the repo, and executable where the kind says so. `config.kdl` is compared separately, with the machine-type include stripped from both sides |
-| niri-tasks | That `niritasks` is installed, the `niri-tasks.kdl` include exists (niri refuses to load a config whose include is missing), and the active-task overlay service is running |
+| niri-tasks | That `niritasks` is installed, the `niri-tasks.kdl` include exists (niri refuses to load a config whose include is missing), and the task panel service is running |
 | Leftovers | Files this repo used to install and no longer does — the workspace-task scripts, the fuzzel picker theme, the retired wallpaper-sync pair, and DankMaterialShell's config trees once the package itself is gone. Deleting them from the repo doesn't delete them from a machine that already has them |
 
 The wallpaper row is the one worth running after a reboot: every other check can be green while the screen shows a stale image, because swww restores its own cache when it starts.
