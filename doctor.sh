@@ -393,6 +393,18 @@ else
     note "  Install with: cargo install --version $BLUETUI_VERSION --locked bluetui"
 fi
 
+# A soft block outlives reboots — systemd-rfkill saves it and puts it back at
+# boot — and nothing on the bar can lift it: DMS's toggle went with DMS, and
+# bluetui only sees an adapter that won't power on. The bar just says "bt off".
+if rfkill --noheadings --output SOFT list bluetooth 2>/dev/null | grep -qx blocked; then
+    issue "Bluetooth is soft-blocked by rfkill — the adapter can't power on"
+    note "  Unblock with: rfkill unblock bluetooth"
+elif rfkill --noheadings --output HARD list bluetooth 2>/dev/null | grep -qx blocked; then
+    issue "Bluetooth is hard-blocked — check the laptop's airplane-mode key or BIOS"
+else
+    ok "Bluetooth not blocked by rfkill"
+fi
+
 # Worktree agents: worktrunk runs the repos' .config/wt.toml hooks, which call
 # dotenvx to point a new worktree's .env at its own port and database.
 for tool in wt:WORKTRUNK dotenvx:DOTENVX; do
