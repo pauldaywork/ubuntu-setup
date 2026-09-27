@@ -8,15 +8,18 @@
  *
  * Note what this costs: matugen used to re-derive the whole palette from the
  * current wallpaper, so the desktop retinted itself when the wallpaper changed.
- * Only the workspace buttons do that now, through @wallpaper_accent below; the
- * rest are fixed colours.
+ * Nothing does that now: the workspace buttons did, through @wallpaper_accent
+ * below, until the current workspace became a task card in fixed colours.
  *
  * The salmon accent those values came with (muted #d9bcb8, primary #eda792) has
- * since been dropped, and the workspace buttons take the wallpaper's accent
- * instead — so @primary has no users left, and nor does @secondary. The palette is kept whole anyway: an unused line here is
- * something to reach for later, where a deleted one is a hex value to invent. */
+ * since been dropped, so @primary has no users left, and nor does @secondary.
+ * The palette is kept whole anyway: an unused line here is something to reach
+ * for later, where a deleted one is a hex value to invent. */
 
-/* @wallpaper_accent, the focused workspace's fill. wallpaper-apply.sh rewrites
+/* @wallpaper_accent, the wallpaper's accent colour. Nothing uses it at the
+ * moment, but the import stays, and so does the script that writes the file:
+ * together they are the whole retint, ready for whatever wants the colour next.
+ * wallpaper-apply.sh rewrites
  * this file from the wallpaper each time it changes, and configure.sh seeds it
  * with white so it exists before the first wallpaper is painted. That seed
  * matters: waybar exits outright over an import it cannot open, so without the
@@ -77,84 +80,119 @@ window#waybar.waybar-dock {
     background-color: transparent;
 }
 
-#workspaces {
-    padding: 0 4px;
-}
-
-/* Untinted too, so the row sits straight on the wallpaper rather than on a pill.
- * The radius and padding stay: they cost nothing while this is transparent, and
- * they are what makes it a pill again the moment a background comes back. */
+/* The workspace row: three copies of niri/workspaces (see config.jsonc), the
+ * one you are on centred as a card and the rest as plain text either side of
+ * it. */
 window#waybar.waybar-dock #workspaces {
     background-color: transparent;
-    border-radius: 8px;
-    padding: 0 6px;
+    padding: 0;
+    margin: 0;
 }
 
+/* Every workspace but the current one is just its name in white at 80%
+ * opacity, so it recedes behind the card: no fill, no hover, no outline. The
+ * padding is only there to space the names apart. */
 #workspaces button {
-    /* Taller, and butted up against each other: with no horizontal margin the
-     * focus wash below runs from one neighbour to the next rather than leaving a
-     * strip of bare bar between them. */
     padding: 6px 10px;
-    margin: 8px 0px;
-    color: @wallpaper_accent;
+    margin: 8px 0;
+    color: alpha(#ffffff, 0.8);
     background-color: transparent;
-    border-radius: 6px;
+    box-shadow: none;
 }
 
-/* A 1px black outline, so light accent text holds up over a light patch of
- * wallpaper. GTK has no text-stroke; four offset shadows are the stand-in. Set
- * on the label rather than the button: the GTK theme styles labels itself, and
- * that beats a shadow the label would otherwise inherit from its button. */
-#workspaces button label {
-    text-shadow: 1px 0 black, -1px 0 black, 0 1px black, 0 -1px black;
-    /* Bold, so the thin accent strokes are not eaten by that outline. */
-    font-weight: bold;
-}
-
-#workspaces button.focused label,
-#workspaces button.active label {
-    text-shadow: none;
-    font-weight: normal;
-}
-
-/* Focus is a solid chip in the wallpaper's accent colour with black text, so the
- * current workspace can be found at a glance. The accent is always picked light
- * enough for black; see wallpaper-apply.sh. The shadow is niri's window shadow (softness
- * 30, spread 5, y 5, #0007) scaled down: the button has only 8px of bar above
- * and below it, and anything past that is clipped at the bar's edge. */
-#workspaces button.focused,
-#workspaces button.active {
-    color: black;
-    background-color: @wallpaper_accent;
-    box-shadow: 0 2px 6px 1px alpha(black, 0.44);
-}
-
-#workspaces button.urgent {
-    color: @background;
-    background-color: @error;
-}
-
-/* Hover is a faint wash of the accent behind accent text: a preview of the chip
- * the button becomes when clicked, rather than a grey that belongs to neither
- * state. */
 #workspaces button:hover {
-    background-color: alpha(@wallpaper_accent, 0.2);
-    color: @wallpaper_accent;
+    background-color: transparent;
+    color: alpha(#ffffff, 0.8);
 }
 
-/* The focused chip keeps its fill and black text under the pointer, only a
- * touch brighter; the rule above would otherwise turn it back into a wash. Two
- * classes outrank the one pseudo-class there, so this wins wherever it sits. */
-#workspaces button.focused:hover,
-#workspaces button.active:hover {
-    background-color: shade(@wallpaper_accent, 1.1);
-    color: black;
+/* A soft drop shadow under the names, to lift them off a light patch of
+ * wallpaper. On the label rather than the button: the GTK theme styles labels
+ * itself, and that beats a shadow the label would otherwise inherit. Only the
+ * side copies get it; the card has its own fill to stand on. */
+#workspaces.before button label,
+#workspaces.after button label {
+    /* Two layers, because a text-shadow has no spread to thicken it with: a
+     * tight dark one hugging the letters, under a wider soft one. */
+    text-shadow: 0 1px 2px alpha(black, 0.9), 0 1px 5px alpha(black, 0.8);
 }
 
-/* Urgent is the one state that should outshout the pointer. */
+/* The current workspace is a niri-tasks task card: its fill, outline, radius,
+ * padding, font and text colour, copied from src/panel/style.rs in that repo,
+ * which in turn copies mako and a ghostty window. Change them together. The
+ * blur behind it is niri's, from the layer-rule for waybar-card in
+ * config/niri/config.kdl.
+ *
+ * There are two copies of it. The one you see is on the waybar-card bar, which
+ * exists only to hold it (see config.jsonc). Its 4px margin is room for the
+ * outline, a 4px spread shadow that would otherwise be clipped at the surface's
+ * edge. The other copy is on the workspace bar, sized the same but invisible,
+ * holding the gap in the row that the card is laid over. */
+#workspaces.current button,
+#workspaces.current button:hover {
+    background-color: rgba(0, 0, 0, 0.375);
+    color: #f0f0f0;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 4px;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.125);
+}
+
+#workspaces.current button label {
+    font: 10pt "Iosevka Term Extended";
+}
+
+window#waybar.waybar-dock #workspaces.current button,
+window#waybar.waybar-dock #workspaces.current button:hover {
+    background-color: transparent;
+    color: transparent;
+    box-shadow: none;
+    margin: 8px 0;
+}
+
+/* Slicing the sides. Both side copies draw every workspace, and GTK has no
+ * display: none, so the buttons a copy should not show are squashed to nothing
+ * instead: no padding, no margin, and a label with no size.
+ *
+ * The left side keeps everything before the active button, meaning
+ * everything except that button and the ones after it. GTK's CSS has no :has(),
+ * so "the buttons before" cannot be selected directly. The right side does it
+ * the other way round: squash everything, then restore what follows the active
+ * button.
+ *
+ * .active rather than .focused: .focused is on one output only, and each
+ * monitor's bar should split around its own visible workspace.
+ *
+ * niri's trailing empty workspace is squashed as well. Its name is blank, so it
+ * would only leave a gap after the last name. */
+#workspaces.before button.active,
+#workspaces.before button.active ~ button,
+#workspaces.after button,
+#workspaces.after button.active ~ button.empty:last-child {
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+}
+
+#workspaces.before button.active label,
+#workspaces.before button.active ~ button label,
+#workspaces.after button label,
+#workspaces.after button.active ~ button.empty:last-child label {
+    font-size: 0;
+}
+
+#workspaces.after button.active ~ button {
+    padding: 6px 10px;
+    margin: 8px 0;
+}
+
+#workspaces.after button.active ~ button label {
+    font-size: 13px;
+}
+
+/* Urgent is the one state that still stands out beside the card. */
+#workspaces button.urgent,
 #workspaces button.urgent:hover {
-    background-color: shade(@error, 1.1);
-    color: @background;
+    color: @error;
 }
 
 #window {

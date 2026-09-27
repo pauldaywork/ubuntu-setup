@@ -87,10 +87,11 @@ if [ "$PAINTED" != yes ]; then
 fi
 
 # ─── Accent colour for the bar ────────────────────────────────────────────────
-# The focused workspace button is filled with an accent colour for the
-# wallpaper, under black text, and the other workspace names are drawn in it.
-# This is the retint matugen used to do for the whole desktop, cut down to the
-# one thing that uses it.
+# An accent colour for the wallpaper, published to waybar as @wallpaper_accent.
+# This is the retint matugen used to do for the whole desktop, cut down to one
+# colour. Nothing in the bar draws with it at the moment — the workspace row
+# used to, until its current workspace became a task card in fixed colours — but
+# it is kept up to date so that it is there to reach for.
 #
 # The colour is looked up in wallpaper-accents first, by filename: those were
 # chosen by eye, one per wallpaper, and they win. Only a wallpaper missing from

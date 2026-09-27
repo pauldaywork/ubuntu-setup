@@ -227,25 +227,33 @@ layer-rule {
     }
 }
 
-// Neither waybar is blurred any more. There was a rule here matching
-// ^waybar-dock$ with the same effect block as the launcher, and before that one
-// matching ^waybar- and catching both bars.
+// The current workspace's card, and only that. It is a waybar bar of its own
+// (waybar-card in config/waybar/config.jsonc), sized to the card, so that
+// blurring its whole surface blurs exactly the card, the way niri-tasks' task
+// panel cards are blurred. The effect is theirs too, so the two read alike.
+// geometry-corner-radius rounds the blur off: 12 is the card's 8 plus the 4px
+// ring around it that holds its outline.
 //
-// What it actually drew was a full-width blurred band along the bottom of the
-// screen — a bar-shaped slab of backdrop under a short row of workspace names.
-// style.css leaves both bars and the workspace row transparent, so with the rule
-// gone the wallpaper runs through both bars sharp and the only thing carrying a
-// background is the module pills on the top bar and the focused workspace
-// button, which tints itself with alpha(@background, 0.5).
-//
-// To put it back, add a layer-rule matching "^waybar-dock$" (or "^waybar-" for
-// both bars) with the same background-effect block as the launcher above, and
-// keep style.css transparent — raise the alpha there and it hides the blur, so
-// it looks like the rule stopped working.
+// The other two bars stay sharp. There used to be a rule here matching
+// ^waybar-dock$, and before that ^waybar- to catch both. It drew a full-width
+// blurred band along the bottom of the screen, a bar-shaped slab of backdrop
+// under a short row of workspace names. That is why the card is a bar of its
+// own: background-effect fills a layer surface's whole rectangle, and niri
+// cannot clip it to what the client draws (see the note on mako below).
 //
 // waybar uses a bar's "name" as its layer-shell namespace as well as its CSS
 // class, which is what makes a bar matchable at all — and why renaming a bar
 // silently changes whether a rule finds it.
+layer-rule {
+    match namespace="^waybar-card$"
+    geometry-corner-radius 12
+    background-effect {
+        blur true
+        xray true
+        noise 0.05
+        saturation 1.4
+    }
+}
 
 // mako is deliberately not blurred, and cannot usefully be.
 //
