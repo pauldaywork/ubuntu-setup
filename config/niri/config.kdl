@@ -231,8 +231,10 @@ layer-rule {
 // (waybar-card in config/waybar/config.jsonc), sized to the card, so that
 // blurring its whole surface blurs exactly the card, the way niri-tasks' task
 // panel cards are blurred. The effect is theirs too, so the two read alike.
-// geometry-corner-radius rounds the blur off: 12 is the card's 8 plus the 4px
-// ring around it that holds its outline.
+// geometry-corner-radius rounds the blur off. The top corners are 12, the
+// card's 8 plus the 4px ring around it that holds its outline. The bottom ones
+// are the card's own 8, since the card sits on the screen's edge with no ring
+// below it. The order is top-left, top-right, bottom-right, bottom-left.
 //
 // The other two bars stay sharp. There used to be a rule here matching
 // ^waybar-dock$, and before that ^waybar- to catch both. It drew a full-width
@@ -246,7 +248,7 @@ layer-rule {
 // silently changes whether a rule finds it.
 layer-rule {
     match namespace="^waybar-card$"
-    geometry-corner-radius 12
+    geometry-corner-radius 12 12 8 8
     background-effect {
         blur true
         xray true

@@ -30,12 +30,11 @@ layout {
     // them, and they are set by hand rather than by the bars' own heights.
     //
     // bottom is 66, and with the 13px gap below it a window's bottom edge sits
-    // 79px above the screen's. The workspace row's card is placed halfway down
-    // that band, 19px from each edge; the two margin-bottoms in
-    // config/waybar/config.jsonc that do it assume this 79, so change them
-    // with it. The top bar gets its clearance from its 60 (40px bar, 20px
-    // clear, plus the gap). The dock sizes itself to its contents, so a taller
-    // card eats the slack above it without anything saying so.
+    // 79px above the screen's. The workspace row's card sits at the bottom of
+    // that band, on the screen's edge. The top bar gets its clearance from its
+    // 60 (40px bar, 20px clear, plus the gap). The dock sizes itself to its
+    // contents, so a taller card eats the slack above it without anything
+    // saying so.
     struts {
         top 60
         bottom 66

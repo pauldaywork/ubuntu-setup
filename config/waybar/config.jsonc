@@ -182,8 +182,8 @@
     // waybar treats "height" as a minimum it asks for, not a cap: if the
     // modules need more it grows the bar anyway and warns that it did. The
     // minimum here is set by the centre card, the tallest thing on the row: 17
-    // for its label at 10pt, plus twice its margin and twice its padding,
-    // because each applies top and bottom — currently 17 + 16 + 24 = 57. A
+    // for its label at 10pt, plus its top margin and twice its padding —
+    // currently 17 + 8 + 24 = 49; it has no bottom margin, see below. A
     // declared 34 was simply overruled, and every restart said so in the log.
     //
     // That number is derived from style.css and nothing else, so declaring it
@@ -193,11 +193,9 @@
     // What this does NOT free you from: the space below the windows. The bottom
     // strut holds 66px open, and niri's 13px gap adds to it, so the windows end
     // 79px up. The bar is not exclusive, so nothing re-reserves when it grows.
-    // Raised 11 by the margin below, the bar's top is at 68, which leaves 11px
-    // of slack. At 2px of bar per 1px of the card's margin or padding, that is
-    // five pixels of either before the dock starts overlapping windows. The
-    // card's margin cannot come down to buy more: below 4px its 4px outline is
-    // clipped at the bar's edge.
+    // At 49 the bar leaves 30px of slack, and at 2px of bar per 1px of the
+    // card's padding, that is fifteen pixels of it before the dock starts
+    // overlapping windows.
     "exclusive": false,
 
     // Mod+Alt+M hides the top bar, and it does that by sending SIGUSR1 — which
@@ -214,12 +212,11 @@
     // nothing here but the workspace row, there is no end pill to keep off the
     // corner either.
     //
-    // Raised off the bottom so that the card sits halfway between the screen's
-    // edge and the windows. The windows end 79px up (see above) and the card is
-    // 41 tall, which leaves 38 to split: 19 below and 19 above. The card sits
-    // 8px up inside this bar, and the 11 here makes up the rest. Change it
-    // together with the card bar's margin-bottom, which is this plus 4.
-    "margin-bottom": 11,
+    // Past the bottom, in fact: the card runs 4px off the screen's edge, like
+    // a tab, so its rounded bottom corners are tucked away. It and the names
+    // have no bottom margin in style.css, and this bar and the card bar below
+    // both take the same -4, which keeps the names level with the card.
+    "margin-bottom": -4,
     "margin-left": 0,
     "margin-right": 0,
 
@@ -301,9 +298,10 @@
 // between workspaces with names of different lengths.
 //
 // It lines up with the invisible #current on the workspace bar. Both are
-// centred on the output. Vertically, the card sits 19px up from the bottom
-// there: 8 inside the bar plus the bar's own margin of 11. Here it sits inside
-// a 4px ring for its outline (see style.css), so the margin below is 15.
+// centred on the output. Vertically, both run 4px off the screen's edge (see
+// the workspace bar's margin-bottom). Here the card has a 4px ring for its
+// outline on every side but the bottom (see style.css), so this bar takes the
+// same -4.
 {
     "name": "waybar-card",
     "layer": "top",
@@ -311,7 +309,7 @@
     "exclusive": false,
     "on-sigusr1": "noop",
     "width": 2,
-    "margin-bottom": 15,
+    "margin-bottom": -4,
 
     "modules-left": [],
     "modules-center": ["niri/workspaces#current"],

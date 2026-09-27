@@ -91,10 +91,14 @@ window#waybar.waybar-dock #workspaces {
 
 /* Every workspace but the current one is just its name in white at 80%
  * opacity, so it recedes behind the card: no fill, no hover, no outline. The
- * padding is only there to space the names apart. */
+ * padding and the 6px side margins are only there to space the names apart.
+ * No bottom margin, so that the names share the card's band and centre on it:
+ * the card sits on the screen's edge.
+ * The card's invisible twin on this bar carries the same side margins, which
+ * is what spaces the names off the card. */
 #workspaces button {
     padding: 6px 10px;
-    margin: 8px 0;
+    margin: 8px 6px 0;
     color: alpha(#ffffff, 0.8);
     background-color: transparent;
     box-shadow: none;
@@ -125,7 +129,8 @@ window#waybar.waybar-dock #workspaces {
  * There are two copies of it. The one you see is on the waybar-card bar, which
  * exists only to hold it (see config.jsonc). Its 4px margin is room for the
  * outline, a 4px spread shadow that would otherwise be clipped at the surface's
- * edge. The other copy is on the workspace bar, sized the same but invisible,
+ * edge — except along the bottom, where the card sits on the screen's edge and
+ * there is nothing below for an outline to show against. The other copy is on the workspace bar, sized the same but invisible,
  * holding the gap in the row that the card is laid over. */
 #workspaces.current button,
 #workspaces.current button:hover {
@@ -133,7 +138,7 @@ window#waybar.waybar-dock #workspaces {
     color: #f0f0f0;
     border-radius: 8px;
     padding: 12px;
-    margin: 4px;
+    margin: 4px 4px 0;
     box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.125);
 }
 
@@ -146,7 +151,7 @@ window#waybar.waybar-dock #workspaces.current button:hover {
     background-color: transparent;
     color: transparent;
     box-shadow: none;
-    margin: 8px 0;
+    margin: 8px 6px 0;
 }
 
 /* Slicing the sides. Both side copies draw every workspace, and GTK has no
@@ -182,7 +187,7 @@ window#waybar.waybar-dock #workspaces.current button:hover {
 
 #workspaces.after button.active ~ button {
     padding: 6px 10px;
-    margin: 8px 0;
+    margin: 8px 6px 0;
 }
 
 #workspaces.after button.active ~ button label {
