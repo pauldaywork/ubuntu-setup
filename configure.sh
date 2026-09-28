@@ -195,9 +195,15 @@ if command -v systemctl &>/dev/null; then
     systemctl --user enable waybar.service 2>/dev/null \
         && info "Enabled the waybar user unit" \
         || warn "Could not enable the waybar user unit (no systemd user session?)"
+    # The bottom bars' watcher — see config/waybar/dock-watch.sh.
+    systemctl --user enable waybar-dock.service 2>/dev/null \
+        && info "Enabled the waybar-dock user unit" \
+        || warn "Could not enable the waybar-dock user unit (no systemd user session?)"
     if systemctl --user is-active --quiet graphical-session.target 2>/dev/null; then
         systemctl --user restart swww-daemon.service 2>/dev/null \
             && info "Started swww-daemon" || true
+        systemctl --user restart waybar-dock.service 2>/dev/null \
+            && info "Started the workspace bar watcher" || true
     fi
 fi
 
@@ -435,17 +441,18 @@ else
     info "Wallpaper set to $ACTIVE_WALLPAPER"
 fi
 
-# The bar's accent colour. wallpaper-apply.sh derives it from the wallpaper on
-# every paint, but style.css imports it unconditionally and waybar exits over an
-# import it cannot open — no bar at all — so it has to exist before waybar first
-# starts, which can be before swww-daemon has painted anything. White until then.
-# Never overwritten: past the first paint it is the wallpaper's, not ours.
-WALLPAPER_COLORS="$USER_HOME/.config/waybar/wallpaper-colors.css"
-if [ ! -f "$WALLPAPER_COLORS" ]; then
-    mkdir -p "$(dirname "$WALLPAPER_COLORS")"
-    printf '@define-color wallpaper_accent #ffffff;\n' > "$WALLPAPER_COLORS"
-    info "Seeded the bar accent colour (white until a wallpaper is painted)"
-fi
+# Retire the wallpaper accent's leftovers on a machine that has them. The
+# retint — wallpaper-apply.sh writing wallpaper-colors.css and restarting
+# waybar on every paint, style.css importing it, this script seeding it —
+# is gone: nothing had drawn with the colour since the current workspace
+# became a task card in fixed colours. The seeded/derived CSS file and the
+# by-eye accent list would just sit unread, which this repo treats as drift.
+for stale in "$USER_HOME/.config/waybar/wallpaper-colors.css" \
+             "$USER_HOME/.config/niri/wallpaper-accents"; do
+    if [ -e "$stale" ]; then
+        rm -f "$stale" && info "Retired $(basename "$stale") (the wallpaper accent is gone)"
+    fi
+done
 
 # ─── Shortcut page ────────────────────────────────────────────────────────────
 # Mod+Alt+/ searches every shortcut in fuzzel and Mod+Alt+Ctrl+/ opens the page.

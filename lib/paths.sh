@@ -81,7 +81,6 @@ DOTFILES_MAP=(
     "wallpaper/apply.sh|.config/niri/wallpaper-apply.sh|exec"
     "wallpaper/pick.sh|.config/niri/wallpaper-pick.sh|exec"
     "wallpaper/picker.ini|.config/fuzzel/wallpaper-picker.ini|copy"
-    "wallpaper/accents|.config/niri/wallpaper-accents|copy"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
 
     # shortcuts — the searchable list of every shortcut. Only the runner behind
@@ -108,7 +107,14 @@ DOTFILES_MAP=(
     # waybar + mako — what replaced DankMaterialShell. Plain copies, which is
     # the whole difference: nothing writes to these but us, so there is no
     # settings file growing keys underneath the repo and no merge to do.
+    # Two waybar processes share style.css: waybar.service draws the top bar
+    # from config.jsonc, and waybar-dock.service runs dock-watch.sh, which
+    # shows dock.jsonc's bottom bars only while a workspace besides general
+    # is named.
     "config/waybar/config.jsonc|.config/waybar/config.jsonc|copy"
+    "config/waybar/dock.jsonc|.config/waybar/dock.jsonc|copy"
+    "config/waybar/dock-watch.sh|.config/waybar/dock-watch.sh|exec"
+    "config/waybar/waybar-dock.service|.config/systemd/user/waybar-dock.service|copy"
     "config/waybar/style.css|.config/waybar/style.css|copy"
     "config/waybar/power_menu.xml|.config/waybar/power_menu.xml|copy"
     # battery + backlight for the top bar; see the include in config.jsonc

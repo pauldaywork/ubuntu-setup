@@ -1,0 +1,177 @@
+// The bottom bars: the workspace bar and the current workspace's card. The
+// top bar lives in config.jsonc; these two are a separate file because they
+// are a separate waybar process, run by dock-watch.sh (waybar-dock.service)
+// rather than waybar.service.
+//
+// That split exists so the bottom of the screen can be empty when there is
+// nothing to show. When "general" is the only named workspace, this row is
+// just a lone card reading "general" — the names either side are already
+// blank — so dock-watch.sh only runs this process while some other workspace
+// is named, and kills it when the last one goes. It has to be a process
+// boundary: the card is blurred by a niri layer-rule against its surface, so
+// hiding it with CSS would leave a blurred card-shaped ghost. Only unmapping
+// the surface — ending the process — takes the blur with it.
+//
+// Both processes read the same style.css: waybar finds it next to whichever
+// config -c names. Mod+Alt+M's `killall -SIGUSR1 waybar` reaches this process
+// too, which is why both bars here keep "on-sigusr1": "noop".
+[
+// ─── the workspace bar ────────────────────────────────────────────────────────
+// Lives in the 50px band at the bottom that the struts have been holding open
+// since DMS's dock went. Nothing but workspaces: this is for seeing where you
+// are and clicking somewhere else, and niri-tasks names workspaces after the
+// project open on them (Mod+Alt+P), so the list reads as a list of what you are
+// working on rather than a row of numbers.
+//
+// Split three ways around the workspace you are on. It sits alone in the middle,
+// drawn as a task card like the ones in niri-tasks' task panel. The workspaces
+// before it line up against the card's left side and the ones after it against
+// its right, as plain text, so the whole row reads outward from where you are.
+{
+    "name": "waybar-dock",
+    "layer": "top",
+    "position": "bottom",
+
+    // No height, deliberately, where the top bar declares 40.
+    //
+    // waybar treats "height" as a minimum it asks for, not a cap: if the
+    // modules need more it grows the bar anyway and warns that it did. The
+    // minimum here is set by the centre card, the tallest thing on the row: 17
+    // for its label at 10pt, plus its top margin and twice its padding —
+    // currently 17 + 8 + 24 = 49; it has no bottom margin, see below. A
+    // declared 34 was simply overruled, and every restart said so in the log.
+    //
+    // That number is derived from style.css and nothing else, so declaring it
+    // here only creates something to keep in sync by hand. Letting waybar size
+    // the bar to its contents means restyling the buttons cannot desync it.
+    //
+    // What this does NOT free you from: the space below the windows. The bottom
+    // strut holds 66px open, and niri's 13px gap adds to it, so the windows end
+    // 79px up. The bar is not exclusive, so nothing re-reserves when it grows.
+    // At 49 the bar leaves 30px of slack, and at 2px of bar per 1px of the
+    // card's padding, that is fifteen pixels of it before the dock starts
+    // overlapping windows.
+    "exclusive": false,
+
+    // Mod+Alt+M hides the top bar, and it does that by sending SIGUSR1 — which
+    // goes to every waybar process, this one included. noop opts this bar out,
+    // and the card bar below as well; the top bar keeps the default "toggle"
+    // and is the only one that responds.
+    "on-sigusr1": "noop",
+
+    "spacing": 6,
+
+    // Flush at the sides, for the same reason as the top bar — and with
+    // nothing here but the workspace row, there is no end pill to keep off the
+    // corner either.
+    //
+    // Past the bottom, in fact: the card runs 4px off the screen's edge, like
+    // a tab, so its rounded bottom corners are tucked away. It and the names
+    // have no bottom margin in style.css, and this bar and the card bar below
+    // both take the same -4, which keeps the names level with the card.
+    "margin-bottom": -4,
+    "margin-left": 0,
+    "margin-right": 0,
+
+    // Three copies of the one module, each showing a different slice of it.
+    // Every copy draws a button for every workspace on this output, in niri's
+    // order. #current sets current-only, which really hides the other buttons
+    // (a GTK hide takes no space). The other two copies have no option to hide
+    // a workspace, so style.css collapses the buttons each one should not show
+    // to zero width. It works out the slice from the active button and the
+    // buttons after it, and the instance name is a class on the box
+    // (#workspaces.before and #workspaces.after) that lets it tell the copies
+    // apart. modules-center is centred on the bar itself rather than in the gap
+    // between the sides, so the card does not drift as either side grows.
+    //
+    // waybar packs each side's modules from its outer edge, which would push
+    // the names into the corners. So both sides expand to meet the card
+    // (expand-left and expand-right), and an expanding spacer on each side's
+    // outer end takes up the slack. That leaves the names flush against the
+    // card.
+    "expand-left": true,
+    "expand-right": true,
+    "modules-left": ["custom/spacer-left", "niri/workspaces#before"],
+    "modules-center": ["niri/workspaces#current"],
+    "modules-right": ["niri/workspaces#after", "custom/spacer-right"],
+
+    // A single space rather than nothing: a custom module with empty text hides
+    // itself, and a hidden spacer cannot take up any slack.
+    "custom/spacer-left": { "format": " ", "expand": true, "tooltip": false },
+    "custom/spacer-right": { "format": " ", "expand": true, "tooltip": false },
+
+    // niri names workspaces, and niri-tasks leans on that heavily — Mod+Alt+P
+    // opens a project on a workspace named after it, so this list is a list of
+    // what you have open.
+    //
+    // {name} rather than {value}: {value} is "the name, or the index when there
+    // isn't one", and niri always keeps one empty unnamed workspace at the end
+    // of the list, so that fallback put a bare number after the names — a "6"
+    // sitting on the end of a row of project names, looking like a count of
+    // something.
+    //
+    // {name} leaves that workspace blank. On the right-hand side style.css
+    // collapses it, so it leaves no gap after the last name. When you are on
+    // it, the centre card shows empty: still a card, so you can see where you
+    // are, just with nothing to name.
+    //
+    // #current here is never seen. The card you see is the waybar-card bar
+    // below, drawn over this one; style.css makes this copy invisible. It stays
+    // so that the row still leaves a card-sized gap in the middle for the
+    // names either side to sit against.
+    "niri/workspaces#before": {
+        "format": "{name}",
+        "on-click": "activate"
+    },
+    "niri/workspaces#current": {
+        "format": "{name}",
+        "on-click": "activate",
+        "current-only": true
+    },
+    "niri/workspaces#after": {
+        "format": "{name}",
+        "on-click": "activate"
+    }
+},
+
+// ─── the current workspace's card ─────────────────────────────────────────────
+// A bar that is nothing but the card in the middle of the workspace bar, so
+// that it can be blurred behind like the task panel's cards.
+//
+// niri blurs a layer surface's whole rectangle. The panel gets round that by
+// handing niri a card-shaped blur region over ext-background-effect, which
+// waybar cannot do. So the card gets a surface of its own, exactly its own size,
+// and config/niri/config.kdl blurs all of it, rounded to the card's corners.
+// On the workspace bar the blur would have been a full-width strip.
+//
+// "width": 2 is what shrinks the surface to the card. Any width above 1 stops
+// waybar anchoring the bar to both sides, which leaves it centred, and GTK
+// never makes a window narrower than its contents, so the 2 is overruled by the
+// card's own width. That also means the surface resizes itself as you move
+// between workspaces with names of different lengths.
+//
+// It lines up with the invisible #current on the workspace bar. Both are
+// centred on the output. Vertically, both run 4px off the screen's edge (see
+// the workspace bar's margin-bottom). Here the card has a 4px ring for its
+// outline on every side but the bottom (see style.css), so this bar takes the
+// same -4.
+{
+    "name": "waybar-card",
+    "layer": "top",
+    "position": "bottom",
+    "exclusive": false,
+    "on-sigusr1": "noop",
+    "width": 2,
+    "margin-bottom": -4,
+
+    "modules-left": [],
+    "modules-center": ["niri/workspaces#current"],
+    "modules-right": [],
+
+    "niri/workspaces#current": {
+        "format": "{name}",
+        "on-click": "activate",
+        "current-only": true
+    }
+}
+]

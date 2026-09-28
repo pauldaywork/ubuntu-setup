@@ -8,23 +8,16 @@
  *
  * Note what this costs: matugen used to re-derive the whole palette from the
  * current wallpaper, so the desktop retinted itself when the wallpaper changed.
- * Nothing does that now: the workspace buttons did, through @wallpaper_accent
- * below, until the current workspace became a task card in fixed colours.
+ * Nothing does that now, and the last thread of it — a @wallpaper_accent
+ * colour that wallpaper-apply.sh derived and imported here, restarting waybar
+ * on every wallpaper change — is gone too: nothing had drawn with it since
+ * the current workspace became a task card in fixed colours. Everything below
+ * is a written-down constant, and the bars never hear about wallpapers.
  *
  * The salmon accent those values came with (muted #d9bcb8, primary #eda792) has
  * since been dropped, so @primary has no users left, and nor does @secondary.
  * The palette is kept whole anyway: an unused line here is something to reach
  * for later, where a deleted one is a hex value to invent. */
-
-/* @wallpaper_accent, the wallpaper's accent colour. Nothing uses it at the
- * moment, but the import stays, and so does the script that writes the file:
- * together they are the whole retint, ready for whatever wants the colour next.
- * wallpaper-apply.sh rewrites
- * this file from the wallpaper each time it changes, and configure.sh seeds it
- * with white so it exists before the first wallpaper is painted. That seed
- * matters: waybar exits outright over an import it cannot open, so without the
- * file there is no bar at all, not just an unstyled one. */
-@import url("wallpaper-colors.css");
 
 @define-color background   #09070d;
 @define-color surface      #130f1a;

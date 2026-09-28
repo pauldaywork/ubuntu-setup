@@ -1,0 +1,23 @@
+[Unit]
+Description=workspace bar, shown only while a workspace besides general is named
+# The bottom two bars (dock.jsonc) as their own waybar process, brought up and
+# down by dock-watch.sh against niri's workspace list. waybar.service keeps
+# the top bar; see the header of dock-watch.sh for why this is a separate
+# process at all.
+#
+# The same session tie as swww-daemon.service: PartOf stops it with the
+# session, Requisite refuses to start without one.
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/waybar/dock-watch.sh
+# The watcher dies with niri's event stream, which is the session ending —
+# but a crash of the script itself should not leave the bottom bar stuck.
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

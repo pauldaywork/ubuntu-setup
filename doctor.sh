@@ -173,26 +173,35 @@ fi
 
 # The desktop pieces that replaced DMS. mako is a niri spawn-at-startup line, so
 # a bare pgrep is the honest check for it. waybar is the package's systemd unit,
-# and a pgrep count as well: a second copy (niri used to spawn one too) draws
-# every bar twice.
+# plus a second process for the bottom bars (dock.jsonc, run by dock-watch.sh
+# under waybar-dock.service) — so the count is per config, not per binary: one
+# top-bar process, and at most one dock, which is legitimately absent whenever
+# "general" is the only named workspace. A second copy of either (niri used to
+# spawn one too) draws its bars twice.
 #
 # A missing bar is obvious the moment you look at the screen. A missing
 # notification daemon is not: notify-send simply returns, and the first thing
 # you notice is that Mod+Alt+F stopped telling you which profile it switched to.
 if pkg_installed waybar; then
-    WAYBARS=$(pgrep -xc waybar || true)
-    if [ "$WAYBARS" -gt 1 ]; then
-        issue "$WAYBARS waybar processes running — every bar is drawn more than once"
-        note "  Only waybar.service should start it; look for a spawn-at-startup \"waybar\""
-        note "  Fix for now with: pkill -x waybar; systemctl --user restart waybar"
+    DOCK_BARS=$(pgrep -fc "waybar -c $HOME/.config/waybar/dock.jsonc" || true)
+    TOP_BARS=$(( $(pgrep -xc waybar || true) - DOCK_BARS ))
+    if [ "$TOP_BARS" -gt 1 ] || [ "$DOCK_BARS" -gt 1 ]; then
+        issue "$TOP_BARS top-bar + $DOCK_BARS dock waybar processes — some bar is drawn more than once"
+        note "  waybar.service starts the top bar, waybar-dock.service the dock; look for a stray spawn"
+        note "  Fix for now with: pkill -x waybar; systemctl --user restart waybar waybar-dock"
     elif systemctl --user is-active --quiet waybar.service 2>/dev/null; then
         ok "waybar running (waybar.service)"
-    elif [ "$WAYBARS" -eq 1 ]; then
+    elif [ "$TOP_BARS" -eq 1 ]; then
         issue "waybar is running, but not from waybar.service — nothing will restart it if it crashes"
         note "  Fix with: pkill -x waybar; systemctl --user enable --now waybar"
     elif [ -n "${WAYLAND_DISPLAY:-}" ]; then
         issue "waybar is installed but not running — there is no bar"
         note "  Start it with: systemctl --user enable --now waybar"
+    fi
+    if ! systemctl --user is-active --quiet waybar-dock.service 2>/dev/null \
+       && [ -n "${WAYLAND_DISPLAY:-}" ]; then
+        issue "waybar-dock.service is not running — the workspace bar will never appear"
+        note "  Start it with: systemctl --user enable --now waybar-dock"
     fi
 fi
 

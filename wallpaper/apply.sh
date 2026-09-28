@@ -86,80 +86,13 @@ if [ "$PAINTED" != yes ]; then
     exit 1
 fi
 
-# ─── Accent colour for the bar ────────────────────────────────────────────────
-# An accent colour for the wallpaper, published to waybar as @wallpaper_accent.
-# This is the retint matugen used to do for the whole desktop, cut down to one
-# colour. Nothing in the bar draws with it at the moment — the workspace row
-# used to, until its current workspace became a task card in fixed colours — but
-# it is kept up to date so that it is there to reach for.
-#
-# The colour is looked up in wallpaper-accents first, by filename: those were
-# chosen by eye, one per wallpaper, and they win. Only a wallpaper missing from
-# that list, such as one added since, gets a colour picked from the image.
-#
-# That pick: ffmpeg's palettegen boils the first frame down to 24 colours; the one scoring
-# highest on saturation² × brightness wins, so a vivid patch beats a large dull
-# one and a grey never wins while there is any colour at all. It is then pushed
-# to full brightness, and if that is still too dark for black text (a deep blue,
-# say) mixed toward white until black on it has at least 9:1 contrast. A
-# wallpaper with no colour in it comes out white.
-#
-# Failure here is not fatal and leaves the previous colour in place: the
-# wallpaper is already painted, and an out-of-date bar colour is not worth an
-# error at login.
-ACCENT_CSS="$HOME/.config/waybar/wallpaper-colors.css"
-ACCENTS="$HOME/.config/niri/wallpaper-accents"
-
-# The first "#rrggbb <filename>" line naming this wallpaper, or nothing.
-# Comments start "# " with a space, so they can never look like a colour.
-chosen_accent_for() {
-    [ -f "$ACCENTS" ] || return 1
-    awk -v name="$(basename "$1")" '
-        $1 ~ /^#[0-9A-Fa-f]{6}$/ && $2 == name { print tolower($1); found = 1; exit }
-        END { exit !found }' "$ACCENTS"
-}
-
-accent_for() {
-    ffmpeg -loglevel error -i "$1" -frames:v 1 \
-        -vf "scale=160:-1:flags=area,palettegen=max_colors=24:reserve_transparent=0:stats_mode=full" \
-        -f image2pipe -vcodec png - </dev/null \
-    | ffmpeg -loglevel error -f png_pipe -i - -f rawvideo -pix_fmt rgb24 - \
-    | od -An -v -tu1 -w3 \
-    | awk '
-        function lin(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4 }
-        function lum(r, g, b) { return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) }
-        NF == 3 {
-            mx = $1; if ($2 > mx) mx = $2; if ($3 > mx) mx = $3
-            mn = $1; if ($2 < mn) mn = $2; if ($3 < mn) mn = $3
-            if (mx == 0) next
-            s = (mx - mn) / mx
-            score = s * s * mx / 255
-            if (!seen || score > best) { best = score; r = $1; g = $2; b = $3; seen = 1 }
-        }
-        END {
-            if (!seen) exit 1
-            mx = r; if (g > mx) mx = g; if (b > mx) mx = b
-            k = 255 / mx; r *= k; g *= k; b *= k
-            while (lum(r, g, b) < 0.4) { r += (255 - r) * 0.08; g += (255 - g) * 0.08; b += (255 - b) * 0.08 }
-            printf "#%02x%02x%02x\n", int(r + 0.5), int(g + 0.5), int(b + 0.5)
-        }'
-}
-
-if ACCENT="$(chosen_accent_for "$WALLPAPER")" \
-   || { command -v ffmpeg >/dev/null && ACCENT="$(accent_for "$WALLPAPER")"; } \
-   && [ -n "$ACCENT" ]; then
-    # Written aside and renamed into place: waybar exits over an import it
-    # cannot read, so it must never catch this file missing or half-written.
-    mkdir -p "$(dirname "$ACCENT_CSS")"
-    printf '/* Written by wallpaper-apply.sh from %s. */\n@define-color wallpaper_accent %s;\n' \
-        "$(basename "$WALLPAPER")" "$ACCENT" > "$ACCENT_CSS.tmp" \
-        && mv -f "$ACCENT_CSS.tmp" "$ACCENT_CSS"
-    # A restart, not SIGUSR2: a SIGUSR2 reload has aborted waybar before, and
-    # the unit is how waybar is run (see configure.sh). try-restart leaves a
-    # stopped bar stopped; its next start reads the file anyway.
-    systemctl --user try-restart waybar.service 2>/dev/null || true
-else
-    echo "Could not pick an accent colour from $WALLPAPER — keeping the last one" >&2
-fi
+# There used to be a second act here: an accent colour picked from the
+# wallpaper (ffmpeg palettegen scored by saturation² × brightness), written to
+# ~/.config/waybar/wallpaper-colors.css and followed by a waybar restart on
+# every paint. Nothing had drawn with that colour since the current workspace
+# became a task card in fixed colours, and the restart made every bar blink on
+# every wallpaper change — so the whole retint went, and the bars no longer
+# hear about wallpapers at all. It is in git history if a colour from the
+# wallpaper is ever wanted back.
 
 exit 0

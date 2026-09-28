@@ -9,7 +9,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 | Shell | `.bashrc`, `.profile` |
 | Terminal multiplexer | [herdr](https://herdr.dev), one session per project workspace (installed by hand, not by this repo) |
 | Window manager | Niri config + swappable window-rules/layout profiles (`Mod+Alt+F`) |
-| Bar | waybar (`config.jsonc` + `style.css`), started by the package's `waybar.service` |
+| Bar | waybar: the top bar (`config.jsonc`) via the package's `waybar.service`, the workspace bar (`dock.jsonc`) via `waybar-dock.service` when there's more than `general` |
 | Notifications | mako |
 | Launcher | fuzzel (`Mod+Space`) |
 | Terminal | Ghostty (deb from the danklinux PPA, not the snap) |
@@ -149,8 +149,11 @@ ubuntu-setup/
 │   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+F)
 │   │       ├── normal.kdl                  # Fully opaque windows
 │   │       └── focus.kdl                   # Unfocused windows fade out
-│   ├── waybar/                             # config.jsonc + style.css + power_menu.xml (the ⏻ drop-down)
+│   ├── waybar/                             # config.jsonc (top bar) + style.css + power_menu.xml (the ⏻ drop-down)
 │   │                                       #   + laptop.jsonc: battery/backlight, laptops only
+│   │                                       #   + dock.jsonc: the bottom bars, run by dock-watch.sh
+│   │                                       #     (waybar-dock.service) only while a workspace
+│   │                                       #     besides general is named
 │   ├── mako/config
 │   ├── fuzzel/fuzzel.ini                   # The launcher only; the pickers bring their own configs
 │   ├── ghostty/config.ghostty
@@ -168,7 +171,6 @@ ubuntu-setup/
 │   ├── pick.sh                             # → ~/.config/niri/wallpaper-pick.sh    The picker (Mod+Alt+B), or the next one (Mod+Alt+Ctrl+B)
 │   ├── picker.ini                          # → ~/.config/fuzzel/wallpaper-picker.ini  (fuzzel reads it)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
-│   ├── accents                             # → ~/.config/niri/wallpaper-accents  Accent colour per image (unused by the bar for now)
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
 │   ├── CREDITS.md                          # Who made each image; not installed
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
@@ -469,7 +471,10 @@ frame, for the animated GIFs) and writes the choice to
 `Mod+Alt+Ctrl+B` skips the list and applies the next one in filename order, wrapping round. Wallpapers
 also no longer retint the desktop — matugen re-derived the entire palette from
 the current image, and the colours in `config/waybar/style.css` and
-`config/mako/config` are now fixed values, the last ones it produced.
+`config/mako/config` are now fixed values, the last ones it produced. The last
+thread of the retint, a `@wallpaper_accent` colour derived per wallpaper and
+imported by the bar, went the same way: nothing drew with it, and deriving it
+restarted waybar on every wallpaper change.
 
 ---
 
