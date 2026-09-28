@@ -49,7 +49,7 @@ cd ~/Projects/ubuntu-setup
 bash install.sh
 ```
 
-All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config — the built-in display's `eDP-1` output block, the brightness keys, and `Mod+Alt+D` to turn the built-in display off/on when an external monitor is connected — plus battery and brightness on the top bar. Desktops get the desk's monitors and their 4K modes instead (`desktop.kdl`, with `Mod+Alt+D` to drop the HDMI matrix to 1080p@60), and a login screen layout for the same monitor — so a laptop never has a desk's resolutions forced on whatever screen it is plugged into. A machine that changes type has the other type's files removed. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
+All machines use `Mod+Up`/`Mod+Down` to focus the workspace above/below and `Mod+Ctrl+Up`/`Mod+Ctrl+Down` to move the current column to it. Laptops get extra niri config — the built-in display's `eDP-1` output block, the brightness keys, and `Mod+Alt+D` to move every workspace to the external monitor and back (the built-in display stays on: with it off, the NVIDIA-driven external becomes niri's only frame clock and the whole session lags) — plus battery and brightness on the top bar. Desktops get the desk's monitors and their 4K modes instead (`desktop.kdl`, with `Mod+Alt+D` to drop the HDMI matrix to 1080p@60), and a login screen layout for the same monitor — so a laptop never has a desk's resolutions forced on whatever screen it is plugged into. A machine that changes type has the other type's files removed. Use `Mod+J`/`Mod+K` to move focus between windows vertically, and `Mod+Ctrl+J`/`Mod+Ctrl+K` to move a window vertically within its workspace.
 
 The binds follow one pattern: `Mod+key` moves around and shapes windows, `Mod+Alt+letter` is every command (tasks, workspaces, wallpaper, bar, display), adding `Ctrl` gives the same key's companion (carry rather than focus, list tasks rather than add one, rename the workspace rather than make one), and `Shift` points at another monitor. Most `Mod+Ctrl` binds also work as `Mod+Alt`. `Mod+Alt+Ctrl+Up`/`Down` and `Mod+Alt+Ctrl+1`–`9` move the workspace itself, and `Mod+Shift+/` shows niri's own overlay. For everything — niri, niri-tasks, herdr and ghostty together — `Mod+Alt+/` searches them in fuzzel and runs the niri action you pick, and `Mod+Alt+Ctrl+/` opens the same list as a page with category and modifier filters. Both are rebuilt from the configs on every `configure.sh`, so they can't fall behind a bind change; herdr's own defaults are the one thing copied in by hand, pinned to its version in `shortcuts/build.py`.
 
@@ -143,7 +143,7 @@ ubuntu-setup/
 ├── config/                                 # Mirrors ~/.config/
 │   ├── niri/
 │   │   ├── config.kdl                      # Includes niri-tasks.kdl; configure.sh seeds a stub for it
-│   │   ├── laptop.kdl                      # eDP-1 + brightness/display keys; laptops only (auto-detected)
+│   │   ├── laptop.kdl                      # eDP-1, brightness keys, workspaces-to-external toggle; laptops only
 │   │   ├── desktop.kdl                     # The desk's monitors, their 4K modes, Mod+Alt+D; desktops only
 │   │   └── window-rules/
 │   │       ├── toggle.sh                   # Cycles the profile (Mod+Alt+F)

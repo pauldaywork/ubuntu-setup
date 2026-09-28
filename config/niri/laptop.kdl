@@ -15,11 +15,24 @@ output "eDP-1" {
 }
 
 binds {
-    // Mod+Alt+D is the display toggle on every machine; here it switches the
-    // built-in screen off and on. It won't switch off the only screen that's lit
-    // — that leaves nothing to see the next keypress on. An output that is off
-    // has a null "logical" in `niri msg -j outputs`.
-    Mod+Alt+D hotkey-overlay-title="Toggle Built-in Display" { spawn-sh "o=$(niri msg -j outputs); if echo \"$o\" | jq -e '.\"eDP-1\".logical' >/dev/null; then echo \"$o\" | jq -e '[.[] | select(.logical)] | length > 1' >/dev/null && niri msg output eDP-1 off; else niri msg output eDP-1 on; fi"; }
+    // Mod+Alt+D is the display toggle on every machine; here it moves every
+    // workspace to the external monitor, or back to the built-in screen when
+    // they are already out there. niri has no mirroring, and this is what
+    // mirroring was wanted for.
+    //
+    // It deliberately leaves the built-in screen on. The external ports are
+    // wired to the NVIDIA GPU while niri renders on the Intel one, and with
+    // eDP-1 off the NVIDIA vblanks are the only frame clock left — they come
+    // in at ~3x the refresh rate, niri throttles them, and the whole session
+    // lags (niri issue #3095). A press while eDP-1 is off, as the old version
+    // of this bind left it, just turns it back on.
+    //
+    // Workspace references are names or per-monitor indexes, not ids, so an
+    // unnamed workspace goes by its index with its monitor focused. Moving the
+    // named or occupied ones is moving all of them: the empty one at the end
+    // of every monitor is niri's own and it makes a new one anyway. One line,
+    // because shortcuts.tsv holds each bind's command on one line.
+    Mod+Alt+D hotkey-overlay-title="Move All Workspaces: External ↔ Built-in" { spawn-sh "o=$(niri msg -j outputs); if ! echo \"$o\" | jq -e '.\"eDP-1\".logical' >/dev/null; then niri msg output eDP-1 on; exit; fi; ext=$(echo \"$o\" | jq -r 'first(.[] | select(.logical and .name != \"eDP-1\") | .name) // empty'); [ -n \"$ext\" ] || exit 0; k='def kept: .name != null or .active_window_id != null;'; if niri msg -j workspaces | jq -e \"$k\"' any(.[]; .output == \"eDP-1\" and kept)' >/dev/null; then from=eDP-1 to=$ext; else from=$ext to=eDP-1; fi; win=$(niri msg -j focused-window | jq -r '.id // empty'); for _ in $(seq 20); do ref=$(niri msg -j workspaces | jq -r --arg f \"$from\" \"$k\"' [.[] | select(.output == $f and kept)] | sort_by(.idx) | first | if . == null then empty else (.name // .idx) end'); [ -n \"$ref\" ] || break; niri msg action focus-monitor \"$from\"; niri msg action move-workspace-to-monitor --reference \"$ref\" \"$to\"; done; niri msg action focus-monitor \"$to\"; [ -n \"$win\" ] && niri msg action focus-window --id \"$win\""; }
 
     // brightnessctl, matching the backlight module's scroll in laptop.jsonc.
     XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
