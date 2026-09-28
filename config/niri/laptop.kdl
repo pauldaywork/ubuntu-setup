@@ -14,6 +14,13 @@ output "eDP-1" {
     position x=1280 y=0
 }
 
+// The Kogan ultrawide the laptop docks to. Its EDID prefers 60 Hz, so niri
+// picks that unless told otherwise. Matched by make/model rather than
+// connector: it has come up as both HDMI-A-1 and DP-1.
+output "KOGAN AUSTRALIA PTY LTD KAMN34FXQULA Unknown" {
+    mode "3440x1440@100.000"
+}
+
 binds {
     // Mod+Alt+D is the display toggle on every machine; here it moves every
     // workspace to the external monitor, or back to the built-in screen when
