@@ -118,6 +118,11 @@ APT_PACKAGES=(
     jq
     # fzf — the herdr-worktrunk plugin's branch picker.
     fzf
+    # bubblewrap, socat — Claude Code's Bash sandbox, which niri-tasks' Refine
+    # and Grill me run Claude in so it can research a task without a prompt per
+    # command yet cannot start on it. Without them that Claude refuses to start.
+    bubblewrap
+    socat
     libudev-dev
     util-linux-extra
 
