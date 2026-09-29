@@ -404,6 +404,13 @@ def as_list(v):
     return v if isinstance(v, list) else [v]
 
 
+# Page category for each plugin's [[keys.command]] binds, by plugin id.
+HERDR_PLUGIN_CATS = {
+    "worktrunk": "Worktrees (worktrunk)",
+    "speak": "Speech (herdr-speak)",
+}
+
+
 def herdr_entries(config_path):
     cfg = tomllib.loads(config_path.read_text()) if config_path.exists() else {}
     keys = cfg.get("keys", {})
@@ -423,10 +430,12 @@ def herdr_entries(config_path):
             e["keys"] = [default]
             if default in taken:
                 e["replaced"] = True
-                e["note"] = "herdr default, replaced by your worktrunk key below"
+                e["note"] = "herdr default, replaced by your plugin key below"
         entries.append(e)
     for c in commands:
-        entries.append({"tool": "herdr", "cat": "Worktrees (worktrunk)", "keys": [c["key"]],
+        plugin = c.get("command", "").split(".")[0]
+        cat = HERDR_PLUGIN_CATS.get(plugin, f"Plugin ({plugin})")
+        entries.append({"tool": "herdr", "cat": cat, "keys": [c["key"]],
                         "title": c.get("description", c.get("command", ""))[:1].upper()
                                  + c.get("description", c.get("command", ""))[1:], "run": "",
                         "note": f"Plugin action {c.get('command', '')}"})

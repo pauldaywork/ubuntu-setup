@@ -48,3 +48,17 @@ key = "prefix+shift+e"
 type = "plugin_action"
 command = "worktrunk.remove"
 description = "worktree: remove (drops its database; keeps an unmerged branch)"
+
+# Read the focused agent's last answer aloud through local Kokoro, via the
+# speak plugin in ~/Projects/herdr-speak. Press again to stop.
+[[keys.command]]
+key = "prefix+shift+s"
+type = "plugin_action"
+command = "speak.last"
+description = "speak: read the last answer aloud (again to stop)"
+
+[[keys.command]]
+key = "prefix+shift+v"
+type = "plugin_action"
+command = "speak.last-verbatim"
+description = "speak: read the last answer as written, no rewrite (again to stop)"
