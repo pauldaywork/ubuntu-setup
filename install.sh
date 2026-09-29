@@ -89,6 +89,17 @@ if ! apt-cache show google-chrome-stable &>/dev/null; then
         | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
 fi
 
+# GitHub CLI — not in Ubuntu's archive. configure.sh clones the private
+# herdr-speak repo with it. The keyring is published already dearmored.
+if ! apt-cache show gh &>/dev/null; then
+    info "Adding GitHub CLI repo"
+    wget -qO - https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+    sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+fi
+
 sudo apt update
 
 # ─── 2. apt packages ──────────────────────────────────────────────────────────

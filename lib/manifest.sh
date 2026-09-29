@@ -147,6 +147,7 @@ APT_PACKAGES=(
     wireplumber
     brightnessctl
     playerctl
+    gh
 )
 
 # Needed to *build* swww, not to run it. install.sh installs these; doctor.sh
