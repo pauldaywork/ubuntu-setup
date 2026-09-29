@@ -19,9 +19,10 @@
         // The laptop's own battery and nothing else. Left unset, waybar also
         // watches peripheral batteries — a wireless mouse's hidpp_battery — and
         // aborts when one vanishes mid-watch ("Could not watch events for
-        // .../hidpp_battery_0"). If a laptop names its battery BAT1, change this,
-        // or the module stays empty there.
-        "bat": "BAT0",
+        // .../hidpp_battery_0"). BAT1 is what the MSI names its battery; a laptop
+        // that calls it BAT0 needs this changed, or the module stays empty there
+        // and the log says "No battery named BAT1".
+        "bat": "BAT1",
         "states": { "warning": 30, "critical": 15 },
         "format": "{capacity}% {icon}",
         "format-charging": "{capacity}% ⚡",
