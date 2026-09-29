@@ -247,6 +247,32 @@ if command -v herdr >/dev/null; then
     fi
 fi
 
+# herdr-speak
+# Reads the focused agent's last answer aloud (prefix+shift+s and +v). Linked
+# rather than installed: it is a project of its own in ~/Projects, edited in
+# place, so herdr runs the working tree. Cloned once and never pulled here —
+# that tree is yours. The repo is private, so the clone needs `gh auth login`
+# or an SSH key; without either this warns, and the next run picks it up.
+if command -v herdr >/dev/null; then
+    HERDR_SPEAK_DIR="$USER_HOME/Projects/herdr-speak"
+    if [ ! -d "$HERDR_SPEAK_DIR/.git" ]; then
+        if gh repo clone pauldaywork/herdr-speak "$HERDR_SPEAK_DIR" >/dev/null 2>&1 \
+            || git clone -q git@github.com:pauldaywork/herdr-speak.git "$HERDR_SPEAK_DIR" 2>/dev/null; then
+            info "Cloned herdr-speak into $HERDR_SPEAK_DIR"
+        fi
+    fi
+    linked_root=$(herdr plugin list --json 2>/dev/null \
+        | jq -r '.result.plugins[]? | select(.plugin_id == "speak") | .plugin_root' 2>/dev/null)
+    if [ "$linked_root" = "$HERDR_SPEAK_DIR" ]; then
+        info "herdr-speak already linked from $HERDR_SPEAK_DIR"
+    elif [ -f "$HERDR_SPEAK_DIR/herdr-plugin.toml" ] \
+        && herdr plugin link "$HERDR_SPEAK_DIR" >/dev/null 2>&1; then
+        info "Linked herdr-speak from $HERDR_SPEAK_DIR"
+    else
+        warn "Could not clone or link herdr-speak — its read-aloud keys in herdr will do nothing"
+    fi
+fi
+
 # The DankMaterialShell theme path rewrite that used to follow is gone with the
 # settings file it edited. waybar and mako need no post-processing: their colours
 # are written literally into config/waybar/style.css and config/mako/config,
