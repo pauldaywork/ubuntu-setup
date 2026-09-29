@@ -111,6 +111,10 @@ APT_PACKAGES=(
     # PipeWire's pipewire-pulse serves.
     pulsemixer
 
+    # Serves waybar's power-profiles-daemon module on laptops. Comes with
+    # ubuntu-desktop-minimal; named for the same reason as bluez.
+    power-profiles-daemon
+
     # dev tools
     git
     curl

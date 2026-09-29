@@ -210,6 +210,7 @@ window#waybar.empty #window {
  * wallpaper rather than a blurred wash, so this is the only thing separating the
  * text from it. */
 #tray,
+#power-profiles-daemon,
 #backlight,
 #pulseaudio,
 #bluetooth,
@@ -240,6 +241,8 @@ window#waybar.empty #window {
 
 #battery.warning  { color: @warning; }
 #battery.critical { color: @error; }
+
+#power-profiles-daemon.performance { color: @warning; }
 
 #pulseaudio.muted,
 #bluetooth.off,

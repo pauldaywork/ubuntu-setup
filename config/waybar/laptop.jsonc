@@ -5,7 +5,20 @@
 {
     "group/laptop": {
         "orientation": "inherit",
-        "modules": ["backlight", "battery"]
+        "modules": ["power-profiles-daemon", "backlight", "battery"]
+    },
+
+    // Click cycles balanced → performance → power-saver. Words rather than
+    // icons, like the vol and bt pills. The daemon is power-profiles-daemon,
+    // the same one `powerprofilesctl` talks to.
+    "power-profiles-daemon": {
+        "format": "{icon}",
+        "format-icons": {
+            "performance": "perf",
+            "balanced": "bal",
+            "power-saver": "save"
+        },
+        "tooltip-format": "Power profile: {profile}\nDriver: {driver}"
     },
 
     "backlight": {
