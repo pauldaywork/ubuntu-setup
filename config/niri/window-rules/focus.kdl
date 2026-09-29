@@ -81,10 +81,19 @@ window-rule {
     }
 }
 
+// Hidden windows must switch every effect back to neutral, not just blur. The
+// rule above still gives them xray, noise and saturation (a later rule can
+// override a value but not unset it), and niri draws the background effect
+// without the window's opacity, so at opacity 0 those still paint a grainy,
+// oversaturated patch on the wallpaper. With all four neutral, niri skips the
+// effect entirely.
 window-rule {
     match is-focused=false
     background-effect {
+        xray false
         blur false
+        noise 0.0
+        saturation 1.0
     }
     opacity 0.0
 }
