@@ -105,6 +105,12 @@ APT_PACKAGES=(
     bluez
     rfkill
 
+    # The mixer waybar's audio module opens, in a terminal like bluetui and
+    # nmtui: output device, per-app volume and input levels, which scrolling
+    # on the bar cannot reach. It speaks the PulseAudio protocol, which
+    # PipeWire's pipewire-pulse serves.
+    pulsemixer
+
     # dev tools
     git
     curl

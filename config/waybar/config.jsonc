@@ -99,13 +99,19 @@
         "icon-size": 16
     },
 
-    // wpctl rather than pactl, so this agrees with the XF86Audio binds in
-    // config.kdl — one tool deciding what "the default sink" means.
+    // Labelled in words like the bt pill beside it. A muted sink used to read
+    // just "muted", with nothing to say it was the audio pill.
+    //
+    // Click opens pulsemixer in a terminal, the way bluetooth and network open
+    // their TUIs: that is where you switch output device or set an app's
+    // volume. Right-click mutes. The mute and scroll actions use wpctl rather
+    // than pactl, so they agree with the XF86Audio binds in config.kdl — one
+    // tool deciding what "the default sink" means.
     "pulseaudio": {
-        "format": "{volume}% {icon}",
-        "format-muted": "muted",
-        "format-icons": { "default": ["ᴠ", "ᴠ", "ᴠ"] },
-        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "format": "vol {volume}%",
+        "format-muted": "vol muted",
+        "on-click": "ghostty -e pulsemixer",
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
         "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05+ -l 1.0",
         "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05-",
         "tooltip-format": "{desc}"

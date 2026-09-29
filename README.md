@@ -326,7 +326,7 @@ it — task state is untouched (`task` on the command line, and niri-tasks'
 `Mod+Alt+T`/`P`, `Mod+Alt+Ctrl+T` and its task panel, which were always separate from
 the widget), but the at-a-glance count in the bar is not coming back. The
 click-through audio, network and bluetooth popovers are gone; waybar's modules
-shell out to `wpctl`, `nmtui` and `bluetui` instead. Wallpapers no longer retint the
+shell out to `pulsemixer`, `nmtui` and `bluetui` instead. Wallpapers no longer retint the
 desktop. And the monitor layout is no longer detected per-machine — `config.kdl`
 names the outputs and modes explicitly, so different hardware needs an edit
 (`install.sh` warns about this at the end).
