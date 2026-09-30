@@ -164,8 +164,8 @@ NIRI_TITLES = {
 SPAWN_TITLES = [
     (r"wpctl set-volume .*0\.1\+", "Volume up"), (r"wpctl set-volume .*0\.1-", "Volume down"),
     (r"wpctl set-mute @DEFAULT_AUDIO_SINK@", "Mute"), (r"wpctl set-mute @DEFAULT_AUDIO_SOURCE@", "Mute microphone"),
-    (r"playerctl play-pause", "Play / pause"), (r"playerctl stop", "Stop playback"),
-    (r"playerctl previous", "Previous track"), (r"playerctl next", "Next track"),
+    (r"playerctl .*play-pause", "Play / pause"), (r"playerctl .*stop", "Stop playback"),
+    (r"playerctl .*previous", "Previous track"), (r"playerctl .*next", "Next track"),
     (r"brightnessctl .*\+10%", "Brightness up"), (r"brightnessctl .*10%-", "Brightness down"),
 ]
 
@@ -186,6 +186,9 @@ NO_RUN = {"quit", "toggle-keyboard-shortcuts-inhibit"}
 
 def niri_category(action, args, chord):
     text = " ".join(args)
+    # Ahead of the hardware-key test, so a media key and its Mod+Alt twin land together.
+    if "playerctl" in text:
+        return "Media"
     if chord.startswith("XF86"):
         return "Hardware keys"
     if action in ("spawn", "spawn-sh"):

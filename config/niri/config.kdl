@@ -331,12 +331,17 @@ binds {
     XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
     XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
 
-    // Example media keys mapping using playerctl.
-    // This will work with any MPRIS-enabled media player.
-    XF86AudioPlay        allow-when-locked=true { spawn-sh "playerctl play-pause"; }
-    XF86AudioStop        allow-when-locked=true { spawn-sh "playerctl stop"; }
-    XF86AudioPrev        allow-when-locked=true { spawn-sh "playerctl previous"; }
-    XF86AudioNext        allow-when-locked=true { spawn-sh "playerctl next"; }
+    // Media controls via playerctl, which drives any MPRIS player. "-p spotify,%any"
+    // aims at Spotify first, so a paused browser tab doesn't take the key.
+    // Mod+Alt+, and . come before the media keys they share a command with:
+    // shortcuts/build.py merges the two into one row led by the first bind, and
+    // fuzzel shows only that first key.
+    Mod+Alt+Comma  allow-when-locked=true hotkey-overlay-title="Music: Previous Track" { spawn-sh "playerctl -p spotify,%any previous"; }
+    Mod+Alt+Period allow-when-locked=true hotkey-overlay-title="Music: Next Track" { spawn-sh "playerctl -p spotify,%any next"; }
+    XF86AudioPlay        allow-when-locked=true { spawn-sh "playerctl -p spotify,%any play-pause"; }
+    XF86AudioStop        allow-when-locked=true { spawn-sh "playerctl -p spotify,%any stop"; }
+    XF86AudioPrev        allow-when-locked=true { spawn-sh "playerctl -p spotify,%any previous"; }
+    XF86AudioNext        allow-when-locked=true { spawn-sh "playerctl -p spotify,%any next"; }
 
     // Open/close the Overview: a zoomed-out view of workspaces and windows.
     // You can also move the mouse into the top-left hot corner,
