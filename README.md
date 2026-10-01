@@ -7,7 +7,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 | Category | Files |
 |---|---|
 | Shell | `.bashrc`, `.profile` |
-| Terminal multiplexer | [herdr](https://herdr.dev), one session per project workspace (installed by hand, not by this repo), with the herdr-worktrunk plugin and [herdr-speak](https://github.com/pauldaywork/herdr-speak) (read the last agent answer aloud, `prefix+shift+s`/`v`; cloned into `~/Projects` and linked) |
+| Terminal multiplexer | [herdr](https://herdr.dev), one session per project workspace (installed by hand, not by this repo), with the herdr-worktrunk plugin and [herdr-speak](https://github.com/pauldaywork/herdr-speak) (read a plan or picked paragraphs of the last agent answer aloud with `prefix+shift+v`, a selection with `prefix+shift+a`, `prefix+shift+b` to close its panes; cloned into `~/Projects` and linked) |
 | Window manager | Niri config + swappable window-rules/layout profiles (`Mod+Alt+F`) |
 | Bar | waybar: the top bar (`config.jsonc`) via the package's `waybar.service`, the workspace bar (`dock.jsonc`) via `waybar-dock.service` when there's more than `general` |
 | Notifications | mako |

@@ -7,6 +7,12 @@ onboarding = false
 name = "catppuccin"
 auto_switch = false
 
+# Keep a mouse selection highlighted until Ctrl+C copies and clears it, so a
+# drag in copy mode (prefix+[) survives for speak.selection (prefix+shift+a).
+# Outside copy mode herdr drops a selection on any key press, prefix included.
+[ui]
+copy_on_select = false
+
 # ─── worktrees ────────────────────────────────────────────────────────────────
 # Worktrees go through worktrunk, by way of the herdr-worktrunk plugin, never
 # herdr's own worktree commands. worktrunk runs the repo's .config/wt.toml hooks
@@ -49,16 +55,29 @@ type = "plugin_action"
 command = "worktrunk.remove"
 description = "worktree: remove (drops its database; keeps an unmerged branch)"
 
-# Read the focused agent's last answer aloud through local Kokoro, via the
-# speak plugin in ~/Projects/herdr-speak. Press again to stop.
-[[keys.command]]
-key = "prefix+shift+s"
-type = "plugin_action"
-command = "speak.last"
-description = "speak: read the last answer aloud (again to stop)"
-
+# Speak through local Kokoro, via the speak plugin in ~/Projects/herdr-speak.
+# Pick Files for a markdown plan, or Last answer to tick the paragraphs of the
+# focused agent's last answer to hear. Press again while it prepares to cancel.
+# Not +p, which is herdr's rename pane.
 [[keys.command]]
 key = "prefix+shift+v"
 type = "plugin_action"
-command = "speak.last-verbatim"
-description = "speak: read the last answer as written, no rewrite (again to stop)"
+command = "speak.plan"
+description = "speak: pick a plan file or last-answer paragraphs and read them aloud (again to cancel)"
+
+# Select text in a pane, then hear it rewritten, shown beside the pane with live
+# captions and a player. Press again while it prepares to cancel. Not +r, which
+# is herdr's reload config.
+[[keys.command]]
+key = "prefix+shift+a"
+type = "plugin_action"
+command = "speak.selection"
+description = "speak: read the selected text aloud (again to cancel)"
+
+# When done, stop any speech and close the spinner, text, captions and player
+# panes the plugin opened. Next to +v; not +x, which is herdr's close tab.
+[[keys.command]]
+key = "prefix+shift+b"
+type = "plugin_action"
+command = "speak.close"
+description = "speak: stop and close the text, captions and player panes"

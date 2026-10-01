@@ -248,7 +248,8 @@ if command -v herdr >/dev/null; then
 fi
 
 # herdr-speak
-# Reads the focused agent's last answer aloud (prefix+shift+s and +v). Linked
+# Reads aloud a plan, picked paragraphs of the agent's last answer (prefix+shift+v)
+# or a copy-mode selection (prefix+shift+a); prefix+shift+b closes its panes. Linked
 # rather than installed: it is a project of its own in ~/Projects, edited in
 # place, so herdr runs the working tree. Cloned once and never pulled here —
 # that tree is yours. The repo is private, so the clone needs `gh auth login`
