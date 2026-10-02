@@ -98,9 +98,17 @@ window#waybar.waybar-dock #workspaces {
     box-shadow: none;
 }
 
+/* No hover state on any workspace: the GTK theme's button hover (a gradient,
+ * border, shadow and transition) is undone here, and the card and urgent rules
+ * list :hover alongside their own selectors so a hover changes nothing. */
 #workspaces button:hover {
     background-color: transparent;
+    background-image: none;
     color: alpha(#ffffff, 0.8);
+    border: none;
+    box-shadow: none;
+    outline: none;
+    transition: none;
 }
 
 /* A soft drop shadow under the names, to lift them off a light patch of
