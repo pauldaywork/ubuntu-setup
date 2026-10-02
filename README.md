@@ -161,6 +161,8 @@ ubuntu-setup/
 │   ├── herdr/plugins/config/worktrunk/config.toml   # The herdr-worktrunk plugin's settings
 │   ├── worktrunk/config.toml               # Where worktrees go: ~/.worktrees/<repo>/<branch>
 │   ├── claude/skills/worktree-setup/SKILL.md   # → ~/.claude/skills/  Writes a repo's wt.toml by interview
+│   ├── claude/hooks/ring-bell-on-stop.sh   # → ~/.claude/hooks/  Rings the bell when an agent finishes,
+│   │                                       #     flagging its workspace in the dock
 │   ├── applications/                       # → ~/.local/share/applications/  (desktop entries)
 │   │   ├── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
 │   │   └── chatgpt.desktop                 # Shadows the stock entry to start ChatGPT on Wayland
