@@ -193,13 +193,25 @@ window#waybar.waybar-dock #workspaces.current button:hover {
  * there rings the bell, Ghostty asks niri for attention, and niri clears it
  * when the workspace's terminal is focused.
  * An inset shadow rather than a border: it takes no room, so the name doesn't
- * shift when the ring comes and goes, and it draws nothing on the zero-width
- * buttons the side copies squash away (see "Slicing the sides"). A border would
- * leave a yellow sliver for every one of those. */
-#workspaces button.urgent,
-#workspaces button.urgent:hover {
+ * shift when the ring comes and goes.
+ *
+ * Only on the buttons a side copy shows, picked the same way as in "Slicing the
+ * sides". A squashed button still paints the shadow, as a 2px line the height
+ * of the bar, and the right copy's squashed buttons sit against the card, so an
+ * urgent workspace left of the current one drew a stray edge on the card. The
+ * left copy shows everything before the active button, so it rings all of its
+ * buttons and then takes the ring off the active one and those after it. The
+ * right copy only ever rings what follows the active button. */
+#workspaces.before button.urgent,
+#workspaces.before button.urgent:hover,
+#workspaces.after button.active ~ button.urgent,
+#workspaces.after button.active ~ button.urgent:hover {
     box-shadow: inset 0 0 0 2px @attention;
     border-radius: 8px;
+}
+
+#workspaces.before button.active ~ button.urgent {
+    box-shadow: none;
 }
 
 #window {
