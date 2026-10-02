@@ -258,7 +258,7 @@ The symlink and state file are machine-local, not tracked in git — `configure.
 
 ## Workspace tasks and project workspaces
 
-`Mod+Alt+P` to open a project on its own named workspace, `Mod+Alt+T` to add a
+`Mod+Alt+W` to open a project on its own named workspace, `Mod+Alt+T` to add a
 task to it, `Mod+Alt+Ctrl+T` to list and act on that workspace's tasks — all of that
 lives in **[niri-tasks](https://github.com/pauldaywork/niri-tasks)** now, not here.
 
@@ -278,7 +278,7 @@ What this repo still owns:
   `niritasks terminal`, which opens the terminal in `~/Projects/<workspace>`; its
   include comes later, and a later bind of the same key wins. Without niri-tasks
   you get a plain terminal. Ghostty itself has no `command =` line — every
-  window is a login shell — and `Mod+Alt+P` opens the project's terminal on its
+  window is a login shell — and `Mod+Alt+W` opens the project's terminal on its
   herdr session, `herdr --session <workspace>`.
 
 ### Worktrees for parallel agents

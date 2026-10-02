@@ -16,7 +16,7 @@ config to this convention.
 
 ## How you use it
 
-In a project's herdr session (`Mod+Alt+P`), the herdr-worktrunk plugin's keys:
+In a project's herdr session (`Mod+Alt+W`), the herdr-worktrunk plugin's keys:
 
 | Key | Does |
 |---|---|

@@ -20,7 +20,7 @@
 // Lives in the 50px band at the bottom that the struts have been holding open
 // since DMS's dock went. Nothing but workspaces: this is for seeing where you
 // are and clicking somewhere else, and niri-tasks names workspaces after the
-// project open on them (Mod+Alt+P), so the list reads as a list of what you are
+// project open on them (Mod+Alt+W), so the list reads as a list of what you are
 // working on rather than a row of numbers.
 //
 // Split three ways around the workspace you are on. It sits alone in the middle,
@@ -100,7 +100,7 @@
     "custom/spacer-left": { "format": " ", "expand": true, "tooltip": false },
     "custom/spacer-right": { "format": " ", "expand": true, "tooltip": false },
 
-    // niri names workspaces, and niri-tasks leans on that heavily — Mod+Alt+P
+    // niri names workspaces, and niri-tasks leans on that heavily — Mod+Alt+W
     // opens a project on a workspace named after it, so this list is a list of
     // what you have open.
     //

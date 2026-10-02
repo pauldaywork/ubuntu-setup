@@ -86,7 +86,7 @@ APT_PACKAGES=(
     waybar
     mako-notifier
 
-    # dmenu-style picker used by open_project_workspace.sh (Mod+Alt+P) and by
+    # dmenu-style picker used by open_project_workspace.sh (Mod+Alt+W) and by
     # wallpaper/pick.sh (Mod+Alt+B). Usually pulled in as a niri dependency, but
     # named here so it can't silently disappear from under the shortcuts.
     fuzzel
