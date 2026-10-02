@@ -288,7 +288,7 @@ if jq -e --arg h "$BELL_HOOK" '[.hooks.Stop[]?.hooks[]?.command] | any(contains(
     info "Claude Code Stop hook already registered"
 elif jq --arg cmd "'$BELL_HOOK'" \
         '.hooks.Stop += [{"hooks": [{"type": "command", "command": $cmd, "timeout": 5}]}]' \
-        "$CLAUDE_SETTINGS" >"$CLAUDE_SETTINGS.tmp" \
+        "$CLAUDE_SETTINGS" >"$CLAUDE_SETTINGS.tmp" 2>/dev/null \
     && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"; then
     info "Registered the Claude Code Stop hook"
 else

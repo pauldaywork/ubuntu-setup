@@ -10,17 +10,24 @@
 # SubagentStop.
 #
 # Hooks run without a controlling terminal, so /dev/tty isn't there. The claude
-# process that spawned us has one, so walk up to the first ancestor with a tty
-# and ring that.
+# process that spawned us has a tty when it is interactive, so walk up to that
+# process and ring its own tty. A headless claude (claude -p, from a script, a
+# skill or the Bash tool) has no tty and rings nothing: climbing past it would
+# ring the outer agent's pane, or an unrelated terminal, while the real agent is
+# still working. Never ring any other process's tty.
 
 cat >/dev/null
 
 pid=$PPID
 while [ "${pid:-1}" -gt 1 ]; do
-    tty=$(ps -o tty= -p "$pid" | tr -d ' ')
-    case "$tty" in
-        ''|'?') pid=$(ps -o ppid= -p "$pid" | tr -d ' ') ;;
-        *) printf '\a' >"/dev/$tty" 2>/dev/null; exit 0 ;;
-    esac
+    if [ "$(ps -o comm= -p "$pid" | tr -d ' ')" = claude ]; then
+        tty=$(ps -o tty= -p "$pid" | tr -d ' ')
+        case "$tty" in
+            ''|'?') ;;
+            *) printf '\a' >"/dev/$tty" 2>/dev/null ;;
+        esac
+        exit 0
+    fi
+    pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
 done
 exit 0
