@@ -52,7 +52,7 @@ confirm-close-surface = false
 app-notifications = no-clipboard-copy,no-config-reload
 # A bell in an unfocused window asks niri for attention, which marks the window
 # (and its workspace) urgent until it is focused. The dock shows that as a
-# yellow ring, and Claude's Stop hook rings the bell when an agent finishes, so
+# white ring, and Claude's Stop hook rings the bell when an agent finishes, so
 # keep `attention`. These are Ghostty's defaults, written out for that reason.
 bell-features = no-system,no-audio,attention,title,no-border
 
