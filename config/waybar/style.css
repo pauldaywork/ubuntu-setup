@@ -28,6 +28,7 @@
 @define-color secondary    #49ccd2;
 @define-color warning      #fab387;
 @define-color error        #f38ba8;
+@define-color attention  #f9e2af;
 
 * {
     /* Same family and size as the terminal, so the bar and a full-screen
@@ -187,10 +188,18 @@ window#waybar.waybar-dock #workspaces.current button:hover {
     font-size: 13px;
 }
 
-/* Urgent is the one state that still stands out beside the card. */
+/* Urgent is the one state that still stands out beside the card: a yellow
+ * ring, for a workspace with something to look at. A Claude agent finishing
+ * there rings the bell, Ghostty asks niri for attention, and niri clears it
+ * when the workspace's terminal is focused.
+ * An inset shadow rather than a border: it takes no room, so the name doesn't
+ * shift when the ring comes and goes, and it draws nothing on the zero-width
+ * buttons the side copies squash away (see "Slicing the sides"). A border would
+ * leave a yellow sliver for every one of those. */
 #workspaces button.urgent,
 #workspaces button.urgent:hover {
-    color: @error;
+    box-shadow: inset 0 0 0 2px @attention;
+    border-radius: 8px;
 }
 
 #window {
