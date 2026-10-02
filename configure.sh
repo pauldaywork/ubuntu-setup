@@ -274,6 +274,28 @@ if command -v herdr >/dev/null; then
     fi
 fi
 
+# Claude Code Stop hook
+# Registers ring-bell-on-stop.sh, deployed from the path table above, so a
+# finished agent flags its workspace in the dock. settings.json is Claude's own
+# file, and herdr adds its SessionStart hook to it as well, so this adds our one
+# entry when it's missing and leaves everything else alone.
+CLAUDE_SETTINGS="$USER_HOME/.claude/settings.json"
+BELL_HOOK="$USER_HOME/.claude/hooks/ring-bell-on-stop.sh"
+mkdir -p "$(dirname "$CLAUDE_SETTINGS")"
+[ -s "$CLAUDE_SETTINGS" ] || echo '{}' >"$CLAUDE_SETTINGS"
+if jq -e --arg h "$BELL_HOOK" '[.hooks.Stop[]?.hooks[]?.command] | any(contains($h))' \
+    "$CLAUDE_SETTINGS" >/dev/null 2>&1; then
+    info "Claude Code Stop hook already registered"
+elif jq --arg cmd "'$BELL_HOOK'" \
+        '.hooks.Stop += [{"hooks": [{"type": "command", "command": $cmd, "timeout": 5}]}]' \
+        "$CLAUDE_SETTINGS" >"$CLAUDE_SETTINGS.tmp" \
+    && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"; then
+    info "Registered the Claude Code Stop hook"
+else
+    rm -f "$CLAUDE_SETTINGS.tmp"
+    warn "Could not register the Claude Code Stop hook — finished agents won't flag their workspace"
+fi
+
 # The DankMaterialShell theme path rewrite that used to follow is gone with the
 # settings file it edited. waybar and mako need no post-processing: their colours
 # are written literally into config/waybar/style.css and config/mako/config,

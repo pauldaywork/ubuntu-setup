@@ -103,6 +103,10 @@ DOTFILES_MAP=(
     "config/worktrunk/config.toml|.config/worktrunk/config.toml|copy"
     # The skill that writes a repo's worktree hooks, by interview.
     "config/claude/skills/worktree-setup/SKILL.md|.claude/skills/worktree-setup/SKILL.md|copy"
+    # Rings the bell when a Claude agent finishes, so its workspace is flagged
+    # in the dock. Registered in ~/.claude/settings.json by configure.sh, which
+    # Claude and herdr also write, so that file isn't in this table.
+    "config/claude/hooks/ring-bell-on-stop.sh|.claude/hooks/ring-bell-on-stop.sh|exec"
 
     # waybar + mako — what replaced DankMaterialShell. Plain copies, which is
     # the whole difference: nothing writes to these but us, so there is no
