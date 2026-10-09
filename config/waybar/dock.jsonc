@@ -152,7 +152,7 @@
 //
 // It lines up with the invisible #current on the workspace bar. Both are
 // centred on the output. Vertically, both run 6px off the screen's edge (see
-// the workspace bar's margin-bottom). Here the card has a 4px ring for its
+// the workspace bar's margin-bottom). Here the card has a 3px ring for its
 // outline on every side but the bottom (see style.css), so this bar takes the
 // same -6.
 {
