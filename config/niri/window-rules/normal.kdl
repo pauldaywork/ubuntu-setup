@@ -58,7 +58,7 @@ window-rule {
 
     focus-ring {
         on
-        width 4
+        width 3
         active-color "#00000020"
         inactive-color "#00000020"
         urgent-color "#00000020"
