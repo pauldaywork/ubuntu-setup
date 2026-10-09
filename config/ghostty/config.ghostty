@@ -5,7 +5,7 @@
 # opens one in ~/Projects/<workspace>.
 
 mouse-scroll-multiplier = 0.5
-background-opacity = 0.5
+background-opacity = 0.75
 background-opacity-cells = true
 background-blur = 32
 window-padding-x = 8
