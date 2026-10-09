@@ -52,10 +52,12 @@ if [ ! -f "$WALLPAPER" ]; then
 fi
 
 # These wallpapers are small pixel-art loops stretched to fill the screen, and
-# Lanczos turns pixel art into mush. Photographs still get swww's default.
+# Lanczos turns pixel art into mush. swww animates WebP as well as GIF, so both
+# count as loops. PNG does not: the static PNGs here include photographs, which
+# still get swww's default.
 case "${WALLPAPER,,}" in
-    *.gif) FILTER=Nearest ;;
-    *)     FILTER=Lanczos3 ;;
+    *.gif|*.webp) FILTER=Nearest ;;
+    *)            FILTER=Lanczos3 ;;
 esac
 
 # This runs as ExecStartPost, which fires while the daemon is still coming up,
