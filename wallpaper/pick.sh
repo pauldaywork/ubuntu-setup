@@ -156,11 +156,29 @@ for wall in "${WALLS[@]}"; do
         # crop before scale, and crop to whichever of the two the source can
         # actually supply, so a portrait wallpaper is cut down rather than
         # stretched. ffmpeg centres a crop when no x/y is given.
+        #
+        # ffmpeg's WebP decoder reads still WebP but not animated: an animated
+        # one fails with "image data not found" and leaves a blank icon. So for
+        # a .webp, webpmux (the webp package) copies frame 1 out as a still
+        # WebP first, and ffmpeg crops and scales that. Without webpmux the
+        # WebP goes to ffmpeg as it is, which still works for a still one.
+        src="$wall"
+        frame=""
+        case "${wall,,}" in
+            *.webp)
+                if command -v webpmux &>/dev/null; then
+                    frame="$(mktemp --suffix=.webp)"
+                    webpmux -get frame 1 "$wall" -o "$frame" >/dev/null 2>&1 \
+                        && src="$frame"
+                fi
+                ;;
+        esac
         ffmpeg -y -loglevel error \
-            -i "$wall" \
+            -i "$src" \
             -vf "crop='min(iw,ih*$THUMB_W/$THUMB_H)':'min(ih,iw*$THUMB_H/$THUMB_W)',scale=$THUMB_W:$THUMB_H" \
             -frames:v 1 \
             "$thumb" </dev/null >/dev/null 2>&1 || true
+        [ -n "$frame" ] && rm -f "$frame"
     fi
 done
 

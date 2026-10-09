@@ -499,6 +499,9 @@ if [ ! -x "$HOME/.config/niri/wallpaper-pick.sh" ]; then
 elif ! command -v ffmpeg &>/dev/null; then
     issue "ffmpeg not installed — the wallpaper picker will list names with no thumbnails"
     note "  Install with: sudo apt install ffmpeg"
+elif ! command -v webpmux &>/dev/null; then
+    issue "webpmux not installed — animated WebP wallpapers will have blank thumbnails"
+    note "  Install with: sudo apt install webp"
 fi
 
 # The end-to-end check: what swww has on screen should be what wallpaper-active

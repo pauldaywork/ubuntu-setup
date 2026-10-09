@@ -98,6 +98,11 @@ APT_PACKAGES=(
     # of an animated GIF, and most of these wallpapers are animated GIFs.
     ffmpeg
 
+    # webpmux, for the thumbnails of animated WebP wallpapers. ffmpeg's WebP
+    # decoder reads still WebP only, so the picker has webpmux copy out the
+    # first frame for ffmpeg to scale.
+    webp
+
     # Bluetooth. Both come with ubuntu-desktop-minimal today, and named here
     # for the same reason as fuzzel: waybar's bluetooth module and bluetui are
     # clients of bluez, and doctor.sh reads rfkill to spot a saved soft block —
