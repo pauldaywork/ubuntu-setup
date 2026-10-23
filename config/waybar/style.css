@@ -238,7 +238,6 @@ window#waybar.empty #window {
  * against whatever the wallpaper happens to be doing behind them — that is sharp
  * wallpaper rather than a blurred wash, so this is the only thing separating the
  * text from it. */
-#tray,
 #power-profiles-daemon,
 #backlight,
 #pulseaudio,
@@ -278,9 +277,4 @@ window#waybar.empty #window {
 #bluetooth.disabled,
 #network.disconnected {
     color: @muted;
-}
-
-#tray menu {
-    background-color: @surface;
-    color: @text;
 }

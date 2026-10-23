@@ -72,7 +72,6 @@
     "modules-left": ["clock"],
     "modules-center": [],
     "modules-right": [
-        "tray",
         "pulseaudio",
         "bluetooth",
         "network",
@@ -93,11 +92,6 @@
     // every battery in /sys/class/power_supply, a mouse's included, and a USB
     // replug on the desktop aborted the whole bar.
     "include": ["~/.config/waybar/laptop.jsonc"],
-
-    "tray": {
-        "spacing": 10,
-        "icon-size": 16
-    },
 
     // Labelled in words like the bt pill beside it. A muted sink used to read
     // just "muted", with nothing to say it was the audio pill.
