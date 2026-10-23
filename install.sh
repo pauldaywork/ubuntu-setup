@@ -126,6 +126,21 @@ else
     warn "Log out and back in before docker works without sudo"
 fi
 
+# ─── Backlight permissions ────────────────────────────────────────────────────
+# Ubuntu builds brightnessctl without logind support and ships no udev rule, so
+# it writes /sys/class/backlight/*/brightness directly. That file is root:video
+# 664, so without the video group the brightness keys and waybar's backlight
+# scroll fail with "Permission denied". Same new-session caveat as docker.
+section "Configuring backlight permissions"
+
+if id -nG "$CURRENT_USER" | grep -qw video; then
+    info "$CURRENT_USER already in the video group"
+else
+    info "Adding $CURRENT_USER to the video group"
+    sudo usermod -aG video "$CURRENT_USER"
+    warn "Log out and back in before the brightness keys work"
+fi
+
 # Running `sudo docker` even once creates ~/.docker owned by root, and after
 # that every rootless docker command fails on its own config directory — a
 # confusing failure, since group membership looks correct. Hand it back.

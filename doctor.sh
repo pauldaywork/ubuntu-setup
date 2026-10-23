@@ -107,6 +107,16 @@ else
     note "  Fix with: sudo usermod -aG docker $(id -un)   (then log out and back in)"
 fi
 
+# Only a machine with a backlight needs it; see the backlight step in install.sh.
+if compgen -G "/sys/class/backlight/*" >/dev/null; then
+    if id -nG "$(id -un)" | grep -qw video; then
+        ok "In the video group"
+    else
+        issue "Not in the video group — brightnessctl can't change the backlight"
+        note "  Fix with: sudo usermod -aG video $(id -un)   (then log out and back in)"
+    fi
+fi
+
 if systemctl is-active --quiet docker; then
     ok "docker service running"
 else
