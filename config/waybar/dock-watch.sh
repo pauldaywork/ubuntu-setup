@@ -10,10 +10,8 @@
 #
 # It has to be the whole process. The card is blurred by a niri layer-rule
 # against its surface, so hiding it with CSS would leave a blurred card-shaped
-# ghost, and waybar's two signals cannot say show *and* hide to these bars
-# while Mod+Alt+M keeps SIGUSR1 for the top bar. A process that exists or
-# does not is also the one state that cannot desync: every decision below
-# re-checks reality rather than remembering it.
+# ghost. A process that exists or does not is also the one state that cannot
+# desync: every decision below re-checks reality rather than remembering it.
 #
 # niri's event stream opens with a full workspace snapshot, so the first
 # event settles the initial state; unnamed workspaces (niri's permanent

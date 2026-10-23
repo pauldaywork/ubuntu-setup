@@ -13,8 +13,9 @@
 // the surface — ending the process — takes the blur with it.
 //
 // Both processes read the same style.css: waybar finds it next to whichever
-// config -c names. Mod+Alt+M's `killall -SIGUSR1 waybar` reaches this process
-// too, which is why both bars here keep "on-sigusr1": "noop".
+// config -c names. Mod+Alt+M signals only waybar.service's process, not this
+// one; both bars here still keep "on-sigusr1": "noop" so that a hand-typed
+// `killall -SIGUSR1 waybar` cannot hide them either.
 [
 // ─── the workspace bar ────────────────────────────────────────────────────────
 // Lives in the 50px band at the bottom that the struts have been holding open
@@ -53,10 +54,10 @@
     // overlapping windows.
     "exclusive": false,
 
-    // Mod+Alt+M hides the top bar, and it does that by sending SIGUSR1 — which
-    // goes to every waybar process, this one included. noop opts this bar out,
-    // and the card bar below as well; the top bar keeps the default "toggle"
-    // and is the only one that responds.
+    // Mod+Alt+M shows and hides the top bar by signalling waybar.service's
+    // process alone, so it never reaches this one. noop is for a hand-typed
+    // `killall -SIGUSR1 waybar`, which would: it opts this bar out, and the
+    // card bar below as well.
     "on-sigusr1": "noop",
 
     "spacing": 6,
