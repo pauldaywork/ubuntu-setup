@@ -71,13 +71,6 @@ else
     note "  Install with: sudo apt install -y ${MISSING_APT[*]}"
 fi
 
-if pkg_installed obsidian; then
-    ok "obsidian installed"
-else
-    issue "obsidian not installed"
-    note "  See the OBSIDIAN_VERSION .deb URL in install.sh"
-fi
-
 for entry in "${DEB_PACKAGES[@]}"; do
     pkg="${entry%%|*}"
     if pkg_installed "$pkg"; then

@@ -33,7 +33,3 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # rustup/cargo (installed via rustup.rs, not the rustup snap)
 . "$HOME/.cargo/env"
 
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:$HOME/.lmstudio/bin"
-# End of LM Studio CLI section
-

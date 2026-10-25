@@ -677,7 +677,7 @@ binds {
     // opened, which live in the same unit and would get it from a plain
     // systemctl kill.
     Mod+Alt+M hotkey-overlay-title="Top Bar: Toggle" { spawn-sh "f=\"$XDG_RUNTIME_DIR/waybar-top-shown\"; if [ -e \"$f\" ]; then rm -f \"$f\"; s=SIGUSR2; else touch \"$f\"; s=SIGUSR1; fi; systemctl --user kill --kill-whom=main -s \"$s\" waybar.service"; }
-    Mod+B hotkey-overlay-title="Open Browser" { spawn "firefox"; }
+    Mod+B hotkey-overlay-title="Open Browser" { spawn "google-chrome-stable"; }
 
     // Every shortcut — niri's, niri-tasks', herdr's and ghostty's — built by
     // configure.sh from shortcuts/build.py. Mod+Alt+/ searches them in fuzzel

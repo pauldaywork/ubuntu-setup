@@ -132,7 +132,3 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # file on the machine behind the repo's back.
 command -v wt >/dev/null && eval "$(command wt config shell init bash)"
 
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:$HOME/.lmstudio/bin"
-# End of LM Studio CLI section
-

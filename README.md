@@ -13,7 +13,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 | Notifications | mako |
 | Launcher | fuzzel (`Mod+Space`) |
 | Terminal | Ghostty (deb from the danklinux PPA, not the snap) |
-| Editor | Sublime Text (installed), VS Code (settings + extensions) |
+| Editor | VS Code (settings + extensions) |
 | Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/pauldaywork/niri-tasks)) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
 | Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user unit) so animated GIFs animate |
@@ -65,12 +65,12 @@ This used to hang on remembering the flag: the installer copied the repo's `conf
 The script will:
 
 1. Remove DankMaterialShell if it's installed — transitional, and a no-op on a machine that never had it (see [Life after DankMaterialShell](#life-after-dankmaterialshell))
-2. Add PPAs for Niri/Ghostty, Sublime Text, and Google Chrome
+2. Add PPAs for Niri/Ghostty, Google Chrome and the GitHub CLI
 3. Install all apt packages, from the list in `lib/manifest.sh`
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
 5. Install the NVIDIA container toolkit, but only if an NVIDIA GPU is actually present (read from sysfs, so it works before any driver is)
-6. Install apps that ship as `.deb`s — Obsidian, VS Code and ChatGPT — via their official downloads (VS Code and ChatGPT add their own apt repos for updates; VS Code is the `.deb` rather than the snap because the snap forces X11)
-7. Install snap packages (Firefox, CMake)
+6. Install VS Code from its official `.deb`, which adds Microsoft's apt repo for updates (the `.deb` rather than the snap because the snap forces X11)
+7. Install snap packages (CMake)
 8. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
 9. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers)), and bluetui, which the waybar bluetooth module opens, then install the Iosevka Term font Ghostty uses into `~/.local/share/fonts`
 10. Install Bun via the official installer
@@ -78,7 +78,7 @@ The script will:
 12. Install Claude Code via npm
 13. Copy all config files to their correct locations, install the swww systemd unit, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
 14. Clone [niri-tasks](https://github.com/pauldaywork/niri-tasks) to `~/Projects/niri-tasks` and build it — this runs straight after the config copy, so its installer can replace the `niri-tasks.kdl` stub that was just seeded
-15. Install VS Code extensions from `config/Code/extensions.txt`
+15. Install VS Code extensions from `config/Code/extensions.txt` (empty for now)
 16. Prompt for your git name and email
 17. Generate a new SSH key and print the public key so you can add it to GitHub
 
@@ -87,12 +87,12 @@ The script will:
 - **Reboot** to start Niri (also picks up `docker` group membership)
 - **Log into Claude Code**: run `claude` in a terminal
 - **Add your SSH key to GitHub**: the script prints the public key — paste it at https://github.com/settings/ssh/new
-- **Log into** Firefox, Chrome, and Obsidian as normal
-- **Run `bash extra.sh`** if you want Steam, OpenCode, LM Studio, or NVIDIA drivers (see below)
+- **Log into** Chrome as normal
+- **Run `bash extra.sh`** if the machine needs NVIDIA drivers (see below)
 
 ### 5. Optional extras
 
-`extra.sh` covers things not everyone wants on every machine: Steam, OpenCode, LM Studio, and NVIDIA drivers.
+`extra.sh` covers what not every machine needs: NVIDIA drivers.
 
 ```bash
 bash extra.sh
@@ -103,8 +103,6 @@ If the machine has an NVIDIA GPU, edit `extra.sh` and uncomment the NVIDIA lines
 ```bash
 # sudo apt install -y nvidia-driver-595-open linux-modules-nvidia-595-open-generic-hwe-26.04
 ```
-
-After running, re-download any LM Studio models you need (not included in this repo) and log into Steam.
 
 
 
@@ -121,7 +119,7 @@ ubuntu-setup/
 ├── install.sh                              # Run on a new machine: packages, then everything below
 ├── configure.sh                            # Just the config files + wallpapers (no app installs)
 ├── doctor.sh                               # Diagnose drift on an already-set-up machine
-├── extra.sh                                # Optional: Steam, OpenCode, LM Studio, NVIDIA
+├── extra.sh                                # Optional: NVIDIA drivers
 │
 ├── capture/                                # machine ──> repo, one script per thing
 │   ├── packages.sh                         # reports apt/snap not in the manifest
@@ -137,8 +135,7 @@ ubuntu-setup/
 ├── home/                                   # Mirrors ~/
 │   ├── .bashrc
 │   ├── .profile
-│   ├── .taskrc
-│   └── .local/bin/chatgpt                  # Starts ChatGPT on Wayland from a terminal
+│   └── .taskrc
 │
 ├── config/                                 # Mirrors ~/.config/
 │   ├── niri/
@@ -164,8 +161,7 @@ ubuntu-setup/
 │   ├── claude/hooks/ring-bell-on-stop.sh   # → ~/.claude/hooks/  Rings the bell when an agent finishes,
 │   │                                       #     flagging its workspace in the dock
 │   ├── applications/                       # → ~/.local/share/applications/  (desktop entries)
-│   │   ├── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
-│   │   └── chatgpt.desktop                 # Shadows the stock entry to start ChatGPT on Wayland
+│   │   └── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
 │   └── Code/                               # settings.json + extensions.txt
 │
 ├── wallpaper/                              # A feature, not a mirror: these land in four directories
@@ -482,7 +478,7 @@ restarted waybar on every wallpaper change.
 
 ## One list of what's installed
 
-`lib/manifest.sh` holds the apt packages, the `.deb` downloads, the snaps, and the version pins for Node, swww, Iosevka and Obsidian. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
+`lib/manifest.sh` holds the apt packages, the `.deb` downloads, the snaps, and the version pins for Node, swww, Iosevka, bluetui, worktrunk and dotenvx. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
 
 `lib/common.sh` holds what all five scripts print with (`info`, `warn`, `ok`, `issue`, `section`) plus `pkg_installed` and `snap_install`. `pkg_installed` is the one worth not copy-pasting: `dpkg -s` exits 0 for packages in the `rc` state — removed, config files left behind — so it matches on the status field instead.
 

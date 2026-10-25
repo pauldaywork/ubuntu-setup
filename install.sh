@@ -69,16 +69,6 @@ add_ppa "danklinux (niri)" "avengemedia/danklinux"
 
 sudo mkdir -p /etc/apt/keyrings
 
-# Sublime Text
-if ! apt-cache show sublime-text &>/dev/null; then
-    info "Adding Sublime Text repo"
-    wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg \
-        | gpg --dearmor \
-        | sudo tee /etc/apt/keyrings/sublimehq-archive-keyring.gpg > /dev/null
-    echo "deb [signed-by=/etc/apt/keyrings/sublimehq-archive-keyring.gpg] https://download.sublimetext.com/ apt/stable/" \
-        | sudo tee /etc/apt/sources.list.d/sublime-text.list > /dev/null
-fi
-
 # Google Chrome
 if ! apt-cache show google-chrome-stable &>/dev/null; then
     info "Adding Google Chrome repo"
@@ -223,14 +213,9 @@ install_deb() {
     info "Installed: $name"
 }
 
-# Obsidian — snap doesn't work; use the official GitHub release .deb.
-# OBSIDIAN_VERSION comes from lib/manifest.sh.
-install_deb "obsidian" \
-    "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/obsidian_${OBSIDIAN_VERSION}_amd64.deb"
-
 # VS Code's postinst asks whether to add Microsoft's apt repo. Answer it up front
 # so dpkg doesn't stop to ask, and so the answer is yes — that repo is how the
-# .deb gets updates. ChatGPT's postinst adds its repo without asking.
+# .deb gets updates.
 echo "code code/add-microsoft-repo boolean true" | sudo debconf-set-selections
 
 # DEB_PACKAGES comes from lib/manifest.sh — see the note there on why these are
@@ -496,8 +481,8 @@ echo ""
 info "Manual steps remaining:"
 echo "  1. Reboot (or log out and back in) to start niri"
 echo "  2. Run 'claude' to log into Claude Code"
-echo "  3. Log into Firefox, Chrome, Obsidian as needed"
-echo "  4. Run 'bash extra.sh' if you want Steam, OpenCode, LM Studio, or NVIDIA drivers"
+echo "  3. Log into Chrome as needed"
+echo "  4. Run 'bash extra.sh' if you want NVIDIA drivers"
 echo ""
 # This used to promise the opposite: DMS generated colors.kdl/layout.kdl and
 # wrote outputs.kdl from detected hardware, so a new machine configured its own

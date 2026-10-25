@@ -196,7 +196,7 @@ def niri_category(action, args, chord):
             return "Tasks" if " task " in f" {text} " else "Workspace"
         if "unset-workspace-name" in text:
             return "Workspace"
-        if re.search(r"fuzzel|ghostty|firefox|shortcuts", text) and "wallpaper" not in text:
+        if re.search(r"fuzzel|ghostty|google-chrome|shortcuts", text) and "wallpaper" not in text:
             return "Launch"
         return "Screen & session"
     if action in LAYOUT:
