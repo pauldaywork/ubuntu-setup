@@ -11,12 +11,10 @@
 # editor should be edited in the repo and deployed with configure.sh instead.
 # That is why there is no capture script for .bashrc or the window-rules.
 #
-# All 15 files in lib/paths.sh are now written by this repo and only by this
-# repo, so none of them is captured and nothing here reads that table any more.
-# Dropping DankMaterialShell is what did it: its settings.json was the one live
-# file a GUI owned, and capture/dms-settings.sh existed for it alone. What is
-# left in here deals only in things the table never held — the niri config, the
-# wallpaper images and selection, the VS Code extension list, the apt manifest.
+# Every file in lib/paths.sh is written by this repo and only by this repo, so
+# none of them is captured and nothing here reads that table. This deals only in
+# things the table never holds — the niri config, the wallpaper images and
+# selection, the VS Code extension list, the apt manifest.
 #
 # Sourced with:
 #   DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

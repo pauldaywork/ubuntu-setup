@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 # Pick a wallpaper with fuzzel, with thumbnails.
 #
-# This is Mod+Alt+B put back. The old bind was "next wallpaper" and went through
-# DMS's picker; when DMS went, the bind went with it rather than be left pointing
-# at a missing binary. What replaces it lists rather than cycles — four
-# wallpapers have no order worth stepping through, and two of the filenames are
-# download hashes, so a list you can see is worth more than a key you press
-# repeatedly.
+# Mod+Alt+B. It lists rather than cycles — the wallpapers have no order worth
+# stepping through, and two of the filenames are download hashes, so a list you
+# can see is worth more than a key you press repeatedly.
 #
 # The selection is applied by handing off to wallpaper-apply.sh, not by calling
 # swww here. That script already knows to use the Nearest filter on GIFs and to

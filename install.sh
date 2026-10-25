@@ -26,29 +26,6 @@ for lib in lib/common.sh lib/manifest.sh; do
     source "$DOTFILES/$lib"
 done
 
-# ─── 0. Remove DankMaterialShell ──────────────────────────────────────────────
-# This slot used to hold the mirror image of this step: remove mako-notifier,
-# because DMS owned the notification socket and the two fought over it. DMS is
-# the one being superseded now — waybar draws the bar, mako takes the
-# notifications, fuzzel is the launcher, and swww already had the wallpaper.
-#
-# Transitional. A machine installed from scratch today never gets DMS in the
-# first place, so this only does anything on a machine that predates the switch.
-# Once every machine you own has been through one install, delete this step —
-# the mako version of it sat here long after it had any work left to do.
-#
-# Ordered before the PPAs so that a machine still carrying the avengemedia/dms
-# repo has the package gone before `apt update` re-advertises it.
-section "Checking for DankMaterialShell"
-
-if pkg_installed dms; then
-    warn "Removing DankMaterialShell — waybar and mako replace it"
-    warn "  Your bar and notifications will be gone until you log out and back in"
-    sudo apt remove -y dms
-else
-    info "DankMaterialShell not installed"
-fi
-
 # ─── 1. PPAs and external repos ───────────────────────────────────────────────
 section "Adding package repositories"
 
@@ -62,10 +39,9 @@ add_ppa() {
     fi
 }
 
-# niri and ghostty. The avengemedia/dms PPA that used to be added alongside this
-# one is gone with the `dms` package; waybar and mako-notifier both come from
-# Ubuntu universe and need no repo of their own.
-add_ppa "danklinux (niri)" "avengemedia/danklinux"
+# niri isn't in Ubuntu's archive; this PPA is the source niri's own docs give
+# for Ubuntu, and ghostty comes from it too.
+add_ppa "niri" "avengemedia/danklinux"
 
 sudo mkdir -p /etc/apt/keyrings
 
@@ -259,10 +235,6 @@ fi
 # because most of this collection is animated GIFs and swww is what animates
 # them — swaybg and friends show a single still frame.
 #
-# It originally arrived to work around DMS, which rendered wallpapers with a QML
-# Image that decoded one frame and whose upstream declined to animate it in-shell
-# (DankMaterialShell#793). DMS is gone; the GIFs are the reason now.
-#
 # Not on crates.io and not packaged for Ubuntu, so it's installed from the git
 # tag. Both binaries are needed: swww-daemon holds the layer surface, swww is
 # the client that talks to it.
@@ -277,7 +249,7 @@ fi
 
 # ─── bluetui (bluetooth pairing) ──────────────────────────────────────────────
 # What the waybar bluetooth module opens on click, in the same way network opens
-# nmtui. DMS's bluetooth popover went with DMS and waybar has none of its own.
+# nmtui. waybar has no bluetooth popover of its own.
 section "Installing bluetui"
 
 if ! command -v bluetui &>/dev/null; then
@@ -484,11 +456,9 @@ echo "  2. Run 'claude' to log into Claude Code"
 echo "  3. Log into Chrome as needed"
 echo "  4. Run 'bash extra.sh' if you want NVIDIA drivers"
 echo ""
-# This used to promise the opposite: DMS generated colors.kdl/layout.kdl and
-# wrote outputs.kdl from detected hardware, so a new machine configured its own
-# monitors. Nothing does that now — the outputs are written out in config.kdl —
-# and a new machine that silently runs at the wrong resolution is a much harder
-# thing to notice than a line of install output saying it might.
+# Nothing detects monitors: the outputs are written out in config.kdl, and a new
+# machine that silently runs at the wrong resolution is a much harder thing to
+# notice than a line of install output saying it might.
 warn "Monitor layout is NOT auto-detected: config/niri/config.kdl names this"
 warn "setup's outputs and modes explicitly. On different hardware, check"
 warn "'niri msg outputs' and edit the output blocks to match."

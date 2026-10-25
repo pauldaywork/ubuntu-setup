@@ -1,18 +1,8 @@
 /* Bar styling.
  *
- * The palette is lifted from the DankMaterialShell theme this setup used, the
- * "Peace & Quiet" dark variant with the salmon accent, so the bar still looks
- * like the rest of the desktop after DMS itself is gone. Those values were
- * previously read live out of theme.json by DMS, and generated into niri by
- * matugen; here they are written down.
- *
- * Note what this costs: matugen used to re-derive the whole palette from the
- * current wallpaper, so the desktop retinted itself when the wallpaper changed.
- * Nothing does that now, and the last thread of it — a @wallpaper_accent
- * colour that wallpaper-apply.sh derived and imported here, restarting waybar
- * on every wallpaper change — is gone too: nothing had drawn with it since
- * the current workspace became a task card in fixed colours. Everything below
- * is a written-down constant, and the bars never hear about wallpapers.
+ * The palette is the "Peace & Quiet" dark theme with the salmon accent, shared
+ * with niri, mako and fuzzel. Everything below is a written-down constant, and
+ * the bars never hear about wallpapers.
  *
  * The salmon accent those values came with (muted #d9bcb8, primary #eda792) has
  * since been dropped, so @primary has no users left, and nor does @secondary.

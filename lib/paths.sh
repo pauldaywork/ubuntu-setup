@@ -6,8 +6,6 @@
 # paths were spelled again in doctor.sh, so keeping them in step was a manual
 # job.
 #
-# The capture/ scripts used to read it right-to-left as well, for the handful of
-# files a GUI owned. That was DankMaterialShell's settings, and with those gone
 # capture/ deals exclusively in things that aren't in the table at all
 # (config.kdl, the wallpaper images, the VS Code extension list, the package
 # manifest).
@@ -19,11 +17,6 @@
 # whatever you last clicked, and there is no capture script to bring it back.
 # Live with it by editing settings in the repo, or notice the drift in
 # doctor.sh; what you must not do is assume this file holds still.
-#
-# It had already gone wrong. `config/niri/dms/laptop.kdl` was deployed by
-# configure.sh, was not in .gitignore, and was never pulled back — so on a
-# laptop, every edit to the live file was silently discarded by the next
-# install. Declaring the direction once makes that class of bug unrepresentable.
 #
 # ─── format ───────────────────────────────────────────────────────────────────
 #
@@ -37,12 +30,6 @@
 #             desktop has no copy to capture anyway.
 #   desktop   the same the other way round: only on desktops, removed from a
 #             laptop.
-#
-# There used to be a fourth, `merge`, for a file the app owned and grew keys in
-# — deploying merged rather than replaced so a re-install couldn't delete every
-# key the repo's snapshot predated. Only DankMaterialShell's two settings files
-# ever used it, and it went with them: waybar and mako read what we write and
-# write nothing back. merge_json in lib/common.sh went at the same time.
 #
 # ─── deliberately NOT in here ─────────────────────────────────────────────────
 #
@@ -108,9 +95,7 @@ DOTFILES_MAP=(
     # Claude and herdr also write, so that file isn't in this table.
     "config/claude/hooks/ring-bell-on-stop.sh|.claude/hooks/ring-bell-on-stop.sh|exec"
 
-    # waybar + mako — what replaced DankMaterialShell. Plain copies, which is
-    # the whole difference: nothing writes to these but us, so there is no
-    # settings file growing keys underneath the repo and no merge to do.
+    # waybar + mako. Plain copies: nothing writes to these but us.
     # Two waybar processes share style.css: waybar.service draws the top bar
     # from config.jsonc, and waybar-dock.service runs dock-watch.sh, which
     # shows dock.jsonc's bottom bars only while a workspace besides general

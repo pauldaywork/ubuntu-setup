@@ -117,11 +117,6 @@ else
     note "  Start with: sudo systemctl enable --now docker"
 fi
 
-# mako used to be checked here in the negative — "installed but no longer used,
-# remove it" — because DMS owned notifications and the two fought over the
-# socket. It is in APT_PACKAGES now, so the loop above checks it like any other
-# package and a second opinion here would only contradict it.
-
 for entry in "${SNAP_PACKAGES[@]}"; do
     pkg="${entry%%:*}"
     flag=""; [[ "$entry" == *:classic ]] && flag=" --classic"
@@ -168,19 +163,13 @@ else
     note "  Install with: npm install -g @anthropic-ai/claude-code"
 fi
 
-# The DMS taskwarrior widget was checked here. It was a DMS plugin, so it went
-# with DMS — there is no waybar equivalent packaged, and nothing in this repo
-# replaces it. Task state is still there: `task` on the command line, and
-# niri-tasks' Mod+Alt+T/P and Mod+Alt+Ctrl+T and its task panel, which were always
-# separate from the widget. What is gone is the at-a-glance count in the bar.
-
-# The desktop pieces that replaced DMS. mako is a niri spawn-at-startup line, so
+# The desktop pieces. mako is a niri spawn-at-startup line, so
 # a bare pgrep is the honest check for it. waybar is the package's systemd unit,
 # plus a second process for the bottom bars (dock.jsonc, run by dock-watch.sh
 # under waybar-dock.service) — so the count is per config, not per binary: one
 # top-bar process, and at most one dock, which is legitimately absent whenever
-# "general" is the only named workspace. A second copy of either (niri used to
-# spawn one too) draws its bars twice.
+# "general" is the only named workspace. A second copy of either draws its bars
+# twice.
 #
 # A missing bar is obvious the moment you look at the screen. A missing
 # notification daemon is not: notify-send simply returns, and the first thing
@@ -214,10 +203,6 @@ if pkg_installed mako-notifier; then
     elif [ -n "${WAYLAND_DISPLAY:-}" ]; then
         issue "mako is installed but not running — notifications will go nowhere"
         note "  Start it with: mako &   (or re-login; niri spawns it at startup)"
-        # The overlap case, and the only one with a non-obvious fix: two daemons
-        # cannot both own org.freedesktop.Notifications, so mako exits at startup
-        # while DMS still holds it.
-        pkg_installed dms && note "  DMS is still installed and owns the notification socket — remove it first"
     fi
 fi
 
@@ -256,12 +241,8 @@ for _row in "${DOTFILES_MAP[@]}"; do
         note "  Install with: bash configure.sh"
         MISSING=$((MISSING + 1))
     elif ! cmp -s "$_live" "$_repo"; then
-        # Every row is a plain copy now, so every row is expected to match
-        # byte-for-byte. The `merge` exemption that used to be here covered
-        # DankMaterialShell's two settings files, whose live copies legitimately
-        # carried keys the repo's snapshot had never heard of; the ghostty
-        # exemption after it covered a `command =` line configure.sh rewrote,
-        # which is gone now that ghostty runs a plain login shell.
+        # Every row is a plain copy, so every row is expected to match
+        # byte-for-byte.
         note "Differs from the repo: ~/$HOME_PATH"
         DRIFTED=$((DRIFTED + 1))
     fi
@@ -342,53 +323,9 @@ else
     fi
 fi
 
-# Files this repo used to install and no longer does. Deleting them from the
-# repo doesn't delete them from a machine that already has them, and a stale
-# script is worse than clutter — it's indistinguishable from a live one.
-#
-# configure.sh does the removing; this only reports, like everything else here.
-STALE_ON_DISK=()
-for rel in \
-    ".config/niri/task-lib.sh" ".config/niri/task-tag.sh" ".config/niri/task-active.sh" \
-    ".config/niri/task-list.sh" ".config/niri/task-add.sh" ".config/niri/task-add-text.sh" \
-    ".config/niri/task-get-text.sh" ".config/niri/task-edit-text.sh" \
-    ".config/niri/task-get-notes.sh" ".config/niri/task-annotate-text.sh" \
-    ".config/niri/create_named_workspace.sh" ".config/niri/rename_workspace.sh" \
-    ".config/niri/default_workspace_name.sh" ".config/niri/open_project_workspace.sh" \
-    ".config/niri/tmux-niri-session.sh" ".config/niri/toggle-window-rules.sh" \
-    ".config/fuzzel/project-picker.ini" ".config/niri/dms/laptop.kdl" \
-    ".config/niri/wallpaper-sync.sh" ".config/systemd/user/wallpaper-sync.service"
-do
-    [ -e "$HOME/$rel" ] && STALE_ON_DISK+=("$rel")
-done
-# DMS's three state trees, reported only once the package is gone — configure.sh
-# gates the removal the same way, and a machine still running DMS is not one
-# whose settings are leftovers. Between them these subsume the activetask plugin
-# directory and the dms/laptop.kdl entry that used to be listed on their own.
-if ! pkg_installed dms; then
-    [ -d "$HOME/.config/DankMaterialShell" ] && \
-        STALE_ON_DISK+=(".config/DankMaterialShell")
-    [ -d "$HOME/.local/state/DankMaterialShell" ] && \
-        STALE_ON_DISK+=(".local/state/DankMaterialShell")
-    [ -d "$HOME/.config/niri/dms" ] && \
-        STALE_ON_DISK+=(".config/niri/dms")
-fi
-
-if [ "${#STALE_ON_DISK[@]}" -gt 0 ]; then
-    issue "${#STALE_ON_DISK[@]} file(s) this repo no longer installs are still on disk"
-    for rel in "${STALE_ON_DISK[@]}"; do
-        note "    ~/$rel"
-    done
-    note "  Remove them with: bash configure.sh"
-else
-    ok "No leftovers from past moves"
-fi
-
 # Wallpapers. Two things have to agree or the desktop goes black: swww has to be
 # installed and running, and what it has on screen has to be what
-# wallpaper-active names. There used to be a third — DMS's own wallpaper layer
-# had to stay disabled or it would paint a still frame over the top — and a
-# second unit to keep alive.
+# wallpaper-active names.
 if command -v swww &>/dev/null && command -v swww-daemon &>/dev/null; then
     ok "swww installed ($(swww --version 2>/dev/null))"
 else
@@ -406,8 +343,8 @@ else
 fi
 
 # A soft block outlives reboots — systemd-rfkill saves it and puts it back at
-# boot — and nothing on the bar can lift it: DMS's toggle went with DMS, and
-# bluetui only sees an adapter that won't power on. The bar just says "bt off".
+# boot — and nothing on the bar can lift it: bluetui only sees an adapter that
+# won't power on. The bar just says "bt off".
 bt_rfkill=$(rfkill --noheadings --output SOFT,HARD list bluetooth 2>/dev/null || true)
 if ! command -v rfkill &>/dev/null; then
     issue "rfkill not installed — can't tell whether bluetooth is blocked"
@@ -511,16 +448,6 @@ fi
 # names. Those two diverging is the whole failure mode this setup guards against
 # — a paint missed while the daemon was down leaves the screen on swww's cached
 # image forever — and nothing else here would catch it.
-#
-# This used to compare against DMS's session.json, and needed Python to pick the
-# right key out of it: the selection moved between wallpaperPath, a per-mode
-# variant and a per-monitor map depending on two other settings, and the
-# per-monitor case had no single right answer to compare against at all. One
-# path in one file has none of those shapes.
-#
-# The DMS check that used to follow — that its built-in wallpaper layer stayed
-# disabled, or it would paint a still frame over swww — has nothing left to
-# check.
 WALLPAPER_ACTIVE="$HOME/.config/niri/wallpaper-active"
 if [ -f "$WALLPAPER_ACTIVE" ] && command -v swww &>/dev/null \
    && systemctl --user is-active --quiet swww-daemon.service 2>/dev/null; then

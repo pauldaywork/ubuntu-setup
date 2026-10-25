@@ -18,8 +18,8 @@
 // `killall -SIGUSR1 waybar` cannot hide them either.
 [
 // ─── the workspace bar ────────────────────────────────────────────────────────
-// Lives in the 50px band at the bottom that the struts have been holding open
-// since DMS's dock went. Nothing but workspaces: this is for seeing where you
+// Lives in the 50px band at the bottom that the struts hold open. Nothing but
+// workspaces: this is for seeing where you
 // are and clicking somewhere else, and niri-tasks names workspaces after the
 // project open on them (Mod+Alt+W), so the list reads as a list of what you are
 // working on rather than a row of numbers.

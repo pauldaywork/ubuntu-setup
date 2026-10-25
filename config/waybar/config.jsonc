@@ -1,5 +1,4 @@
-// The top bar. Replaces DankMaterialShell's, which was a whole Quickshell
-// desktop that happened to draw one.
+// The top bar.
 //
 // This is one of three bars, and one of two waybar processes. The other two
 // bars — the workspace bar along the bottom and the current workspace's card
@@ -14,14 +13,11 @@
 // generic a thing to be matching by name.
 //
 // All of them land in strut space that config/niri/window-rules/*.kdl already
-// holds open — `struts { top 60; bottom 50; }` in both profiles. The bottom 50
-// was reserved for a DMS dock and has been empty since; the workspace bar
-// fills it without changing window geometry at all.
+// holds open — `struts { top 60; bottom 50; }` in both profiles. The workspace
+// bar fills the bottom 50 without changing window geometry at all.
 //
-// What is genuinely gone and not replaced here is DMS's notification centre,
-// notepad, night-mode toggle and its click-through audio/network/bluetooth
-// popovers — waybar has no equivalent, and the modules below click out to the
-// same CLI tools the niri binds already use instead.
+// waybar has no click-through audio/network/bluetooth popovers, so the modules
+// below click out to the same CLI tools the niri binds already use.
 [
 {
     "name": "waybar-top",
@@ -57,8 +53,7 @@
     //
     // An exclusive bar asks the compositor to reserve its height, and niri
     // would shrink the window area to suit. But the struts above already
-    // reserve that space by hand, because DMS's surfaces were not exclusive
-    // either. Leaving this false means each bar sits in the band that is
+    // reserve that space by hand. Leaving this false means each bar sits in the band that is
     // already being held open for it, and the window geometry does not change.
     //
     // To reclaim that space later: set this true on both bars (or drop the
@@ -123,8 +118,8 @@
         "tooltip-format": "{desc}"
     },
 
-    // bluetui in a terminal, the same way network opens nmtui. The DMS popover
-    // this replaces could pair and connect from the bar; bluetui does both.
+    // bluetui in a terminal, the same way network opens nmtui: it pairs and
+    // connects.
     "bluetooth": {
         "format": "bt",
         "format-off": "bt off",

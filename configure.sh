@@ -141,13 +141,6 @@ if [ ! -e "$USER_HOME/.config/niri/window-rules-active.kdl" ]; then
     echo "focus" > "$USER_HOME/.config/niri/.window-rules-profile"
 fi
 
-# The dms/binds.kdl stub that used to be seeded here is gone with the include
-# that needed it. It existed only because config.kdl carried an unconditional
-# `include "dms/binds.kdl"` and DMS would not create that file until someone
-# saved a keybind through its settings UI — so without the stub, a fresh machine
-# had an invalid niri config on every login. No include, no stub, and nothing
-# recreates ~/.config/niri/dms/ any more.
-
 # niri refuses to load a config whose include is missing — it falls back to its
 # built-in defaults, which looks like "my keybinds vanished". niri-tasks owns the
 # workspace-task binds and symlinks the real file over this stub when it's
@@ -163,35 +156,19 @@ fi
 # desktop bare until the next login, and so `systemctl --user status` can say
 # what went wrong. graphical-session.target starts and stops it with niri.
 #
-# One unit, where there used to be two: wallpaper-sync.service ran a watch loop
-# over DMS's session.json, and swww-daemon.service's only job beyond starting
-# the daemon was to kick it. The daemon now paints from its own ExecStartPost.
+# The daemon paints the selection from its own ExecStartPost.
 
 # `enable` alone is enough: graphical-session.target pulls it in at login.
 # Starting it here would fail on a fresh machine that has no session yet
 # (Requisite=graphical-session.target), so that's left to the next login —
 # except when there *is* a session, where it saves a re-login.
 if command -v systemctl &>/dev/null; then
-    # Retire wallpaper-sync.service on a machine that already has it. Deleting
-    # the unit file without disabling it first would leave a dangling symlink in
-    # graphical-session.target.wants, which systemd complains about on every
-    # daemon-reload and which `systemctl --user disable` can no longer clean up
-    # once the file it points at is gone. Stop before disable, so it isn't left
-    # running until the next logout with nothing left to restart it.
-    if systemctl --user list-unit-files wallpaper-sync.service &>/dev/null \
-       && [ -e "$USER_HOME/.config/systemd/user/wallpaper-sync.service" ]; then
-        systemctl --user stop wallpaper-sync.service 2>/dev/null || true
-        systemctl --user disable wallpaper-sync.service 2>/dev/null \
-            && info "Retired wallpaper-sync.service (swww-daemon paints directly now)"
-    fi
-
     systemctl --user daemon-reload 2>/dev/null || true
     systemctl --user enable swww-daemon.service 2>/dev/null \
         && info "Enabled the swww-daemon user unit" \
         || warn "Could not enable the swww-daemon user unit (no systemd user session?)"
     # The bar. The waybar package's own unit, which Ubuntu enables system-wide
     # already; enabled here too so the bar does not hang on a package preset.
-    # See the note where config.kdl used to spawn it.
     systemctl --user enable waybar.service 2>/dev/null \
         && info "Enabled the waybar user unit" \
         || warn "Could not enable the waybar user unit (no systemd user session?)"
@@ -208,16 +185,9 @@ if command -v systemctl &>/dev/null; then
 fi
 
 # ghostty
-# No post-processing any more. Its `command =` line used to be rewritten here to
-# `niritasks tmux-session`, a wrapper that put each window in a tmux session in
-# the workspace's ~/Projects folder. Now ghostty runs a plain login shell, and
-# whoever asks for the window picks the folder: Mod+Return runs
-# `niritasks terminal`, which opens one in ~/Projects/<workspace>.
-#
 # ghostty runs as one long-lived process (gtk-single-instance) that reads its
 # config once at startup, so every new window keeps the old config until it is
-# told to reload — which, when the old config named a command that has since
-# gone, means new windows that fail to start at all. SIGUSR2 is its reload
+# told to reload. SIGUSR2 is its reload
 # signal, from 1.2 on. Older versions don't handle it, and SIGUSR2's default
 # action is to terminate, so check first.
 if pgrep -u "$USER" -x ghostty >/dev/null; then
@@ -296,125 +266,6 @@ else
     warn "Could not register the Claude Code Stop hook — finished agents won't flag their workspace"
 fi
 
-# The DankMaterialShell theme path rewrite that used to follow is gone with the
-# settings file it edited. waybar and mako need no post-processing: their colours
-# are written literally into config/waybar/style.css and config/mako/config,
-# because there is no longer anything generating a palette to point at.
-
-# ─── Files this repo used to install and no longer does ───────────────────────
-# Deleting a file from the repo does not delete it from a machine that already
-# has it. Nothing here reads these any more, but left in place they are worse
-# than clutter: the DMS plugin keeps rendering a widget whose scripts are gone,
-# and fifteen dead scripts in ~/.config/niri make it impossible to tell at a
-# glance which ones are live.
-#
-# Removal is safe in this order because config.kdl was written above, so by the
-# time these go the binds that used to call them are already gone too — either
-# replaced by niri-tasks.kdl, or by the empty stub when niri-tasks is absent.
-#
-# Keep this list rather than globbing ~/.config/niri/*.sh: wallpaper-sync.sh
-# lives there and is very much still ours.
-STALE_FILES=(
-    # The workspace-task system, now https://github.com/pauldaywork/niri-tasks
-    ".config/niri/task-lib.sh"
-    ".config/niri/task-tag.sh"
-    ".config/niri/task-active.sh"
-    ".config/niri/task-list.sh"
-    ".config/niri/task-add.sh"
-    ".config/niri/task-add-text.sh"
-    ".config/niri/task-get-text.sh"
-    ".config/niri/task-edit-text.sh"
-    ".config/niri/task-get-notes.sh"
-    ".config/niri/task-annotate-text.sh"
-    ".config/niri/create_named_workspace.sh"
-    ".config/niri/rename_workspace.sh"
-    ".config/niri/default_workspace_name.sh"
-    ".config/niri/open_project_workspace.sh"
-    ".config/niri/tmux-niri-session.sh"
-    # tmux, dropped: herdr is the multiplexer now, one session per project
-    # workspace, and plain terminals are plain shells. ~/.tmux (TPM and its
-    # plugins) is left alone — it was never a managed file.
-    ".tmux.conf"
-    # ghostty's legacy config file, which predates config.ghostty and was never
-    # managed. ghostty loads both, so it was quietly setting working-directory
-    # to ~/Code and a DankMaterialShell theme; what was worth keeping from it
-    # now lives in config/ghostty/config.ghostty, colours included, so the
-    # theme DMS generated goes with it.
-    ".config/ghostty/config"
-    ".config/ghostty/themes/dankcolors"
-    # Its fuzzel theme too — niri-tasks installs its own as picker.ini.
-    ".config/fuzzel/project-picker.ini"
-    # The window-rules toggle moved in beside the profiles it switches between,
-    # so it installs to window-rules/toggle.sh now.
-    ".config/niri/toggle-window-rules.sh"
-    # Dropping DMS moved our laptop binds out of the directory DMS generated
-    # into. config.kdl includes "laptop.kdl" now, so the old copy is dead — and
-    # worse than dead, since it looks exactly like a live config file.
-    ".config/niri/dms/laptop.kdl"
-    # A single-popup guard that wrapped the launcher and the wallpaper picker.
-    # It worked by holding an flock for the popup's lifetime, and flock holds its
-    # lock through a file descriptor that every app fuzzel launches inherits — so
-    # opening anything from the launcher kept the lock until that app was closed,
-    # and the shortcuts stayed dead meanwhile. fuzzel already refuses to run
-    # twice on its own, so the wrapper was buying nothing for the cost.
-    ".config/niri/popup-guard.sh"
-
-    # The wallpaper watch loop and its unit. swww-daemon.service paints from its
-    # own ExecStartPost now. The unit is disabled further up before it is
-    # removed here — order matters, see the note there.
-    ".config/niri/wallpaper-sync.sh"
-    ".config/systemd/user/wallpaper-sync.service"
-)
-
-STALE_REMOVED=0
-for rel in "${STALE_FILES[@]}"; do
-    if [ -e "$USER_HOME/$rel" ]; then
-        rm -f "$USER_HOME/$rel"
-        STALE_REMOVED=$((STALE_REMOVED + 1))
-    fi
-done
-
-# DankMaterialShell's whole config tree, which subsumes the activetask plugin
-# directory that used to be removed here on its own. A directory, so it needs
-# -rf rather than the loop above.
-#
-# Gated on the package actually being gone. apt leaves ~/.config alone when it
-# removes something, so this is the only thing that will ever clean it up — but
-# running install.sh is what removes the package, and configure.sh is also run
-# on its own, by someone who may still be using DMS and would not thank us for
-# deleting its settings out from under it.
-if [ -d "$USER_HOME/.config/DankMaterialShell" ] && ! pkg_installed dms; then
-    rm -rf "$USER_HOME/.config/DankMaterialShell"
-    STALE_REMOVED=$((STALE_REMOVED + 1))
-    info "Removed the leftover ~/.config/DankMaterialShell tree"
-fi
-
-# The other half of DMS's state: session.json (the wallpaper selection, launcher
-# history, night mode, the notepad) under ~/.local/state.
-if [ -d "$USER_HOME/.local/state/DankMaterialShell" ] && ! pkg_installed dms; then
-    rm -rf "$USER_HOME/.local/state/DankMaterialShell"
-    STALE_REMOVED=$((STALE_REMOVED + 1))
-    info "Removed the leftover ~/.local/state/DankMaterialShell tree"
-fi
-
-# The niri config DMS generated: colors.kdl (matugen's palette), alttab.kdl,
-# layout.kdl, wpblur.kdl, cursor.kdl, binds.kdl, and the outputs.kdl symlink into
-# profiles/. config.kdl stopped including any of it, and the one file in there
-# that was ever ours moved out to ~/.config/niri/laptop.kdl.
-#
-# Left alone these are worse than clutter, which is the whole reason the sweep
-# above exists: six .kdl files sitting in ~/.config/niri/dms/ are indis-
-# tinguishable from live config to anyone reading the directory, including you
-# in six months. Only `dms/laptop.kdl` was being removed before, which left the
-# directory present and looking load-bearing.
-if [ -d "$USER_HOME/.config/niri/dms" ] && ! pkg_installed dms; then
-    rm -rf "$USER_HOME/.config/niri/dms"
-    STALE_REMOVED=$((STALE_REMOVED + 1))
-    info "Removed the leftover ~/.config/niri/dms tree"
-fi
-
-[ "$STALE_REMOVED" -gt 0 ] && info "Removed $STALE_REMOVED file(s) this repo no longer installs"
-
 # VS Code settings (extensions are not installed here — see install.sh)
 
 # ─── Projects folder ──────────────────────────────────────────────────────────
@@ -431,10 +282,9 @@ fi
 # ─── Wallpapers ───────────────────────────────────────────────────────────────
 section "Setting up wallpapers"
 
-# The whole folder is installed, not just the active one. With DMS's picker gone
-# there is nothing browsing this directory at runtime, but switching wallpaper is
-# now "point wallpaper-active at a different file in here", and that only works
-# if they are all present. Animated GIFs included — swww is what renders those.
+# The whole folder is installed, not just the active one. Switching wallpaper is
+# "point wallpaper-active at a different file in here", and that only works if
+# they are all present. Animated GIFs included — swww is what renders those.
 WALLPAPER_DIR="$USER_HOME/Documents/Wallpapers"
 mkdir -p "$WALLPAPER_DIR"
 
@@ -464,19 +314,13 @@ fi
 
 WALLPAPER_DST="$WALLPAPER_DIR/$ACTIVE_WALLPAPER"
 
-# Record which image swww should paint. This replaces seeding DMS's
-# session.json, and the rule it enforces is carried over unchanged: select a
-# wallpaper if none is selected, but never overrule one already chosen on this
-# machine. Re-running the installer to pick up an unrelated config change used
-# to throw away whichever wallpaper you'd since picked, and the fix then is the
-# fix now — the installer's job is to make sure there *is* one, not to have the
-# last word on which. Same treatment as the window-rules profile seeded above.
+# Record which image swww should paint: select a wallpaper if none is selected,
+# but never overrule one already chosen on this machine. The installer's job is
+# to make sure there *is* one, not to have the last word on which. Same
+# treatment as the window-rules profile seeded above.
 #
 # A single line holding a path. Reading it back needs `head -n1` and a test that
-# the file still exists, which is the whole of the format; the fifty lines of
-# Python this replaces were spent keeping DMS's other session state intact while
-# editing one key out of the middle of its JSON, and none of that is owed to a
-# file we write ourselves.
+# the file still exists, which is the whole of the format.
 WALLPAPER_ACTIVE="$USER_HOME/.config/niri/wallpaper-active"
 CURRENT_WALLPAPER=""
 [ -s "$WALLPAPER_ACTIVE" ] && CURRENT_WALLPAPER="$(head -n1 "$WALLPAPER_ACTIVE")"
@@ -489,19 +333,6 @@ else
     printf '%s\n' "$WALLPAPER_DST" > "$WALLPAPER_ACTIVE"
     info "Wallpaper set to $ACTIVE_WALLPAPER"
 fi
-
-# Retire the wallpaper accent's leftovers on a machine that has them. The
-# retint — wallpaper-apply.sh writing wallpaper-colors.css and restarting
-# waybar on every paint, style.css importing it, this script seeding it —
-# is gone: nothing had drawn with the colour since the current workspace
-# became a task card in fixed colours. The seeded/derived CSS file and the
-# by-eye accent list would just sit unread, which this repo treats as drift.
-for stale in "$USER_HOME/.config/waybar/wallpaper-colors.css" \
-             "$USER_HOME/.config/niri/wallpaper-accents"; do
-    if [ -e "$stale" ]; then
-        rm -f "$stale" && info "Retired $(basename "$stale") (the wallpaper accent is gone)"
-    fi
-done
 
 # ─── Shortcut page ────────────────────────────────────────────────────────────
 # Mod+Alt+/ searches every shortcut in fuzzel and Mod+Alt+Ctrl+/ opens the page.

@@ -9,11 +9,9 @@
 #   - which one is selected, recorded in wallpaper/active so a fresh machine
 #     boots the same background
 #
-# The second half used to read DMS's session.json, because its picker owned the
-# selection. Changing wallpaper is now "point ~/.config/niri/wallpaper-active at
-# another image and restart swww-daemon", which is still a change made on the
-# machine rather than in the repo — so this still has a job, it just reads a
-# one-line file instead of picking a key out of someone else's JSON.
+# Changing wallpaper is "point ~/.config/niri/wallpaper-active at another image
+# and restart swww-daemon", a change made on the machine rather than in the
+# repo — which is why the selection is captured.
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$DOTFILES/capture/common.sh"
@@ -36,8 +34,7 @@ if [ -d "$LIVE_DIR" ]; then
         name="$(basename "$wall")"
         # Image types only. Without this, anything that lands in the folder gets
         # committed: a .DS_Store, a stray zip, the __MACOSX leftovers out of an
-        # unzipped download. The list was originally copied from DMS's picker
-        # filter and is kept as-is — swww reads rather more than it rejects.
+        # unzipped download. swww reads rather more than this rejects.
         case "${name,,}" in
             *.jpg|*.jpeg|*.png|*.bmp|*.gif|*.webp|*.jxl|*.avif|*.heif|*.exr) ;;
             *) continue ;;

@@ -1,8 +1,7 @@
 // What only laptops get: the built-in screen and the keys that drive it.
 // configure.sh deploys this on machines it takes for laptops (see "Machine
 // type" in CONTEXT.md) and appends `include "laptop.kdl"` to config.kdl there;
-// a desktop has neither. Lived at dms/laptop.kdl until DMS was dropped — it was
-// never a DMS file, it just shared the directory with the ones DMS generated.
+// a desktop has neither.
 
 // The built-in screen. niri picks the highest refresh rate when the mode's is
 // left off, and places the output automatically when this position would

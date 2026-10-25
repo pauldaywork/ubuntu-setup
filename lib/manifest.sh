@@ -64,20 +64,16 @@ DEB_PACKAGES=(
 
 # ─── apt ──────────────────────────────────────────────────────────────────────
 APT_PACKAGES=(
-    # window manager. niri and ghostty are from the danklinux PPA, which is why
-    # ghostty isn't a snap: the repo is already configured for niri's sake, and
-    # the deb avoids classic-snap confinement.
+    # window manager. niri and ghostty both come from the PPA install.sh adds
+    # for niri, which is why ghostty isn't a snap: the deb avoids classic-snap
+    # confinement.
     niri
     ghostty
 
-    # The bar and the notification daemon, which between them replace what
-    # DankMaterialShell used to do. Both are plain Ubuntu universe packages —
-    # the DMS PPA is gone from install.sh along with `dms` itself.
-    #
-    # mako in particular used to be actively *removed* by install.sh: DMS owned
-    # the notification socket and the two fought over it. Nothing implements
-    # org.freedesktop.Notifications now, so notify-send — which
-    # window-rules/toggle.sh calls on every profile switch — needs it back.
+    # The bar and the notification daemon, both plain Ubuntu universe packages.
+    # mako is the only thing implementing org.freedesktop.Notifications, which
+    # notify-send — called by window-rules/toggle.sh on every profile switch —
+    # needs.
     waybar
     mako-notifier
 
@@ -101,7 +97,7 @@ APT_PACKAGES=(
     # Bluetooth. Both come with ubuntu-desktop-minimal today, and named here
     # for the same reason as fuzzel: waybar's bluetooth module and bluetui are
     # clients of bluez, and doctor.sh reads rfkill to spot a saved soft block —
-    # which nothing on the bar can lift since DMS went.
+    # which nothing on the bar can lift.
     bluez
     rfkill
 
@@ -135,10 +131,6 @@ APT_PACKAGES=(
     socat
     libudev-dev
     util-linux-extra
-
-    # inotify-tools was here for wallpaper-sync.sh, which watched DMS's session
-    # file to follow the wallpaper picker. Both are gone: the selection is a
-    # path in a file this repo writes, so nothing watches anything.
 
     # apps (from external repos)
     taskwarrior

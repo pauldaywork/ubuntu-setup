@@ -24,8 +24,7 @@ background = 000000
 cursor-color = #f4f4f4
 selection-background = #d6d6d6
 selection-foreground = #dcdcdc
-# The 16 ANSI colours, carried over from the `dankcolors` theme
-# DankMaterialShell used to generate, so dropping DMS does not change them.
+# The 16 ANSI colours.
 palette = 0=#161616
 palette = 1=#ff7272
 palette = 2=#94f47a

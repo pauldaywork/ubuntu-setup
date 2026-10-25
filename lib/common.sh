@@ -123,19 +123,6 @@ copy() {
     info "Copied $dst"
 }
 
-# merge_json lived here, for config files the *app* owned and rewrote as it
-# gained features. DankMaterialShell's settings.json was the only real case: its
-# live file grew keys and climbed a configVersion with each release, while the
-# repo carried a snapshot from whenever capture/dms-settings.sh last ran, so
-# copying ours flat over the top deleted every key our snapshot had never heard
-# of — 147 of them on this machine, including the display profiles and the whole
-# battery section. Merging kept those.
-#
-# It went with DMS. waybar and mako read what this repo writes and write nothing
-# back, so a plain copy() is both correct and honest about who owns the file. If
-# something that owns its own config shows up again, this is in the git history
-# rather than gone.
-
 # ─── pulling back (used by capture/) ──────────────────────────────────────────
 # A repo file that matches HEAD is always recoverable with `git checkout`, so it
 # is overwritten silently. Untracked files count as uncommitted: there's no

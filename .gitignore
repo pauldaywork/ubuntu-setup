@@ -4,12 +4,6 @@
 # Private scratch notes — local only, deliberately untracked.
 THOUGHTS.md
 
-# The nine config/niri/dms/* exclusions that used to live here are gone with
-# DMS. They existed because DMS regenerated those files per-machine; the two
-# that carried real settings (colors.kdl, alttab.kdl) are now written out in
-# config.kdl, and the rest were empty or unused. config/niri/dms/ no longer
-# exists in this repo — laptop.kdl, the one file in there that was ours, is
-# config/niri/laptop.kdl now.
 
 # Specs and tickets written by the engineering skills. See
 # docs/agents/issue-tracker.md — this repo tracks issues as local markdown, and

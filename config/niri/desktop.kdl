@@ -8,9 +8,7 @@
 // its log — so a desktop with a different monitor plugged in degrades rather
 // than failing to start.
 
-// The motherboard's HDMI port (card2-HDMI-A-1, the AMD iGPU). This used to come
-// from `include "dms/outputs.kdl"`, a symlink into DMS's own monitor-profile
-// store written from its display settings tab.
+// The motherboard's HDMI port (card2-HDMI-A-1, the AMD iGPU).
 output "HDMI-A-1" {
     mode "3840x2160@60.000"
     scale 1

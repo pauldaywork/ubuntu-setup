@@ -1,23 +1,12 @@
 #!/usr/bin/env bash
 # Paint the selected wallpaper with swww.
 #
-# Replaces wallpaper-sync.sh, which was a watch loop: DMS owned the wallpaper
-# choice and only ever announced a change by rewriting session.json, so the only
-# way to follow it was to sit on that file with inotify and re-derive the
-# selection each time it moved. All of that — the watch, the JSON resolution,
-# the per-mode and per-monitor handling, the pid comparison that noticed a
-# restarted daemon showing its own stale cache — existed to track someone else's
-# state.
-#
-# The choice is now a path in a file this repo writes (configure.sh seeds it,
-# see ~/.config/niri/wallpaper-active), so there is nothing to follow. This runs
+# The choice is a path in a file this repo writes (configure.sh seeds it, see
+# ~/.config/niri/wallpaper-active), so there is nothing to follow. This runs
 # once, from swww-daemon.service's ExecStartPost, on every daemon start.
 #
 # To change wallpaper: point that file at another image in ~/Documents/Wallpapers
 # and run this script, or `systemctl --user restart swww-daemon.service`.
-#
-# It also picks the wallpaper's accent colour for the bar, below. Every change
-# of wallpaper comes through here, so this is the one place that can.
 set -uo pipefail
 
 # swww is a `cargo install`, not an apt package, and niri's session env doesn't
@@ -66,8 +55,7 @@ esac
 # that takes its time or dies once on startup.
 #
 # --resize crop is swww's name for the "Fill" fill mode. No --outputs flag means
-# every output: there is one wallpaper for the whole session now, where DMS
-# could set one per monitor and per light/dark mode.
+# every output: there is one wallpaper for the whole session.
 PAINTED=no
 for _ in $(seq 1 30); do
     if swww img "$WALLPAPER" \
@@ -87,14 +75,5 @@ if [ "$PAINTED" != yes ]; then
     echo "Could not paint $WALLPAPER — is swww-daemon running?" >&2
     exit 1
 fi
-
-# There used to be a second act here: an accent colour picked from the
-# wallpaper (ffmpeg palettegen scored by saturation² × brightness), written to
-# ~/.config/waybar/wallpaper-colors.css and followed by a waybar restart on
-# every paint. Nothing had drawn with that colour since the current workspace
-# became a task card in fixed colours, and the restart made every bar blink on
-# every wallpaper change — so the whole retint went, and the bars no longer
-# hear about wallpapers at all. It is in git history if a colour from the
-# wallpaper is ever wanted back.
 
 exit 0
