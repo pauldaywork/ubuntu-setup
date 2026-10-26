@@ -14,6 +14,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 | Launcher | fuzzel (`Mod+Space`) |
 | Terminal | Ghostty (deb from the PPA install.sh adds for niri, not the snap) |
 | Editor | VS Code (settings + extensions) |
+| Browser | Firefox (Mozilla's `.deb`, pinned over Ubuntu's snap), with uBlock Origin force-installed by enterprise policy (`system/firefox-policies.json`) |
 | Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/pauldaywork/niri-tasks)) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
 | Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user unit) so animated GIFs animate |
@@ -57,29 +58,29 @@ This used to hang on remembering the flag: the installer copied the repo's `conf
 
 The script will:
 
-1. Add PPAs for Niri/Ghostty, Google Chrome and the GitHub CLI
+1. Add PPAs and repos for Niri/Ghostty, Firefox (Mozilla's, pinned over Ubuntu's snap) and the GitHub CLI
 2. Install all apt packages, from the list in `lib/manifest.sh`
-3. Enable the Docker service and add you to the `docker` group (takes effect on next login)
-4. Install the NVIDIA container toolkit, but only if an NVIDIA GPU is actually present (read from sysfs, so it works before any driver is)
-5. Install VS Code from its official `.deb`, which adds Microsoft's apt repo for updates (the `.deb` rather than the snap because the snap forces X11)
-6. Install snap packages (CMake)
-7. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
-8. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers)), and bluetui, which the waybar bluetooth module opens, then install the Iosevka Term font Ghostty uses into `~/.local/share/fonts`
-9. Install Bun via the official installer
-10. Install NVM + Node.js v24.18.0
-11. Install Claude Code via npm
-12. Copy all config files to their correct locations, install the swww systemd unit, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
-13. Clone [niri-tasks](https://github.com/pauldaywork/niri-tasks) to `~/Projects/niri-tasks` and build it — this runs straight after the config copy, so its installer can replace the `niri-tasks.kdl` stub that was just seeded
-14. Install VS Code extensions from `config/Code/extensions.txt` (empty for now)
-15. Prompt for your git name and email
-16. Generate a new SSH key and print the public key so you can add it to GitHub
+3. Remove Ubuntu's Firefox snap, install the add-on policy to `/etc/firefox/policies/`, and make Firefox the default browser
+4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
+5. Install the NVIDIA container toolkit, but only if an NVIDIA GPU is actually present (read from sysfs, so it works before any driver is)
+6. Install VS Code from its official `.deb`, which adds Microsoft's apt repo for updates (the `.deb` rather than the snap because the snap forces X11)
+7. Install snap packages (CMake)
+8. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
+9. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers)), and bluetui, which the waybar bluetooth module opens, then install the Iosevka Term font Ghostty uses into `~/.local/share/fonts`
+10. Install Bun via the official installer
+11. Install NVM + Node.js v24.18.0
+12. Install Claude Code via npm
+13. Copy all config files to their correct locations, install the swww systemd unit, create `~/Projects/`, and copy the wallpapers to `~/Documents/Wallpapers/`
+14. Clone [niri-tasks](https://github.com/pauldaywork/niri-tasks) to `~/Projects/niri-tasks` and build it — this runs straight after the config copy, so its installer can replace the `niri-tasks.kdl` stub that was just seeded
+15. Install VS Code extensions from `config/Code/extensions.txt` (empty for now)
+16. Prompt for your git name and email
+17. Generate a new SSH key and print the public key so you can add it to GitHub
 
 ### 4. After the script finishes
 
 - **Reboot** to start Niri (also picks up `docker` group membership)
 - **Log into Claude Code**: run `claude` in a terminal
 - **Add your SSH key to GitHub**: the script prints the public key — paste it at https://github.com/settings/ssh/new
-- **Log into** Chrome as normal
 - **Run `bash extra.sh`** if the machine needs NVIDIA drivers (see below)
 
 ### 5. Optional extras
@@ -171,6 +172,7 @@ ubuntu-setup/
 │   └── search.sh                           # → ~/.config/niri/shortcuts-search.sh  fuzzel search that runs your pick (Mod+Alt+/)
 │
 ├── system/                                 # Outside $HOME, so install.sh puts these in place with sudo
+│   ├── firefox-policies.json               # → /etc/firefox/policies/policies.json  Add-ons Firefox force-installs
 │   └── monitors.xml                        # → /etc/xdg/  The login screen's monitor layout; desktops only
 │
 ├── docs/                                   # Not installed anywhere; read by people and agents
@@ -471,6 +473,7 @@ What it checks:
 |---|---|
 | Packages | Everything in `lib/manifest.sh` — the same list `install.sh` installs from, so the two can't drift. Build-only packages are excluded on purpose |
 | Docker | Group membership, service running, and `docker-ce` conflicting with Ubuntu's `docker.io` |
+| Browser | Firefox is Mozilla's `.deb` and not the snap-transitional package, no Firefox snap or Chrome left over, `/etc/firefox/policies/policies.json` matching the repo, and Firefox as the default browser |
 | Toolchains | rustup, bun, nvm (and that `NVM_DIR` points where nvm actually is), Node, Claude Code, TPM |
 | Desktop | waybar running from `waybar.service`, and only once; mako actually running — it is not a systemd unit, so nothing else would notice. A missing bar is obvious; a missing notification daemon is not |
 | Wallpaper | swww installed, its unit enabled and running, `wallpaper-apply.sh` present, **and that what's on screen is what `wallpaper-active` names** — the one check that catches a missed paint |
