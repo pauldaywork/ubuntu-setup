@@ -81,6 +81,46 @@ for entry in "${DEB_PACKAGES[@]}"; do
     fi
 done
 
+# Firefox is Mozilla's .deb, pinned over Ubuntu's snap-transitional package —
+# see the Mozilla repo block in install.sh. The transitional package satisfies
+# the APT_PACKAGES check above just as well, so tell them apart by version:
+# Ubuntu's is 1:1snap1-…, Mozilla's a plain release number.
+FIREFOX_VERSION=$(dpkg-query -W -f='${Version}' firefox 2>/dev/null)
+if [[ "$FIREFOX_VERSION" == *snap* ]]; then
+    issue "firefox is Ubuntu's snap-transitional package ($FIREFOX_VERSION), not Mozilla's .deb"
+    note "  Check /etc/apt/preferences.d/mozilla exists, then: sudo apt install -y --allow-downgrades firefox"
+elif [ -n "$FIREFOX_VERSION" ]; then
+    ok "firefox $FIREFOX_VERSION installed from Mozilla's repo"
+fi
+
+if snap list firefox &>/dev/null; then
+    issue "The Firefox snap is still installed alongside the .deb"
+    note "  Remove with: sudo snap remove firefox"
+fi
+
+if pkg_installed google-chrome-stable; then
+    issue "Google Chrome is installed — Firefox replaced it"
+    note "  Remove with: sudo apt purge -y google-chrome-stable && sudo rm -f /etc/apt/sources.list.d/google-chrome.*"
+fi
+
+# The add-ons are force-installed by policy, so a matching policies.json is
+# what decides whether Firefox has them.
+FIREFOX_POLICIES=/etc/firefox/policies/policies.json
+if cmp -s "$DOTFILES/system/firefox-policies.json" "$FIREFOX_POLICIES"; then
+    ok "$FIREFOX_POLICIES matches the repo"
+else
+    issue "$FIREFOX_POLICIES is missing or differs from system/firefox-policies.json"
+    note "  Fix with: sudo install -D -m 644 $DOTFILES/system/firefox-policies.json $FIREFOX_POLICIES"
+fi
+
+DEFAULT_BROWSER=$(xdg-settings get default-web-browser 2>/dev/null)
+if [ "$DEFAULT_BROWSER" = firefox.desktop ]; then
+    ok "Firefox is the default browser"
+else
+    issue "Default browser is ${DEFAULT_BROWSER:-unset}, not firefox.desktop"
+    note "  Fix with: xdg-settings set default-web-browser firefox.desktop"
+fi
+
 if [ -n "$(fc-list "Iosevka Term")" ]; then
     ok "Iosevka Term font installed"
 else
