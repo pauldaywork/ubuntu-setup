@@ -1,5 +1,6 @@
 {
   "policies": {
+    "DontCheckDefaultBrowser": true,
     "ExtensionSettings": {
       "uBlock0@raymondhill.net": {
         "installation_mode": "force_installed",

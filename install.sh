@@ -121,6 +121,11 @@ fi
 # Add-ons are force-installed by enterprise policy, so a new profile gets them
 # on first launch and they can't be removed by accident. Password managers and
 # login add-ons are deliberately left out — those get signed into by hand.
+#
+# The same file turns off Firefox's "make me your default" prompt. Outside
+# GNOME, accepting it writes a userapp-Firefox-*.desktop of Firefox's own and
+# points mimeapps.list at that instead of firefox.desktop — the default is
+# set below, so the prompt has nothing to add.
 FIREFOX_POLICIES=/etc/firefox/policies/policies.json
 if cmp -s "$DOTFILES/system/firefox-policies.json" "$FIREFOX_POLICIES"; then
     info "$FIREFOX_POLICIES already matches the repo"

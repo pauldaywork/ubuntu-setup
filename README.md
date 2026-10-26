@@ -14,7 +14,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 | Launcher | fuzzel (`Mod+Space`) |
 | Terminal | Ghostty (deb from the PPA install.sh adds for niri, not the snap) |
 | Editor | VS Code (settings + extensions) |
-| Browser | Firefox (Mozilla's `.deb`, pinned over Ubuntu's snap), with uBlock Origin force-installed by enterprise policy (`system/firefox-policies.json`) |
+| Browser | Firefox (Mozilla's `.deb`, pinned over Ubuntu's snap), with uBlock Origin force-installed and the default-browser prompt turned off by enterprise policy (`system/firefox-policies.json`) |
 | Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/pauldaywork/niri-tasks)) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
 | Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user unit) so animated GIFs animate |
@@ -173,7 +173,7 @@ ubuntu-setup/
 │   └── search.sh                           # → ~/.config/niri/shortcuts-search.sh  fuzzel search that runs your pick (Mod+Alt+/)
 │
 ├── system/                                 # Outside $HOME, so install.sh puts these in place with sudo
-│   ├── firefox-policies.json               # → /etc/firefox/policies/policies.json  Add-ons Firefox force-installs
+│   ├── firefox-policies.json               # → /etc/firefox/policies/policies.json  Add-ons Firefox force-installs; no default-browser prompt
 │   └── monitors.xml                        # → /etc/xdg/  The login screen's monitor layout; desktops only
 │
 ├── docs/                                   # Not installed anywhere; read by people and agents
