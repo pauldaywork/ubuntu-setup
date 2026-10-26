@@ -238,22 +238,6 @@ fi
 # ─── .deb installs (no apt repo — downloaded directly) ───────────────────────
 section "Installing .deb packages"
 
-install_deb() {
-    local name="$1" url="$2"
-    if pkg_installed "$name"; then
-        info "Already installed: $name"
-        return
-    fi
-    info "Downloading $name..."
-    local tmp
-    tmp=$(mktemp /tmp/"${name}"-XXXXXX.deb)
-    curl -fsSL "$url" -o "$tmp"
-    sudo dpkg -i "$tmp"
-    sudo apt-get install -f -y   # fix any missing dependencies
-    rm -f "$tmp"
-    info "Installed: $name"
-}
-
 # VS Code's postinst asks whether to add Microsoft's apt repo. Answer it up front
 # so dpkg doesn't stop to ask, and so the answer is yes — that repo is how the
 # .deb gets updates.

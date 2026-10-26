@@ -80,6 +80,47 @@ install_release_binary() {
     rm -rf "$tmp"
 }
 
+# ─── .deb downloads ───────────────────────────────────────────────────────────
+# Download a .deb and install it, letting apt fetch whatever it depends on.
+# Skipped when the package is already installed, at any version: DEB_PACKAGES
+# update through the apt repo their postinst adds, and Proton Pass through its
+# own update notice, so a re-run must never reinstall an older copy over them.
+#
+# Given a sha512 — pinned in lib/manifest.sh for a .deb with no apt repo behind
+# it — a download that doesn't match is refused and the call fails, which stops
+# install.sh under set -e rather than carrying on without the package.
+#
+#   install_deb <package> <url> [<sha512>]
+install_deb() {
+    local name="$1" url="$2" sha512="${3:-}"
+    if pkg_installed "$name"; then
+        info "Already installed: $name"
+        return 0
+    fi
+    info "Downloading $name..."
+    local tmp
+    tmp=$(mktemp /tmp/"${name}"-XXXXXX.deb)
+    if ! curl -fsSL -o "$tmp" "$url"; then
+        warn "Could not download $url"
+        rm -f "$tmp"; return 1
+    fi
+    if [ -n "$sha512" ] && ! echo "$sha512  $tmp" | sha512sum -c --quiet - >/dev/null 2>&1; then
+        warn "Checksum mismatch for $url — not installed"
+        rm -f "$tmp"; return 1
+    fi
+    # dpkg -i fails when a dependency is missing, leaving the package unpacked
+    # but unconfigured; apt-get -f then installs the dependency and finishes the
+    # job. Under set -e an unguarded dpkg -i would stop install.sh before that.
+    sudo dpkg -i "$tmp" || true
+    sudo apt-get install -f -y
+    rm -f "$tmp"
+    if ! pkg_installed "$name"; then
+        warn "$name did not install — see above"
+        return 1
+    fi
+    info "Installed: $name"
+}
+
 # ─── moving config files about ────────────────────────────────────────────────
 # copy/backup_existing used to live in configure.sh and
 # pull/confirm_overwrite in update.sh — inverse operations on the same files,
