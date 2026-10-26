@@ -45,15 +45,37 @@ add_ppa "niri" "avengemedia/danklinux"
 
 sudo mkdir -p /etc/apt/keyrings
 
-# Google Chrome
-if ! apt-cache show google-chrome-stable &>/dev/null; then
-    info "Adding Google Chrome repo"
-    wget -q -O - https://dl.google.com/linux/linux_signing_key.pub \
-        | gpg --dearmor \
-        | sudo tee /etc/apt/keyrings/google-chrome-keyring.gpg > /dev/null
-    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" \
-        | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
+# Firefox — Mozilla's own .deb rather than Ubuntu's snap, so it updates through
+# apt like everything else and runs unconfined. Ubuntu's `firefox` is a transitional package that installs the snap, and its
+# 1: epoch makes it outrank every Mozilla version, so the pin has to be 1000:
+# only that priority lets apt pick a lower version. The key is checked against
+# the fingerprint Mozilla publishes before apt is told to trust it.
+MOZILLA_KEY=/etc/apt/keyrings/packages.mozilla.org.asc
+MOZILLA_FPR=35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3
+if [ ! -f /etc/apt/sources.list.d/mozilla.sources ]; then
+    info "Adding Mozilla's Firefox repo"
+    tmp=$(mktemp)
+    wget -qO "$tmp" https://packages.mozilla.org/apt/repo-signing-key.gpg
+    if ! gpg --show-keys --with-colons "$tmp" | grep -q "^fpr:*$MOZILLA_FPR:"; then
+        rm -f "$tmp"
+        echo "Mozilla's signing key does not have fingerprint $MOZILLA_FPR — stopping" >&2
+        exit 1
+    fi
+    sudo install -m 644 "$tmp" "$MOZILLA_KEY"
+    rm -f "$tmp"
+    sudo tee /etc/apt/sources.list.d/mozilla.sources > /dev/null <<EOF
+Types: deb
+URIs: https://packages.mozilla.org/apt
+Suites: mozilla
+Components: main
+Signed-By: $MOZILLA_KEY
+EOF
 fi
+sudo tee /etc/apt/preferences.d/mozilla > /dev/null <<'EOF'
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+EOF
 
 # GitHub CLI — not in Ubuntu's archive. configure.sh clones the private
 # herdr-speak repo with it. The keyring is published already dearmored.
@@ -73,7 +95,38 @@ section "Installing apt packages"
 
 # The list itself lives in lib/manifest.sh, so doctor.sh can check the same one.
 # APT_BUILD_PACKAGES is what swww needs to compile; see the note there.
-sudo apt install -y "${APT_PACKAGES[@]}" "${APT_BUILD_PACKAGES[@]}"
+# --allow-downgrades is for firefox alone: swapping Ubuntu's transitional
+# package (1:1snap1-…) for Mozilla's is a downgrade by version number, and -y
+# refuses one without the flag. Only the 1000 pin can make apt choose a lower
+# version, so nothing else in the list is affected.
+sudo apt install -y --allow-downgrades "${APT_PACKAGES[@]}" "${APT_BUILD_PACKAGES[@]}"
+
+# ─── Firefox ──────────────────────────────────────────────────────────────────
+# The .deb is in by now, so the snap that Ubuntu ships can go without leaving
+# the machine without a browser. snap remove keeps a snapshot of its profile
+# (`snap saved`) for 31 days.
+section "Setting up Firefox"
+
+if snap list firefox &>/dev/null; then
+    info "Removing the Firefox snap"
+    sudo snap remove firefox
+fi
+
+# Add-ons are force-installed by enterprise policy, so a new profile gets them
+# on first launch and they can't be removed by accident. Password managers and
+# login add-ons are deliberately left out — those get signed into by hand.
+FIREFOX_POLICIES=/etc/firefox/policies/policies.json
+if cmp -s "$DOTFILES/system/firefox-policies.json" "$FIREFOX_POLICIES"; then
+    info "$FIREFOX_POLICIES already matches the repo"
+else
+    sudo install -D -m 644 "$DOTFILES/system/firefox-policies.json" "$FIREFOX_POLICIES"
+    info "Installed $FIREFOX_POLICIES — Firefox applies it at its next start"
+fi
+
+if [ "$(xdg-settings get default-web-browser 2>/dev/null)" != firefox.desktop ]; then
+    info "Making Firefox the default browser"
+    xdg-settings set default-web-browser firefox.desktop
+fi
 
 # ─── Docker permissions ───────────────────────────────────────────────────────
 # /var/run/docker.sock is root:docker, so without group membership every docker
@@ -453,8 +506,7 @@ echo ""
 info "Manual steps remaining:"
 echo "  1. Reboot (or log out and back in) to start niri"
 echo "  2. Run 'claude' to log into Claude Code"
-echo "  3. Log into Chrome as needed"
-echo "  4. Run 'bash extra.sh' if you want NVIDIA drivers"
+echo "  3. Run 'bash extra.sh' if you want NVIDIA drivers"
 echo ""
 # Nothing detects monitors: the outputs are written out in config.kdl, and a new
 # machine that silently runs at the wrong resolution is a much harder thing to

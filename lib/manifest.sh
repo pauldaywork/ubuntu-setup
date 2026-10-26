@@ -134,7 +134,12 @@ APT_PACKAGES=(
 
     # apps (from external repos)
     taskwarrior
-    google-chrome-stable
+    # firefox — Mozilla's .deb, not Ubuntu's same-named snap-transitional
+    # package; the pin install.sh writes decides which one this resolves to.
+    firefox
+    # xdg-settings, which install.sh uses to make Firefox the default browser.
+    # Comes with ubuntu-desktop-minimal; named for the same reason as fuzzel.
+    xdg-utils
 
     # docker — Ubuntu's own packages, not the docker-ce repo. Keeps everything
     # on one repo at the cost of tracking the release's version rather than
