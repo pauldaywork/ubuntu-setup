@@ -81,6 +81,7 @@ The script will:
 - **Reboot** to start Niri (also picks up `docker` group membership)
 - **Log into Claude Code**: run `claude` in a terminal
 - **Add your SSH key to GitHub**: the script prints the public key — paste it at https://github.com/settings/ssh/new
+- **Sign into Firefox** and add your password manager — the add-on policy leaves password managers and login add-ons out on purpose
 - **Run `bash extra.sh`** if the machine needs NVIDIA drivers (see below)
 
 ### 5. Optional extras
@@ -473,7 +474,7 @@ What it checks:
 |---|---|
 | Packages | Everything in `lib/manifest.sh` — the same list `install.sh` installs from, so the two can't drift. Build-only packages are excluded on purpose |
 | Docker | Group membership, service running, and `docker-ce` conflicting with Ubuntu's `docker.io` |
-| Browser | Firefox is Mozilla's `.deb` and not the snap-transitional package, no Firefox snap or Chrome left over, `/etc/firefox/policies/policies.json` matching the repo, and Firefox as the default browser |
+| Browser | Firefox is Mozilla's `.deb` and not the snap-transitional package, no Firefox snap, Chrome package or Chrome apt source left over, `/etc/firefox/policies/policies.json` matching the repo, and Firefox as the default browser |
 | Toolchains | rustup, bun, nvm (and that `NVM_DIR` points where nvm actually is), Node, Claude Code, TPM |
 | Desktop | waybar running from `waybar.service`, and only once; mako actually running — it is not a systemd unit, so nothing else would notice. A missing bar is obvious; a missing notification daemon is not |
 | Wallpaper | swww installed, its unit enabled and running, `wallpaper-apply.sh` present, **and that what's on screen is what `wallpaper-active` names** — the one check that catches a missed paint |

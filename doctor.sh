@@ -90,17 +90,26 @@ if [[ "$FIREFOX_VERSION" == *snap* ]]; then
     issue "firefox is Ubuntu's snap-transitional package ($FIREFOX_VERSION), not Mozilla's .deb"
     note "  Check /etc/apt/preferences.d/mozilla exists, then: sudo apt install -y --allow-downgrades firefox"
 elif [ -n "$FIREFOX_VERSION" ]; then
-    ok "firefox $FIREFOX_VERSION installed from Mozilla's repo"
+    ok "firefox $FIREFOX_VERSION installed (Mozilla's .deb, not the snap-transitional package)"
 fi
 
 if snap list firefox &>/dev/null; then
-    issue "The Firefox snap is still installed alongside the .deb"
+    issue "The Firefox snap is still installed"
     note "  Remove with: sudo snap remove firefox"
 fi
 
 if pkg_installed google-chrome-stable; then
     issue "Google Chrome is installed — Firefox replaced it"
-    note "  Remove with: sudo apt purge -y google-chrome-stable && sudo rm -f /etc/apt/sources.list.d/google-chrome.*"
+    note "  Remove with: sudo apt purge -y google-chrome-stable"
+fi
+# Purging the package leaves its apt source and keyring behind.
+CHROME_LEFTOVERS=()
+for f in /etc/apt/sources.list.d/google-chrome.* /usr/share/keyrings/google-chrome.gpg; do
+    [ -e "$f" ] && CHROME_LEFTOVERS+=("$f")
+done
+if [ ${#CHROME_LEFTOVERS[@]} -gt 0 ]; then
+    issue "Chrome apt source or keyring left over: ${CHROME_LEFTOVERS[*]}"
+    note "  Remove with: sudo rm -f /etc/apt/sources.list.d/google-chrome.* /usr/share/keyrings/google-chrome.gpg"
 fi
 
 # The add-ons are force-installed by policy, so a matching policies.json is

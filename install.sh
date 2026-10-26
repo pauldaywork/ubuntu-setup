@@ -46,17 +46,23 @@ add_ppa "niri" "avengemedia/danklinux"
 sudo mkdir -p /etc/apt/keyrings
 
 # Firefox — Mozilla's own .deb rather than Ubuntu's snap, so it updates through
-# apt like everything else and runs unconfined. Ubuntu's `firefox` is a transitional package that installs the snap, and its
-# 1: epoch makes it outrank every Mozilla version, so the pin has to be 1000:
-# only that priority lets apt pick a lower version. The key is checked against
-# the fingerprint Mozilla publishes before apt is told to trust it.
+# apt like everything else and runs unconfined. Ubuntu's `firefox` is a
+# transitional package that installs the snap, and its 1: epoch makes it
+# outrank every Mozilla version, so the pin has to be 1000: only that priority
+# lets apt pick a lower version. The key is checked against the fingerprint
+# Mozilla publishes before apt is told to trust it. A repo set up another way
+# (Mozilla's own docs write mozilla.list) is left alone: apt rejects the same
+# URI listed twice with different Signed-By.
 MOZILLA_KEY=/etc/apt/keyrings/packages.mozilla.org.asc
 MOZILLA_FPR=35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3
-if [ ! -f /etc/apt/sources.list.d/mozilla.sources ]; then
+if [ -f /etc/apt/sources.list.d/mozilla.sources ] ||
+   apt-cache policy 2>/dev/null | grep packages.mozilla.org >/dev/null; then
+    info "Already present: Mozilla's Firefox repo"
+else
     info "Adding Mozilla's Firefox repo"
     tmp=$(mktemp)
     wget -qO "$tmp" https://packages.mozilla.org/apt/repo-signing-key.gpg
-    if ! gpg --show-keys --with-colons "$tmp" | grep -q "^fpr:*$MOZILLA_FPR:"; then
+    if ! gpg --show-keys --with-colons "$tmp" | grep "^fpr:*$MOZILLA_FPR:" >/dev/null; then
         rm -f "$tmp"
         echo "Mozilla's signing key does not have fingerprint $MOZILLA_FPR — stopping" >&2
         exit 1
@@ -125,7 +131,8 @@ fi
 
 if [ "$(xdg-settings get default-web-browser 2>/dev/null)" != firefox.desktop ]; then
     info "Making Firefox the default browser"
-    xdg-settings set default-web-browser firefox.desktop
+    xdg-settings set default-web-browser firefox.desktop ||
+        warn "Could not make Firefox the default browser — doctor.sh will report it"
 fi
 
 # ─── Docker permissions ───────────────────────────────────────────────────────
