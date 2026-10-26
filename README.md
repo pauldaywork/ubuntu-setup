@@ -63,7 +63,7 @@ The script will:
 3. Remove Ubuntu's Firefox snap, install the add-on policy to `/etc/firefox/policies/`, and make Firefox the default browser
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
 5. Install the NVIDIA container toolkit, but only if an NVIDIA GPU is actually present (read from sysfs, so it works before any driver is)
-6. Install VS Code from its official `.deb`, which adds Microsoft's apt repo for updates (the `.deb` rather than the snap because the snap forces X11)
+6. Install VS Code from its official `.deb`, which adds Microsoft's apt repo for updates (the `.deb` rather than the snap because the snap forces X11), and Proton Pass from its official `.deb`, pinned and checked against Proton's SHA512 since it has no apt repo (it updates itself through the app's own notice)
 7. Install snap packages (CMake)
 8. Install Rust via the official rustup.rs script (not the rustup snap — its confinement causes friction with `cargo install` and linking against system libraries)
 9. Build and install swww, the wallpaper daemon (see [Animated wallpapers](#animated-wallpapers)), and bluetui, which the waybar bluetooth module opens, then install the Iosevka Term font Ghostty uses into `~/.local/share/fonts`
@@ -383,7 +383,7 @@ per-filetype scaling filter are commented at the top of `wallpaper/apply.sh`.
 
 ## One list of what's installed
 
-`lib/manifest.sh` holds the apt packages, the `.deb` downloads, the snaps, and the version pins for Node, swww, Iosevka, bluetui, worktrunk and dotenvx. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
+`lib/manifest.sh` holds the apt packages, the `.deb` downloads, the snaps, and the version pins for Node, swww, Iosevka, bluetui, worktrunk, dotenvx and Proton Pass. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
 
 `lib/common.sh` holds what all five scripts print with (`info`, `warn`, `ok`, `issue`, `section`) plus `pkg_installed` and `snap_install`. `pkg_installed` is the one worth not copy-pasting: `dpkg -s` exits 0 for packages in the `rc` state — removed, config files left behind — so it matches on the status field instead.
 

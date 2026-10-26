@@ -95,9 +95,10 @@ is_ignored() {
 
 apt-mark showmanual 2>/dev/null | sort -u > /tmp/capture-apt-live.txt
 # The .debs install through dpkg, so apt-mark counts them as manual too: declare
-# them here or they show up as undeclared.
+# them here or they show up as undeclared. proton-pass is one of them, pinned
+# separately in lib/manifest.sh.
 printf '%s\n' "${APT_PACKAGES[@]}" "${APT_BUILD_PACKAGES[@]}" \
-    "${DEB_PACKAGES[@]%%|*}" | sort -u > /tmp/capture-apt-repo.txt
+    "${DEB_PACKAGES[@]%%|*}" proton-pass | sort -u > /tmp/capture-apt-repo.txt
 
 echo
 echo "  Declared but NOT installed — a rebuild expects these:"

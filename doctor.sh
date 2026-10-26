@@ -130,6 +130,13 @@ else
     note "  Fix with: xdg-settings set default-web-browser firefox.desktop"
 fi
 
+if pkg_installed proton-pass; then
+    ok "proton-pass installed"
+else
+    issue "proton-pass not installed"
+    note "  Install with: bash install.sh (pinned $PROTON_PASS_VERSION, see lib/manifest.sh)"
+fi
+
 if [ -n "$(fc-list "Iosevka Term")" ]; then
     ok "Iosevka Term font installed"
 else

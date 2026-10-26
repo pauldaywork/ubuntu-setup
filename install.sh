@@ -249,6 +249,12 @@ for entry in "${DEB_PACKAGES[@]}"; do
     install_deb "${entry%%|*}" "${entry#*|}"
 done
 
+# Proton Pass has no apt repo, so it is pinned and checked rather than listed
+# in DEB_PACKAGES — see lib/manifest.sh. A mismatched download stops the install.
+install_deb proton-pass \
+    "https://proton.me/download/pass/linux/proton-pass_${PROTON_PASS_VERSION}_amd64.deb" \
+    "$PROTON_PASS_SHA512"
+
 # ─── 3. snap packages ─────────────────────────────────────────────────────────
 section "Installing snap packages"
 

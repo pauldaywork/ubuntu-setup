@@ -38,6 +38,18 @@ WORKTRUNK_SHA256="b8c190b1d652370ef9f6b8f4694a2d6831b5b22f4b789f047612aad32764c6
 DOTENVX_VERSION="2.30.0"
 DOTENVX_SHA256="1ac0fb8fef37c10de4297686a273719290fbc29d8c3abf9595ab7a023119c1c3"
 
+# Proton Pass — the password manager's desktop app. Proton ships a versioned
+# .deb with no maintainer scripts and no apt repo, so it fits neither
+# APT_PACKAGES nor DEB_PACKAGES (a vendor "latest" link, updated through apt
+# afterwards); install.sh checks it against this sha512, the one Proton
+# publishes in https://proton.me/download/PassDesktop/linux/x64/version.json.
+# The official .deb rather than Flathub's me.proton.Pass, which is
+# community-built and unverified. The pin is for a first install only: newer
+# versions arrive through the app's own update notice, and a re-run of
+# install.sh leaves whatever version is installed alone.
+PROTON_PASS_VERSION="1.43.0"
+PROTON_PASS_SHA512="ac19002dd7e5e6110fd5ca5d342d2cacbd2528d95966e83c1ac8df928e86506927d9cad1ffafaa1b542bb6ebf13aaa8f7b5e6d6499531a62aa82bbf82a706c62"
+
 # herdr-worktrunk — the herdr plugin that drives worktrunk from herdr's keys and
 # shows each worktree as a workspace grouped under its project. A herdr plugin
 # is unsandboxed code, so it is pinned to a full commit whose source was read
