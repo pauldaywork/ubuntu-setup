@@ -6,8 +6,12 @@
     "workbench.settings.applyToAllProfiles": [
         "workbench.browser.enableChatTools",
         "workbench.commandPalette.showAskInChat",
-        "chat.agent.enabled"
+        "chat.agent.enabled",
+        "workbench.secondarySideBar.defaultVisibility",
+        "chat.disableAIFeatures"
     ],
+    "workbench.secondarySideBar.defaultVisibility": "hidden",
+    "chat.disableAIFeatures": true,
     "window.menuBarVisibility": "compact",
     "editor.minimap.enabled": false
 }
