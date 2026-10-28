@@ -98,6 +98,27 @@ if snap list firefox &>/dev/null; then
     note "  Remove with: sudo snap remove firefox"
 fi
 
+# unattended-upgrades pins every origin it isn't allowed to upgrade from to
+# "never", Mozilla's 1000 pin included, so Ubuntu's 1:1snap1 package looks
+# like an upgrade to it, and the package's postinst puts the snap back. It did
+# that on 2026-10-28. install.sh allows Mozilla's site and pins Ubuntu's
+# firefox to -1. Either one stops it.
+if apt-config dump 2>/dev/null |
+   grep -F 'Unattended-Upgrade::Origins-Pattern:: "site=packages.mozilla.org";' >/dev/null; then
+    ok "unattended-upgrades may update Firefox from packages.mozilla.org"
+else
+    issue "unattended-upgrades isn't allowed packages.mozilla.org, so it can put the Firefox snap back"
+    note "  Fix with: echo 'Unattended-Upgrade::Origins-Pattern:: \"site=packages.mozilla.org\";' | sudo tee /etc/apt/apt.conf.d/51unattended-upgrades-firefox"
+fi
+UNPINNED_SNAP_FIREFOX=$(apt-cache policy firefox 2>/dev/null |
+    awk '$(NF-1) ~ /snap/ && $NF != -1 {print $(NF-1)}' | paste -sd' ')
+if [ -z "$UNPINNED_SNAP_FIREFOX" ]; then
+    ok "Ubuntu's snap-transitional firefox is pinned to -1"
+else
+    issue "Ubuntu's snap-transitional firefox isn't pinned to -1: $UNPINNED_SNAP_FIREFOX"
+    note "  Add the Pin-Priority: -1 stanza from install.sh to /etc/apt/preferences.d/mozilla"
+fi
+
 if pkg_installed google-chrome-stable; then
     issue "Google Chrome is installed — Firefox replaced it"
     note "  Remove with: sudo apt purge -y google-chrome-stable"

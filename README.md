@@ -58,7 +58,7 @@ This used to hang on remembering the flag: the installer copied the repo's `conf
 
 The script will:
 
-1. Add PPAs and repos for Niri/Ghostty, Firefox (Mozilla's, pinned over Ubuntu's snap) and the GitHub CLI
+1. Add PPAs and repos for Niri/Ghostty, Firefox (Mozilla's, pinned over Ubuntu's snap, which is pinned to -1, and allowed to unattended-upgrades so it can't swap the snap back) and the GitHub CLI
 2. Install all apt packages, from the list in `lib/manifest.sh`
 3. Remove Ubuntu's Firefox snap, install the add-on policy to `/etc/firefox/policies/`, and make Firefox the default browser
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
@@ -474,7 +474,7 @@ What it checks:
 |---|---|
 | Packages | Everything in `lib/manifest.sh` — the same list `install.sh` installs from, so the two can't drift. Build-only packages are excluded on purpose |
 | Docker | Group membership, service running, and `docker-ce` conflicting with Ubuntu's `docker.io` |
-| Browser | Firefox is Mozilla's `.deb` and not the snap-transitional package, no Firefox snap, Chrome package or Chrome apt source left over, `/etc/firefox/policies/policies.json` matching the repo, and Firefox as the default browser |
+| Browser | Firefox is Mozilla's `.deb` and not the snap-transitional package, that package pinned to -1 and unattended-upgrades allowed `packages.mozilla.org` (without them it puts the snap back), no Firefox snap, Chrome package or Chrome apt source left over, `/etc/firefox/policies/policies.json` matching the repo, and Firefox as the default browser |
 | Toolchains | rustup, bun, nvm (and that `NVM_DIR` points where nvm actually is), Node, Claude Code, TPM |
 | Desktop | waybar running from `waybar.service`, and only once; mako actually running — it is not a systemd unit, so nothing else would notice. A missing bar is obvious; a missing notification daemon is not |
 | Wallpaper | swww installed, its unit enabled and running, `wallpaper-apply.sh` present, **and that what's on screen is what `wallpaper-active` names** — the one check that catches a missed paint |

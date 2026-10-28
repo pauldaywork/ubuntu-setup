@@ -49,7 +49,8 @@ sudo mkdir -p /etc/apt/keyrings
 # apt like everything else and runs unconfined. Ubuntu's `firefox` is a
 # transitional package that installs the snap, and its 1: epoch makes it
 # outrank every Mozilla version, so the pin has to be 1000: only that priority
-# lets apt pick a lower version. The key is checked against the fingerprint
+# lets apt pick a lower version (and see below for why that isn't enough).
+# The key is checked against the fingerprint
 # Mozilla publishes before apt is told to trust it. A repo set up another way
 # (Mozilla's own docs write mozilla.list) is left alone: apt rejects the same
 # URI listed twice with different Signed-By.
@@ -77,10 +78,23 @@ Components: main
 Signed-By: $MOZILLA_KEY
 EOF
 fi
+# The -1 stanza and the unattended-upgrades drop-in are there because the 1000
+# pin alone didn't hold. unattended-upgrades pins every origin outside its
+# allowed list to "never", Mozilla's included, so it took Ubuntu's 1:1snap1
+# package for an upgrade and swapped it back in, snap and all. Allowing
+# Mozilla's site fixes that and gets Firefox its security updates unattended.
+# The -1 pin means nothing at all can choose Ubuntu's package again.
 sudo tee /etc/apt/preferences.d/mozilla > /dev/null <<'EOF'
 Package: *
 Pin: origin packages.mozilla.org
 Pin-Priority: 1000
+
+Package: firefox
+Pin: release o=Ubuntu
+Pin-Priority: -1
+EOF
+sudo tee /etc/apt/apt.conf.d/51unattended-upgrades-firefox > /dev/null <<'EOF'
+Unattended-Upgrade::Origins-Pattern:: "site=packages.mozilla.org";
 EOF
 
 # GitHub CLI — not in Ubuntu's archive. configure.sh clones the private
