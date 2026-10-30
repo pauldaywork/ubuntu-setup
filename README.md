@@ -58,7 +58,7 @@ This used to hang on remembering the flag: the installer copied the repo's `conf
 
 The script will:
 
-1. Add PPAs and repos for Niri/Ghostty, Firefox (Mozilla's, pinned over Ubuntu's snap, which is pinned to -1, and allowed to unattended-upgrades so it can't swap the snap back) and the GitHub CLI
+1. Add PPAs and repos for Niri/Ghostty, Firefox (Mozilla's, pinned over Ubuntu's snap-transitional package, which is pinned to -1, with `packages.mozilla.org` allowed in unattended-upgrades so it can't swap the snap back) and the GitHub CLI
 2. Install all apt packages, from the list in `lib/manifest.sh`
 3. Remove Ubuntu's Firefox snap, install the add-on policy to `/etc/firefox/policies/`, and make Firefox the default browser
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
