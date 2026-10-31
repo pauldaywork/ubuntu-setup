@@ -1,7 +1,7 @@
 {
   "wallpaper_path": "~/Documents/Wallpapers/",
   "cache_path": "~/.cache/quickshell/thumbs/",
-  "active_layout": "layouts/shell-floating.qml",
+  "active_layout": "layouts/shell-coverflow-clear.qml",
   "wallpaper_tool": "auto",
   "custom_command": "printf '%s\\n' \"$WALLPAPER\" > \"$HOME/.config/niri/wallpaper-active\" && \"$HOME/.config/niri/wallpaper-apply.sh\"",
   "post_apply": [],
