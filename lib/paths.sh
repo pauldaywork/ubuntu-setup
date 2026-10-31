@@ -67,6 +67,7 @@ DOTFILES_MAP=(
     # because fuzzel is what reads it, even though only the wallpaper bind does.
     "wallpaper/apply.sh|.config/niri/wallpaper-apply.sh|exec"
     "wallpaper/pick.sh|.config/niri/wallpaper-pick.sh|exec"
+    "wallpaper/next.sh|.config/niri/wallpaper-next.sh|exec"
     "wallpaper/picker.ini|.config/fuzzel/wallpaper-picker.ini|copy"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
 

@@ -492,6 +492,13 @@ if [ ! -x "$HOME/.config/niri/wallpaper-apply.sh" ]; then
     note "  Install with: bash configure.sh"
 fi
 
+# Mod+Alt+Ctrl+B. Like the picker, a shortcut that would do nothing rather than
+# a blank screen.
+if [ ! -x "$HOME/.config/niri/wallpaper-next.sh" ]; then
+    issue "wallpaper-next.sh missing or not executable — Mod+Alt+Ctrl+B will do nothing"
+    note "  Install with: bash configure.sh"
+fi
+
 # The launcher's icon theme and terminal, both of which used to name something
 # that was not installed: the icons silently fell back to hicolor and anything
 # with Terminal=true in its .desktop entry silently failed to start. Neither

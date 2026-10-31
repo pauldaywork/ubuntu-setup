@@ -641,8 +641,9 @@ binds {
     // are download hashes. wallpaper/pick.sh shows them in
     // fuzzel with thumbnails and hands the choice to wallpaper-apply.sh.
     Mod+Alt+B hotkey-overlay-title="Wallpaper: Pick" { spawn "~/.config/niri/wallpaper-pick.sh"; }
-    // Its companion skips the list: the next wallpaper along, in filename order.
-    Mod+Alt+Ctrl+B hotkey-overlay-title="Wallpaper: Next" { spawn "~/.config/niri/wallpaper-pick.sh" "--next"; }
+    // Its companion skips the list: the next wallpaper along, in filename
+    // order. wallpaper/next.sh.
+    Mod+Alt+Ctrl+B hotkey-overlay-title="Wallpaper: Next" { spawn "~/.config/niri/wallpaper-next.sh"; }
 
     // The launcher. fuzzel is already installed for the pickers.
     //

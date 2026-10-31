@@ -160,7 +160,8 @@ ubuntu-setup/
 │
 ├── wallpaper/                              # A feature, not a mirror: these land in four directories
 │   ├── apply.sh                            # → ~/.config/niri/wallpaper-apply.sh   Paints the selection
-│   ├── pick.sh                             # → ~/.config/niri/wallpaper-pick.sh    The picker (Mod+Alt+B), or the next one (Mod+Alt+Ctrl+B)
+│   ├── pick.sh                             # → ~/.config/niri/wallpaper-pick.sh    The picker (Mod+Alt+B)
+│   ├── next.sh                             # → ~/.config/niri/wallpaper-next.sh    The next one along (Mod+Alt+Ctrl+B)
 │   ├── picker.ini                          # → ~/.config/fuzzel/wallpaper-picker.ini  (fuzzel reads it)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
