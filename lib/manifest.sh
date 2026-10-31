@@ -150,7 +150,8 @@ APT_PACKAGES=(
     build-essential
     # jq — the Mod+Alt+Q close-workspace bind in config/niri/config.kdl picks
     # the focused workspace's windows out of `niri msg -j`, and laptop.kdl's
-    # Mod+Alt+D reads which outputs are lit the same way. Also a
+    # Mod+Alt+D reads which outputs are lit the same way, and hyprquickpaper's
+    # scripts parse its config.json with it. Also a
     # general-purpose tool worth having on a new machine.
     jq
     # fzf — the herdr-worktrunk plugin's branch picker.

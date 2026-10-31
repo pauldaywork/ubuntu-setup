@@ -455,13 +455,13 @@ done
 # check above cannot see it; and the patch is what keeps a GIF pick on swww.
 # Its config.json is a lib/paths.sh row, checked with the other managed files.
 HQP_DIR="$HOME/.config/quickshell/hyprquickpaper"
-if [ ! -d "$HQP_DIR/.git" ]; then
+if ! git -C "$HQP_DIR" rev-parse -q --verify HEAD &>/dev/null; then
     issue "hyprquickpaper not installed — Mod+Alt+B will do nothing"
     note "  Install with: bash install.sh"
 else
     hqp_ref=$(git -C "$HQP_DIR" rev-parse HEAD 2>/dev/null)
     if ! git -C "$HQP_DIR" apply --reverse --check "$DOTFILES/wallpaper/hyprquickpaper.patch" 2>/dev/null; then
-        issue "hyprquickpaper is not patched — a GIF pick would go to mpvpaper, not swww"
+        issue "hyprquickpaper is not patched as wallpaper/hyprquickpaper.patch says"
         note "  Patch with: bash install.sh"
     elif [ "$hqp_ref" != "$HYPRQUICKPAPER_REF" ]; then
         note "hyprquickpaper is at ${hqp_ref:0:12}, manifest pins ${HYPRQUICKPAPER_REF:0:12}"

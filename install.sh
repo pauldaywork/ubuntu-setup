@@ -333,8 +333,8 @@ fi
 #
 # Then one patch, two files. commands.sh: with custom_command set, every pick
 # goes to it — GIFs included, which upstream would hand to mpvpaper. cache.sh:
-# -nostdin on its ffmpeg calls, or ffmpeg reads the file list as keypresses and
-# about a third of the GIFs get no thumbnail. configure.sh (step 8, below)
+# -nostdin on its ffmpeg calls, or ffmpeg swallows the rest of find's file list
+# from the shared stdin and those GIFs are skipped, so they get no thumbnail. configure.sh (step 8, below)
 # copies the repo's config.json over upstream's.
 #
 # Not fatal if it fails: the rest of the machine is fine without a picker, and
@@ -356,10 +356,20 @@ else
 fi
 
 # --reverse --check succeeds only on an already-patched tree, which is what
-# makes a re-run quiet. A checkout of a new pin starts unpatched.
-if git -C "$HQP_DIR" apply --reverse --check "$HQP_PATCH" 2>/dev/null; then
+# makes a re-run quiet. A checkout of a new pin starts unpatched. Without a
+# HEAD the fetch above failed and has said so; nothing to patch.
+#
+# An older version of the patch at the same pin fails both checks: the
+# reverse one (not fully applied) and a plain apply (its hunks are already
+# in, and git apply is all-or-nothing). So restore the files the patch
+# touches from HEAD first. Never config.json, which is not one of them.
+if ! git -C "$HQP_DIR" rev-parse -q --verify HEAD &>/dev/null; then
+    :
+elif git -C "$HQP_DIR" apply --reverse --check "$HQP_PATCH" 2>/dev/null; then
     info "hyprquickpaper already patched"
-elif git -C "$HQP_DIR" apply "$HQP_PATCH" 2>/dev/null; then
+elif mapfile -t hqp_files < <(git -C "$HQP_DIR" apply --numstat "$HQP_PATCH" | cut -f3) \
+     && git -C "$HQP_DIR" checkout -q HEAD -- "${hqp_files[@]}" \
+     && git -C "$HQP_DIR" apply "$HQP_PATCH" 2>/dev/null; then
     info "Patched hyprquickpaper's commands.sh and cache.sh"
 else
     warn "wallpaper/hyprquickpaper.patch does not apply — a GIF pick would go to mpvpaper, not swww"

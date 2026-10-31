@@ -374,9 +374,9 @@ have the last word on which.
 
 The whole image folder is installed, not just the selected one, so there is
 always something to point at. swww is built from a git tag by `install.sh`;
-`doctor.sh` checks the daemon, the scripts, the picker's checkout and patch, and that what is actually on screen
-matches what `wallpaper-active` names — run it first if the background ever goes
-black or goes stale.
+`doctor.sh` checks the daemon, the scripts, the picker's checkout and patch, and
+that what is actually on screen matches what `wallpaper-active` names — run it
+first if the background ever goes black or goes stale.
 
 ### The picker
 
@@ -395,8 +395,9 @@ retries and the choice surviving a login all still live in `apply.sh`.
   `custom_command` instead. No real video format is in the list, because swww
   can't paint one.
 - **The patch also adds `-nostdin` to `cache.sh`'s ffmpeg calls.** Without it
-  ffmpeg reads `cache.sh`'s file list as keypresses and fails, and about a
-  third of the GIFs got no thumbnail.
+  ffmpeg swallows the rest of `find`'s file list from the shared stdin, so
+  those files are skipped; that is why the count of GIFs without a thumbnail
+  varied from run to run (22 to 37).
 - **Change the layout in the repo.** Set `active_layout` in
   `wallpaper/hyprquickpaper.json` and run `configure.sh`. The switcher
   (`qs -p ~/.config/quickshell/hyprquickpaper/settings.qml`) is fine for
