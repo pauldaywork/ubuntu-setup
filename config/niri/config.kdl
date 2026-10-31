@@ -636,11 +636,13 @@ binds {
     // "focus" profile.
     Mod+Alt+F hotkey-overlay-title="Toggle Window Rules Profile" { spawn "~/.config/niri/window-rules/toggle.sh"; }
 
-    // The wallpaper picker lists rather than cycles, because a handful of
-    // wallpapers have no order worth stepping through and two of the filenames
-    // are download hashes. wallpaper/pick.sh shows them in
-    // fuzzel with thumbnails and hands the choice to wallpaper-apply.sh.
-    Mod+Alt+B hotkey-overlay-title="Wallpaper: Pick" { spawn "~/.config/niri/wallpaper-pick.sh"; }
+    // The wallpaper picker lists rather than cycles, because the wallpapers
+    // have no order worth stepping through and several filenames are download
+    // hashes. hyprquickpaper shows them as thumbnails; Enter hands the choice to
+    // wallpaper-apply.sh through the custom_command in wallpaper/hyprquickpaper.json.
+    // spawn-sh because spawn only expands ~ in the program; -n is Quickshell's
+    // own guard, so a second press while it is open does nothing.
+    Mod+Alt+B hotkey-overlay-title="Wallpaper: Pick" { spawn-sh "qs -n -p ~/.config/quickshell/hyprquickpaper"; }
     // Its companion skips the list: the next wallpaper along, in filename
     // order. wallpaper/next.sh.
     Mod+Alt+Ctrl+B hotkey-overlay-title="Wallpaper: Next" { spawn "~/.config/niri/wallpaper-next.sh"; }

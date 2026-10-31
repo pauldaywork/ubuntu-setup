@@ -61,14 +61,12 @@ DOTFILES_MAP=(
     "config/niri/laptop.kdl|.config/niri/laptop.kdl|laptop"
     "config/niri/desktop.kdl|.config/niri/desktop.kdl|desktop"
 
-    # wallpaper — one directory in the repo, five destinations on disk across
-    # three trees, which is exactly why it is a feature directory rather than
-    # part of the mirror. picker.ini lands in fuzzel's config rather than niri's
-    # because fuzzel is what reads it, even though only the wallpaper bind does.
+    # wallpaper — one directory in the repo, destinations on disk across three
+    # trees, which is exactly why it is a feature directory rather than part of
+    # the mirror. The picker's config lands in Quickshell's tree because the
+    # picker is a Quickshell config, even though only the wallpaper bind uses it.
     "wallpaper/apply.sh|.config/niri/wallpaper-apply.sh|exec"
-    "wallpaper/pick.sh|.config/niri/wallpaper-pick.sh|exec"
     "wallpaper/next.sh|.config/niri/wallpaper-next.sh|exec"
-    "wallpaper/picker.ini|.config/fuzzel/wallpaper-picker.ini|copy"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
     # The picker's config, over upstream's own in the checkout install.sh makes.
     # The patch next to it is applied by install.sh, not deployed.
@@ -79,9 +77,8 @@ DOTFILES_MAP=(
     # by configure.sh from build.py and page.html, which stay in the repo.
     "shortcuts/search.sh|.config/niri/shortcuts-search.sh|exec"
 
-    # fuzzel — the launcher on Mod+Space. The other fuzzel configs are not here:
-    # picker.ini is a symlink niri-tasks installs, and wallpaper-picker.ini goes
-    # out with the wallpaper feature above.
+    # fuzzel — the launcher on Mod+Space. The other fuzzel config is not here:
+    # picker.ini is a symlink niri-tasks installs.
     "config/fuzzel/fuzzel.ini|.config/fuzzel/fuzzel.ini|copy"
 
     # ghostty

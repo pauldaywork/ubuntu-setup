@@ -98,22 +98,16 @@ APT_PACKAGES=(
     waybar
     mako-notifier
 
-    # dmenu-style picker used by open_project_workspace.sh (Mod+Alt+W) and by
-    # wallpaper/pick.sh (Mod+Alt+B). Usually pulled in as a niri dependency, but
-    # named here so it can't silently disappear from under the shortcuts.
+    # dmenu-style picker used by open_project_workspace.sh (Mod+Alt+W) and the
+    # launcher (Mod+Space). Usually pulled in as a niri dependency, but named
+    # here so it can't silently disappear from under the shortcuts.
     fuzzel
 
-    # Thumbnails for the wallpaper picker. Named for the same reason as fuzzel:
-    # it happened to be installed here already, and a shortcut that quietly
-    # stops showing previews on a fresh machine is worse than one that fails.
-    # ffmpeg rather than ImageMagick because -frames:v 1 takes the first frame
-    # of an animated GIF, and most of these wallpapers are animated GIFs.
+    # GIF thumbnails for the wallpaper picker: hyprquickpaper's cache.sh pulls
+    # one frame out with ffmpeg, then ImageMagick (below) shrinks it. Named for
+    # the same reason as fuzzel: a picker that quietly loses its previews on a
+    # fresh machine is worse than one that fails.
     ffmpeg
-
-    # webpmux, for the thumbnails of animated WebP wallpapers. ffmpeg's WebP
-    # decoder reads still WebP only, so the picker has webpmux copy out the
-    # first frame for ffmpeg to scale.
-    webp
 
     # The wallpaper picker (Mod+Alt+B) is hyprquickpaper, a Quickshell config.
     # quickshell comes from the danklinux PPA added for niri. Its package pulls

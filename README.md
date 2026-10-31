@@ -158,11 +158,9 @@ ubuntu-setup/
 │   │   └── org.gnome.Settings.desktop      # Shadows the stock entry so Settings runs outside GNOME
 │   └── Code/                               # settings.json + extensions.txt
 │
-├── wallpaper/                              # A feature, not a mirror: these land in four directories
+├── wallpaper/                              # A feature, not a mirror: these land in three trees
 │   ├── apply.sh                            # → ~/.config/niri/wallpaper-apply.sh   Paints the selection
-│   ├── pick.sh                             # → ~/.config/niri/wallpaper-pick.sh    The picker (Mod+Alt+B)
 │   ├── next.sh                             # → ~/.config/niri/wallpaper-next.sh    The next one along (Mod+Alt+Ctrl+B)
-│   ├── picker.ini                          # → ~/.config/fuzzel/wallpaper-picker.ini  (fuzzel reads it)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
 │   ├── hyprquickpaper.json                 # → ~/.config/quickshell/hyprquickpaper/config.json  The picker's config
 │   ├── hyprquickpaper.patch                # Applied by install.sh to the picker's checkout: every pick goes to swww
@@ -201,8 +199,8 @@ Two rules keep this predictable:
   it, and that is not under `~/.config`.
 - **Anything whose files land in more than one place gets its own directory**
   instead of being scattered to match. `wallpaper/` is the only one — its two
-  scripts, its fuzzel picker config, its systemd unit and its images would
-  otherwise be scattered across four destinations to match where each one goes.
+  scripts, its picker config, its systemd unit and its images would otherwise
+  be scattered across four destinations to match where each one goes.
 
 `lib/paths.sh` is what actually decides where each file goes, so the tree is free
 to be organised for reading rather than for the installer's benefit.
@@ -353,11 +351,15 @@ The images are other artists' work — see [`wallpaper/CREDITS.md`](wallpaper/CR
 |---|---|
 | `swww-daemon.service` | Holds the background layer surface and plays the animation |
 | `wallpaper/apply.sh` | Reads the selection and paints it, from the daemon's `ExecStartPost` |
+| hyprquickpaper (`~/.config/quickshell/hyprquickpaper`) | The picker on `Mod+Alt+B`: thumbnails of the folder, `Enter` writes the pick to `wallpaper-active` and runs `apply.sh` |
+| `wallpaper/next.sh` | `Mod+Alt+Ctrl+B`: the next wallpaper, in filename order |
 | `~/.config/niri/wallpaper-active` | One line: the path of the image to paint |
 | `layer-rule` on `^swww-daemon$` | `place-within-backdrop true`, so the background stays put instead of scrolling with the workspaces |
 
-**To change wallpaper**, point `wallpaper-active` at another image in
-`~/Documents/Wallpapers` and restart the daemon:
+**To change wallpaper**, press `Mod+Alt+B` and pick one (arrows or `h`/`l`,
+`Enter` to apply, `Esc` to close), or `Mod+Alt+Ctrl+B` for the next one along.
+By hand, point `wallpaper-active` at another image in `~/Documents/Wallpapers`
+and restart the daemon:
 
 ```bash
 echo ~/Documents/Wallpapers/205.png > ~/.config/niri/wallpaper-active
@@ -372,9 +374,37 @@ have the last word on which.
 
 The whole image folder is installed, not just the selected one, so there is
 always something to point at. swww is built from a git tag by `install.sh`;
-`doctor.sh` checks the daemon, the script, and that what is actually on screen
+`doctor.sh` checks the daemon, the scripts, the picker's checkout and patch, and that what is actually on screen
 matches what `wallpaper-active` names — run it first if the background ever goes
 black or goes stale.
+
+### The picker
+
+[hyprquickpaper](https://github.com/ujjalsigdel/hyprquickpaper) is a
+Quickshell config. `install.sh` fetches it at the commit `lib/manifest.sh` pins
+(`HYPRQUICKPAPER_REF`) into `~/.config/quickshell/hyprquickpaper`, then applies
+`wallpaper/hyprquickpaper.patch`. `configure.sh` deploys
+`wallpaper/hyprquickpaper.json` over its `config.json`. That config's
+`custom_command` hands every pick to the same path as everything else: it
+writes `wallpaper-active` and runs `wallpaper-apply.sh`. So the GIF filter, the
+retries and the choice surviving a login all still live in `apply.sh`.
+
+- **GIFs are listed as `video_extensions`.** That is how they get a thumbnail:
+  `cache.sh` pulls a frame out with ffmpeg, which it does only for "videos".
+  Upstream would then hand the pick to mpvpaper. The patch sends every pick to
+  `custom_command` instead. No real video format is in the list, because swww
+  can't paint one.
+- **Change the layout in the repo.** Set `active_layout` in
+  `wallpaper/hyprquickpaper.json` and run `configure.sh`. The switcher
+  (`qs -p ~/.config/quickshell/hyprquickpaper/settings.qml`) is fine for
+  auditioning, but it rewrites the live `config.json`, which `doctor.sh` then
+  reports as drift.
+- **Thumbnails** live in `~/.cache/quickshell/thumbs/`. A GIF's is
+  `<name>.jpg`, so `x.gif` and `x.jpg` would share one. WebP isn't listed at
+  all. Neither happens in this collection.
+- **Bumping the pin**: read the upstream diff, change `HYPRQUICKPAPER_REF`, and
+  run `install.sh`. If the patch no longer applies, `install.sh` warns and
+  `doctor.sh` reports it.
 
 The reasoning lives next to what it explains: why this is a systemd unit and not
 `spawn-at-startup`, and the `place-within-backdrop` rule, are in
