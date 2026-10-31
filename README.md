@@ -14,7 +14,7 @@ A dotfiles repo and bootstrap script for my Ubuntu + Niri setup. Clone this on a
 | Launcher | fuzzel (`Mod+Space`) |
 | Terminal | Ghostty (deb from the PPA install.sh adds for niri, not the snap) |
 | Editor | VS Code (settings + extensions) |
-| Browser | Firefox (Mozilla's `.deb`, pinned over Ubuntu's snap), with uBlock Origin force-installed and the default-browser prompt turned off by enterprise policy (`system/firefox-policies.json`) |
+| Browser | Firefox (Mozilla's `.deb`, pinned over Ubuntu's snap), with uBlock Origin force-installed, the default-browser prompt turned off, and its settings (vertical tabs, no bookmarks toolbar, a bare new tab page, no prefetching, DuckDuckGo) set by enterprise policy (`system/firefox-policies.json`) |
 | Task manager | Taskwarrior (workspace-scoped shortcuts live in [niri-tasks](https://github.com/pauldaywork/niri-tasks)) |
 | Containers | Docker (Ubuntu's `docker.io` + compose/buildx, user in `docker` group) |
 | Wallpaper | Wallpaper collection + the active choice, drawn by swww (systemd user unit) so animated GIFs animate |
@@ -60,7 +60,7 @@ The script will:
 
 1. Add PPAs and repos for Niri/Ghostty, Firefox (Mozilla's, pinned over Ubuntu's snap-transitional package, which is pinned to -1, with `packages.mozilla.org` allowed in unattended-upgrades so it can't swap the snap back) and the GitHub CLI
 2. Install all apt packages, from the list in `lib/manifest.sh`
-3. Remove Ubuntu's Firefox snap, install the add-on policy to `/etc/firefox/policies/`, and make Firefox the default browser
+3. Remove Ubuntu's Firefox snap, install the add-on and settings policy to `/etc/firefox/policies/`, and make Firefox the default browser
 4. Enable the Docker service and add you to the `docker` group (takes effect on next login)
 5. Install the NVIDIA container toolkit, but only if an NVIDIA GPU is actually present (read from sysfs, so it works before any driver is)
 6. Install VS Code from its official `.deb`, which adds Microsoft's apt repo for updates (the `.deb` rather than the snap because the snap forces X11), and Proton Pass from its official `.deb`, pinned and checked against Proton's SHA512 since it has no apt repo (it updates itself through the app's own notice)
@@ -173,7 +173,7 @@ ubuntu-setup/
 │   └── search.sh                           # → ~/.config/niri/shortcuts-search.sh  fuzzel search that runs your pick (Mod+Alt+/)
 │
 ├── system/                                 # Outside $HOME, so install.sh puts these in place with sudo
-│   ├── firefox-policies.json               # → /etc/firefox/policies/policies.json  Add-ons Firefox force-installs; no default-browser prompt
+│   ├── firefox-policies.json               # → /etc/firefox/policies/policies.json  Add-ons Firefox force-installs, its settings; no default-browser prompt
 │   └── monitors.xml                        # → /etc/xdg/  The login screen's monitor layout; desktops only
 │
 ├── docs/                                   # Not installed anywhere; read by people and agents

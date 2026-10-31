@@ -140,6 +140,12 @@ fi
 # GNOME, accepting it writes a userapp-Firefox-*.desktop of Firefox's own and
 # points mimeapps.list at that instead of firefox.desktop — the default is
 # set below, so the prompt has nothing to add.
+#
+# It also carries the browser settings: vertical tabs that expand on hover, a
+# hidden bookmarks toolbar, a new tab page without shortcuts, sponsored content
+# or widgets, no link or DNS prefetching, and DuckDuckGo as the search engine.
+# These are defaults or one-off settings, not locks, so they can still be
+# changed in Firefox.
 FIREFOX_POLICIES=/etc/firefox/policies/policies.json
 if cmp -s "$DOTFILES/system/firefox-policies.json" "$FIREFOX_POLICIES"; then
     info "$FIREFOX_POLICIES already matches the repo"
