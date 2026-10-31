@@ -322,6 +322,47 @@ else
     info "swww already installed ($(swww --version 2>/dev/null))"
 fi
 
+# ─── hyprquickpaper (the wallpaper picker) ────────────────────────────────────
+# Mod+Alt+B: a Quickshell overlay with a thumbnail of every wallpaper. Not
+# packaged anywhere, so it is a checkout of the commit lib/manifest.sh pins, in
+# the directory its own README uses. Fetched by commit into an init'd repo
+# rather than cloned, so this works whether the directory is missing, already
+# a checkout, or holds only the config.json configure.sh deploys into it.
+# Upstream's own install.sh is not run: it prompts, and installs packages the
+# manifest already names.
+#
+# Then one patch: with custom_command set, every pick goes to it — GIFs
+# included, which upstream would hand to mpvpaper. configure.sh (step 8, below)
+# copies the repo's config.json over upstream's.
+#
+# Not fatal if it fails: the rest of the machine is fine without a picker, and
+# Mod+Alt+Ctrl+B still changes wallpaper.
+section "Installing hyprquickpaper"
+
+HQP_DIR="$USER_HOME/.config/quickshell/hyprquickpaper"
+HQP_PATCH="$DOTFILES/wallpaper/hyprquickpaper.patch"
+if [ -d "$HQP_DIR/.git" ] \
+   && [ "$(git -C "$HQP_DIR" rev-parse HEAD 2>/dev/null)" = "$HYPRQUICKPAPER_REF" ]; then
+    info "hyprquickpaper already at ${HYPRQUICKPAPER_REF:0:12}"
+elif mkdir -p "$HQP_DIR" \
+     && git -C "$HQP_DIR" init -q \
+     && git -C "$HQP_DIR" fetch -q --depth 1 https://github.com/ujjalsigdel/hyprquickpaper "$HYPRQUICKPAPER_REF" \
+     && git -C "$HQP_DIR" checkout -q --force FETCH_HEAD; then
+    info "Installed hyprquickpaper ${HYPRQUICKPAPER_REF:0:12}"
+else
+    warn "Could not fetch hyprquickpaper — Mod+Alt+B will do nothing"
+fi
+
+# --reverse --check succeeds only on an already-patched tree, which is what
+# makes a re-run quiet. A checkout of a new pin starts unpatched.
+if git -C "$HQP_DIR" apply --reverse --check "$HQP_PATCH" 2>/dev/null; then
+    info "hyprquickpaper already patched"
+elif git -C "$HQP_DIR" apply "$HQP_PATCH" 2>/dev/null; then
+    info "Patched hyprquickpaper's commands.sh"
+else
+    warn "wallpaper/hyprquickpaper.patch does not apply — a GIF pick would go to mpvpaper, not swww"
+fi
+
 # ─── bluetui (bluetooth pairing) ──────────────────────────────────────────────
 # What the waybar bluetooth module opens on click, in the same way network opens
 # nmtui. waybar has no bluetooth popover of its own.

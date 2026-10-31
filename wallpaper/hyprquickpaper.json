@@ -1,0 +1,15 @@
+{
+  "wallpaper_path": "~/Documents/Wallpapers/",
+  "cache_path": "~/.cache/quickshell/thumbs/",
+  "active_layout": "layouts/shell-floating.qml",
+  "wallpaper_tool": "auto",
+  "custom_command": "printf '%s\\n' \"$WALLPAPER\" > \"$HOME/.config/niri/wallpaper-active\" && \"$HOME/.config/niri/wallpaper-apply.sh\"",
+  "post_apply": [],
+  "notify_on_apply": false,
+  "number_of_pictures": 7,
+  "border_color": "#49ccd2",
+  "cache_batch_size": 20,
+  "stable_copy_path": "",
+  "video_extensions": ["gif"],
+  "video_thumbnail_interval": 5
+}

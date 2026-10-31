@@ -70,6 +70,9 @@ DOTFILES_MAP=(
     "wallpaper/next.sh|.config/niri/wallpaper-next.sh|exec"
     "wallpaper/picker.ini|.config/fuzzel/wallpaper-picker.ini|copy"
     "wallpaper/swww-daemon.service|.config/systemd/user/swww-daemon.service|copy"
+    # The picker's config, over upstream's own in the checkout install.sh makes.
+    # The patch next to it is applied by install.sh, not deployed.
+    "wallpaper/hyprquickpaper.json|.config/quickshell/hyprquickpaper/config.json|copy"
 
     # shortcuts — the searchable list of every shortcut. Only the runner behind
     # Mod+Alt+/ is a managed file; the page and the list it reads are built

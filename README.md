@@ -164,6 +164,8 @@ ubuntu-setup/
 │   ├── next.sh                             # → ~/.config/niri/wallpaper-next.sh    The next one along (Mod+Alt+Ctrl+B)
 │   ├── picker.ini                          # → ~/.config/fuzzel/wallpaper-picker.ini  (fuzzel reads it)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
+│   ├── hyprquickpaper.json                 # → ~/.config/quickshell/hyprquickpaper/config.json  The picker's config
+│   ├── hyprquickpaper.patch                # Applied by install.sh to the picker's checkout: every pick goes to swww
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
 │   ├── CREDITS.md                          # Who made each image; not installed
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
@@ -384,7 +386,7 @@ per-filetype scaling filter are commented at the top of `wallpaper/apply.sh`.
 
 ## One list of what's installed
 
-`lib/manifest.sh` holds the apt packages, the `.deb` downloads, the snaps, and the version pins for Node, swww, Iosevka, bluetui, worktrunk, dotenvx and Proton Pass. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
+`lib/manifest.sh` holds the apt packages, the `.deb` downloads, the snaps, and the version pins for Node, swww, Iosevka, bluetui, worktrunk, dotenvx, Proton Pass and hyprquickpaper. `install.sh` installs from it; `doctor.sh` checks against it. They each kept their own copy before, with a comment on doctor's asking whoever edited one to remember the other — a promise no repo keeps, and a diagnostic that drifts from the installer is worse than none, since it invents problems and misses real ones.
 
 `lib/common.sh` holds what all five scripts print with (`info`, `warn`, `ok`, `issue`, `section`) plus `pkg_installed` and `snap_install`. `pkg_installed` is the one worth not copy-pasting: `dpkg -s` exits 0 for packages in the `rc` state — removed, config files left behind — so it matches on the status field instead.
 

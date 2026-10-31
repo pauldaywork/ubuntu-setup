@@ -1,0 +1,16 @@
+diff --git a/commands.sh b/commands.sh
+index 1fb60a4..d0c9bc0 100644
+--- a/commands.sh
++++ b/commands.sh
+@@ -70,7 +70,10 @@ notify() {
+ # ALWAYS kill any running video wallpaper first.
+ pkill mpvpaper 2>/dev/null
+ 
+-if is_video "$WALLPAPER" "$VIDEO_EXT_PATTERN"; then
++# ubuntu-setup: with custom_command set, every pick goes to it. GIFs are
++# listed in video_extensions only so cache.sh thumbnails them with ffmpeg;
++# swww paints them, and mpvpaper is never run.
++if [ -z "$CUSTOM_CMD" ] && is_video "$WALLPAPER" "$VIDEO_EXT_PATTERN"; then
+     echo "Detected video file: $WALLPAPER"
+ 
+     # Locate the cached still for this video. cache.sh writes both

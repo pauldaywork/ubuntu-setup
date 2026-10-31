@@ -59,6 +59,15 @@ PROTON_PASS_SHA512="ac19002dd7e5e6110fd5ca5d342d2cacbd2528d95966e83c1ac8df928e86
 # https://github.com/devashish2203/herdr-worktrunk
 HERDR_WORKTRUNK_REF="8ceca541de8fb0d6006727e172534e1e2af17224"
 
+# hyprquickpaper — the wallpaper picker on Mod+Alt+B, a Quickshell config. Not
+# packaged anywhere and untagged, so install.sh fetches this commit into
+# ~/.config/quickshell/hyprquickpaper and applies wallpaper/hyprquickpaper.patch.
+# The source was read at this commit (2026-10-31): it makes no network calls
+# and runs only its own cache.sh, commands.sh and set-layout.sh. Bump the pin
+# only after reading the diff, and check the patch still applies.
+# https://github.com/ujjalsigdel/hyprquickpaper
+HYPRQUICKPAPER_REF="0c2de83fe2734ea938ea06727b2722f275f7c412"
+
 # ─── .deb installs ────────────────────────────────────────────────────────────
 # Downloaded directly rather than listed in APT_PACKAGES: the package's own
 # postinst adds its vendor's apt repo (with a keyring it writes itself), so the
@@ -105,6 +114,22 @@ APT_PACKAGES=(
     # decoder reads still WebP only, so the picker has webpmux copy out the
     # first frame for ffmpeg to scale.
     webp
+
+    # The wallpaper picker (Mod+Alt+B) is hyprquickpaper, a Quickshell config.
+    # quickshell comes from the danklinux PPA added for niri. Its package pulls
+    # in the Qt libraries but none of the QML modules the picker's layouts
+    # import, so those are named here: without them the overlay fails to load,
+    # with no error anywhere you would see it. All five, so that switching
+    # layout cannot break it.
+    quickshell
+    qml6-module-qtquick-controls
+    qml6-module-qtquick-effects
+    qml6-module-qtquick-shapes
+    qml6-module-qt-labs-folderlistmodel
+    qml6-module-qt5compat-graphicaleffects
+    # The picker's thumbnailer: ImageMagick shrinks every thumbnail, and ffmpeg
+    # (above) pulls the frame out of a GIF first.
+    imagemagick
 
     # Bluetooth. Both come with ubuntu-desktop-minimal today, and named here
     # for the same reason as fuzzel: waybar's bluetooth module and bluetui are
