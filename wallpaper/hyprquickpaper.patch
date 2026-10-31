@@ -1,3 +1,30 @@
+diff --git a/cache.sh b/cache.sh
+index f2629f9..2351156 100644
+--- a/cache.sh
++++ b/cache.sh
+@@ -88,18 +88,19 @@ if command -v ffmpeg &>/dev/null; then
+             # This is the expensive step; everything else derives from it.
+             # ffmpeg is invoked with three fallback seek points, same as
+             # before, so short clips and odd streams still work.
+-            ffmpeg -i "$video" -ss "$video_thumbnail_interval" -vframes 1 \
++            # ubuntu-setup: -nostdin, or ffmpeg reads the find list below as keypresses and fails.
++            ffmpeg -nostdin -i "$video" -ss "$video_thumbnail_interval" -vframes 1 \
+                 -vf "scale='min(3840,iw)':-2:flags=lanczos" -q:v 2 \
+                 "$out_hq" -y 2>/dev/null
+ 
+             if [ ! -f "$out_hq" ]; then
+-                ffmpeg -i "$video" -ss 1 -vframes 1 \
++                ffmpeg -nostdin -i "$video" -ss 1 -vframes 1 \
+                     -vf "scale='min(3840,iw)':-2:flags=lanczos" -q:v 2 \
+                     "$out_hq" -y 2>/dev/null
+             fi
+ 
+             if [ ! -f "$out_hq" ]; then
+-                ffmpeg -i "$video" -vframes 1 \
++                ffmpeg -nostdin -i "$video" -vframes 1 \
+                     -vf "scale='min(3840,iw)':-2:flags=lanczos" -q:v 2 \
+                     "$out_hq" -y 2>/dev/null
+             fi
 diff --git a/commands.sh b/commands.sh
 index 1fb60a4..d0c9bc0 100644
 --- a/commands.sh

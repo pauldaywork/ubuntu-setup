@@ -331,8 +331,10 @@ fi
 # Upstream's own install.sh is not run: it prompts, and installs packages the
 # manifest already names.
 #
-# Then one patch: with custom_command set, every pick goes to it — GIFs
-# included, which upstream would hand to mpvpaper. configure.sh (step 8, below)
+# Then one patch, two files. commands.sh: with custom_command set, every pick
+# goes to it — GIFs included, which upstream would hand to mpvpaper. cache.sh:
+# -nostdin on its ffmpeg calls, or ffmpeg reads the file list as keypresses and
+# about a third of the GIFs get no thumbnail. configure.sh (step 8, below)
 # copies the repo's config.json over upstream's.
 #
 # Not fatal if it fails: the rest of the machine is fine without a picker, and
@@ -358,7 +360,7 @@ fi
 if git -C "$HQP_DIR" apply --reverse --check "$HQP_PATCH" 2>/dev/null; then
     info "hyprquickpaper already patched"
 elif git -C "$HQP_DIR" apply "$HQP_PATCH" 2>/dev/null; then
-    info "Patched hyprquickpaper's commands.sh"
+    info "Patched hyprquickpaper's commands.sh and cache.sh"
 else
     warn "wallpaper/hyprquickpaper.patch does not apply — a GIF pick would go to mpvpaper, not swww"
 fi

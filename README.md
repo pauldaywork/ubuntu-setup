@@ -163,7 +163,7 @@ ubuntu-setup/
 │   ├── next.sh                             # → ~/.config/niri/wallpaper-next.sh    The next one along (Mod+Alt+Ctrl+B)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
 │   ├── hyprquickpaper.json                 # → ~/.config/quickshell/hyprquickpaper/config.json  The picker's config
-│   ├── hyprquickpaper.patch                # Applied by install.sh to the picker's checkout: every pick goes to swww
+│   ├── hyprquickpaper.patch                # Applied by install.sh to the picker's checkout: every pick goes to swww, ffmpeg gets -nostdin
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
 │   ├── CREDITS.md                          # Who made each image; not installed
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
@@ -394,6 +394,9 @@ retries and the choice surviving a login all still live in `apply.sh`.
   Upstream would then hand the pick to mpvpaper. The patch sends every pick to
   `custom_command` instead. No real video format is in the list, because swww
   can't paint one.
+- **The patch also adds `-nostdin` to `cache.sh`'s ffmpeg calls.** Without it
+  ffmpeg reads `cache.sh`'s file list as keypresses and fails, and about a
+  third of the GIFs got no thumbnail.
 - **Change the layout in the repo.** Set `active_layout` in
   `wallpaper/hyprquickpaper.json` and run `configure.sh`. The switcher
   (`qs -p ~/.config/quickshell/hyprquickpaper/settings.qml`) is fine for
