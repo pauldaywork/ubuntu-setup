@@ -163,7 +163,7 @@ ubuntu-setup/
 │   ├── next.sh                             # → ~/.config/niri/wallpaper-next.sh    The next one along (Mod+Alt+Ctrl+B)
 │   ├── swww-daemon.service                 # → ~/.config/systemd/user/
 │   ├── hyprquickpaper.json                 # → ~/.config/quickshell/hyprquickpaper/config.json  The picker's config
-│   ├── hyprquickpaper.patch                # Applied by install.sh to the picker's checkout: every pick goes to swww, ffmpeg gets -nostdin
+│   ├── hyprquickpaper.patch                # Applied by install.sh to the picker's checkout: every pick goes to swww, ffmpeg gets -nostdin, no clock
 │   ├── active                              # Seeds ~/.config/niri/wallpaper-active; never overwrites it
 │   ├── CREDITS.md                          # Who made each image; not installed
 │   └── images/                             # → ~/Documents/Wallpapers/  (GIFs animate, via swww)
@@ -398,6 +398,9 @@ retries and the choice surviving a login all still live in `apply.sh`.
   ffmpeg swallows the rest of `find`'s file list from the shared stdin, so
   those files are skipped; that is why the count of GIFs without a thumbnail
   varied from run to run (22 to 37).
+- **The patch drops the day, date and time** from the top of the
+  `shell-coverflow-clear` layout, leaving just the search box. Another layout
+  still shows its own clock.
 - **Change the layout in the repo.** Set `active_layout` in
   `wallpaper/hyprquickpaper.json` and run `configure.sh`. The switcher
   (`qs -p ~/.config/quickshell/hyprquickpaper/settings.qml`) is fine for

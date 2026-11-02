@@ -41,3 +41,78 @@ index 1fb60a4..d0c9bc0 100644
      echo "Detected video file: $WALLPAPER"
  
      # Locate the cached still for this video. cache.sh writes both
+diff --git a/layouts/shell-coverflow-clear.qml b/layouts/shell-coverflow-clear.qml
+index b4e8b68..2d375ea 100644
+--- a/layouts/shell-coverflow-clear.qml
++++ b/layouts/shell-coverflow-clear.qml
+@@ -15,7 +15,6 @@ PanelWindow {
+     property string currentImagePath: ""
+     property bool bgToggle: false
+     property string searchQuery: ""
+-    property date currentDateTime: new Date()
+ 
+     // Load custom  font file directly
+     FontLoader {
+@@ -165,13 +164,6 @@ PanelWindow {
+         sortField: FolderListModel.Name
+     }
+ 
+-    Timer {
+-        interval: 1000
+-        running: true
+-        repeat: true
+-        onTriggered: currentDateTime = new Date()
+-    }
+-
+     function updateBackground() {
+         if (folderModel.count === 0) return
+         const fileName = folderModel.get(pathView.currentIndex, "fileName")
+@@ -526,7 +518,7 @@ PanelWindow {
+     }
+ 
+     // -----------------------------------------------------
+-    // DATE / TIME + SEARCH HEADER
++    // SEARCH HEADER
+     // -----------------------------------------------------
+     Column {
+         id: headerColumn
+@@ -536,38 +528,7 @@ PanelWindow {
+         spacing: 6
+         z: 200
+ 
+-        Text {
+-            anchors.horizontalCenter: parent.horizontalCenter
+-            text: Qt.formatDateTime(currentDateTime, "dddd").toUpperCase()
+-            color: "#f2f2f2"
+-            font.pixelSize: 60
+-            font.letterSpacing: 12
+-            font.family: customDisplayFont.name
+-            font.capitalization: Font.AllUppercase
+-            style: Text.Raised
+-            styleColor: "#40000000"
+-        }
+-
+-        Text {
+-            anchors.horizontalCenter: parent.horizontalCenter
+-            text: Qt.formatDateTime(currentDateTime, "dd MMM yyyy").toUpperCase()
+-            color: "#cfcfcf"
+-            font.pixelSize: 16
+-            font.letterSpacing: 4
+-            font.family: "sans-serif"
+-        }
+-
+-        Text {
+-            anchors.horizontalCenter: parent.horizontalCenter
+-            text: "- " + Qt.formatDateTime(currentDateTime, "hh:mm AP") + " -"
+-            color: "#cfcfcf"
+-            font.pixelSize: 14
+-            font.letterSpacing: 3
+-            font.family: "sans-serif"
+-        }
+-
+-        Item { width: 1; height: 14 }
+-
++        // ubuntu-setup: no day, date or time above the search box.
+         Rectangle {
+             id: searchBox
+             anchors.horizontalCenter: parent.horizontalCenter

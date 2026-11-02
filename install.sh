@@ -370,7 +370,7 @@ elif git -C "$HQP_DIR" apply --reverse --check "$HQP_PATCH" 2>/dev/null; then
 elif mapfile -t hqp_files < <(git -C "$HQP_DIR" apply --numstat "$HQP_PATCH" | cut -f3) \
      && git -C "$HQP_DIR" checkout -q HEAD -- "${hqp_files[@]}" \
      && git -C "$HQP_DIR" apply "$HQP_PATCH" 2>/dev/null; then
-    info "Patched hyprquickpaper's commands.sh and cache.sh"
+    info "Patched hyprquickpaper's commands.sh, cache.sh and coverflow-clear layout"
 else
     warn "wallpaper/hyprquickpaper.patch does not apply — a GIF pick would go to mpvpaper, not swww"
 fi
